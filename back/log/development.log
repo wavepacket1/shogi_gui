@@ -1,0 +1,25 @@
+DEPRECATION WARNING: Using legacy connection handling is deprecated. Please set
+`legacy_connection_handling` to `false` in your application.
+
+The new connection handling does not support `connection_handlers`
+getter and setter.
+
+Read more about how to migrate at: https://guides.rubyonrails.org/active_record_multiple_databases.html#migrate-to-the-new-connection-handling
+ (called from <main> at bin/rails:4)
+  [1m[35m (0.7ms)[0m  [1m[35mCREATE DATABASE "app_development" ENCODING = 'unicode'[0m
+  [1m[35m (55.4ms)[0m  [1m[35mCREATE DATABASE "app_test" ENCODING = 'unicode'[0m
+DEPRECATION WARNING: Using legacy connection handling is deprecated. Please set
+`legacy_connection_handling` to `false` in your application.
+
+The new connection handling does not support `connection_handlers`
+getter and setter.
+
+Read more about how to migrate at: https://guides.rubyonrails.org/active_record_multiple_databases.html#migrate-to-the-new-connection-handling
+ (called from block (2 levels) in <class:Railtie> at /usr/local/bundle/gems/activerecord-7.0.8.4/lib/active_record/railtie.rb:264)
+Started GET "/" for 172.19.0.1 at 2024-08-10 08:15:29 +0000
+Processing by Rails::WelcomeController#index as HTML
+  Rendering /usr/local/bundle/gems/railties-7.0.8.4/lib/rails/templates/rails/welcome/index.html.erb
+  Rendered /usr/local/bundle/gems/railties-7.0.8.4/lib/rails/templates/rails/welcome/index.html.erb (Duration: 19.4ms | Allocations: 633)
+Completed 200 OK in 242ms (Views: 52.1ms | ActiveRecord: 0.0ms | Allocations: 7109)
+
+
