@@ -1,0 +1,52 @@
+.board_back {
+    display: grid;
+    grid-template-columns: repeat(9, 60px);
+    grid-template-rows: repeat(9, 60px);
+    gap: 1px;
+    border: 2px solid #d9b89c;
+    background: #d9b89c;
+    position: relative;
+  }
+.board {
+    width: 60px;
+    height: 60px;
+    background-color: #f0d9b5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 18px;
+    writing-mode: vertical-rl;
+    text-align: center;
+    border: 1px solid 40;
+    color: #000; /* 駒の色を黒に設定 */
+}
+
+.board_container {
+    position: absolute;
+    display: flex;
+}
+
+.piece_box {
+    position: absolute;
+    padding: 10px;
+    width: 160px;
+    height: 160px;
+    border: 2px solid #f0d9b5;
+    background: #f0d9b5;
+  }
+
+.piece_box_front {
+    top: 35px; /* 画面の左上に配置 */
+    left: 130px;
+    margin: 10px;
+    text-align: center;
+  }
+  
+  .piece_box_back {
+    bottom: 45px; /* 画面の右下に配置 */
+    right: 130px;
+    margin: 10px;
+    text-align: center;
+  }
+
