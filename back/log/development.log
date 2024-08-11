@@ -23,3 +23,18 @@ Processing by Rails::WelcomeController#index as HTML
 Completed 200 OK in 168ms (Views: 43.3ms | ActiveRecord: 0.0ms | Allocations: 7110)
 
 
+DEPRECATION WARNING: Using legacy connection handling is deprecated. Please set
+`legacy_connection_handling` to `false` in your application.
+
+The new connection handling does not support `connection_handlers`
+getter and setter.
+
+Read more about how to migrate at: https://guides.rubyonrails.org/active_record_multiple_databases.html#migrate-to-the-new-connection-handling
+ (called from block (2 levels) in <class:Railtie> at /usr/local/bundle/gems/activerecord-7.0.8.4/lib/active_record/railtie.rb:264)
+Started GET "/" for 172.21.0.1 at 2024-08-10 13:39:04 +0000
+Processing by Rails::WelcomeController#index as HTML
+  Rendering /usr/local/bundle/gems/railties-7.0.8.4/lib/rails/templates/rails/welcome/index.html.erb
+  Rendered /usr/local/bundle/gems/railties-7.0.8.4/lib/rails/templates/rails/welcome/index.html.erb (Duration: 5.1ms | Allocations: 489)
+Completed 200 OK in 57ms (Views: 16.0ms | ActiveRecord: 0.0ms | Allocations: 4035)
+
+

@@ -1,3 +1,8 @@
+.board_container {
+    position: absolute;
+    display: flex;
+}
+
 .board_back {
     display: grid;
     grid-template-columns: repeat(9, 60px);
@@ -7,6 +12,7 @@
     background: #d9b89c;
     position: relative;
   }
+
 .board {
     width: 60px;
     height: 60px;
@@ -22,10 +28,6 @@
     color: #000; /* 駒の色を黒に設定 */
 }
 
-.board_container {
-    position: absolute;
-    display: flex;
-}
 
 .piece_box {
     position: absolute;
@@ -37,16 +39,16 @@
   }
 
 .piece_box_front {
-    top: 35px; /* 画面の左上に配置 */
-    left: 130px;
-    margin: 10px;
+    bottom: 552px;
+    left: -160px;
+    position: relative;
     text-align: center;
   }
   
   .piece_box_back {
-    bottom: 45px; /* 画面の右下に配置 */
-    right: 130px;
-    margin: 10px;
+    bottom: 320px;
+    left: 552px; 
+    position: relative;
     text-align: center;
   }
 
