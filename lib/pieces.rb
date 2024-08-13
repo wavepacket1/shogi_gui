@@ -1,6 +1,6 @@
 module Shogi 
     class Pieces
-        attr_reader :name,:symbol,:color
+        # attr_reader :name,:symbol,:color
 
         def initialize(name,symbol)
             # @name = name
@@ -26,6 +26,7 @@ module Shogi
             end
             false
         end
+
         class FU
             @movement = [[0,1]]
             def self.fu_validation(board,present_position,next_position,turn)

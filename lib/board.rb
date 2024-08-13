@@ -10,20 +10,34 @@ module Shogi
 
         def initial_board
         [
-        ["KY", "KE", "GI", "KI", "OU", "KI", "GI", "KE", "KY"], # P1
-        [nil, "HI", nil, nil, nil, nil, nil, "KA", nil],        # P2
-        ["FU", "FU", "FU", "FU", "FU", "FU", "FU", "FU", "FU"], # P3
-        [nil, nil, nil, nil, nil, nil, nil, nil, nil],          # P4
-        [nil, nil, nil, nil, nil, nil, nil, nil, nil],          # P5
-        [nil, nil, nil, nil, nil, nil, nil, nil, nil],          # P6
-        ["+FU", "+FU", "+FU", "+FU", "+FU", "+FU", "+FU", "+FU", "+FU"], # P7
-        [nil, "+KA", nil, nil, nil, nil, nil, "+HI", nil],      # P8
-        ["+KY", "+KE", "+GI", "+KI", "+OU", "+KI", "+GI", "+KE", "+KY"]  # P9
+            ["KY", "KE", "GI", "KI", "OU", "KI", "GI", "KE", "KY"], # P1
+            [nil, "HI", nil, nil, nil, nil, nil, "KA", nil],        # P2
+            ["FU", "FU", "FU", "FU", "FU", "FU", "FU", "FU", "FU"], # P3
+            [nil, nil, nil, nil, nil, nil, nil, nil, nil],          # P4
+            [nil, nil, nil, nil, nil, nil, nil, nil, nil],          # P5
+            [nil, nil, nil, nil, nil, nil, nil, nil, nil],          # P6
+            ["+FU", "+FU", "+FU", "+FU", "+FU", "+FU", "+FU", "+FU", "+FU"], # P7
+            [nil, "+KA", nil, nil, nil, nil, nil, "+HI", nil],      # P8
+            ["+KY", "+KE", "+GI", "+KI", "+OU", "+KI", "+GI", "+KE", "+KY"], # P9
+            [],#先手の持ち駒
+            [],#後手の持ち駒
         ]
+        end
+        
+        def take_piece(board,present_position,next_position,turn,piece)
+            return if !board[next_position[0]][next_position[1]]
+            #取った駒を持ち駒に追加
+            if(turn == -1)
+                board[9].push(piece)
+            else
+                board[10].push(piece)
+            end
         end
 
         def move(board,present_position,next_position,piece,turn)
-            if(board[present_position[0]][present_position[1]] == piece && piece_validation(board,piece,present_position,next_position,turn) && entire_validation(piece)) 
+            if(board[present_position[0]][present_position[1]] == piece && piece_validation(board,piece,present_position,next_position,turn)) 
+                #動いた先に駒があった時に持ち駒に追加するようにする
+                take_piece(board,present_position,next_position,turn,piece)
                 board[present_position[0]][present_position[1]] = nil
                 board[next_position[0]][next_position[1]] = piece
             end

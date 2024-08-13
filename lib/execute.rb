@@ -7,4 +7,3 @@ board = shogi_board.initial_board
 puts board[6][0]
 
 shogi_board.move(board,[6,0],[5,0],"+FU",-1)
-puts board[5][0]
