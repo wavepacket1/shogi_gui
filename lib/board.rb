@@ -22,9 +22,9 @@ module Shogi
         ]
         end
 
-        def move(board,previous_position,next_position,piece)
-            if(board[previous_position[0]][previous_position[1]] == piece ) 
-                board[previous_position[0]][previous_position[1]] = nil
+        def move(board,present_position,next_position,piece,turn)
+            if(board[present_position[0]][present_position[1]] == piece && piece_validation(board,piece,present_position,next_position,turn) && entire_validation(piece)) 
+                board[present_position[0]][present_position[1]] = nil
                 board[next_position[0]][next_position[1]] = piece
             end
         end
@@ -34,5 +34,27 @@ module Shogi
                 puts row.map { |cell| cell.nil? ? "*" : cell }.join(" ")
             end
         end
+
+        ##次の位置まで駒が動けるかをvalidationする
+        def piece_validation(board,piece,present_position,next_position,turn)
+            if piece == "+FU"
+                Shogi::Pieces::FU.fu_validation(board,present_position,next_position,turn)
+            elsif piece == "+KE"
+                Shogi::Pieces::KE.ke_validation(board,present_position,next_position,turn)
+            elsif piece == "+OU"
+                Shogi::Pieces::OU.ou_validation(board,present_position,next_position,turn)
+            elsif piece == "+KA"
+                Shogi::Pieces::KA.ou_validation(board,present_position,next_position,turn)
+            elsif piece == "+KY"
+                Shogi::Pieces::KY.ou_validation(board,present_position,next_position,turn)
+            elsif piece == "+GI"
+                Shogi::Pieces::GI.ou_validation(board,present_position,next_position,turn)
+            elsif piece == "+KI"
+                Shogi::Pieces::Ki.ou_validation(board,present_position,next_position,turn)
+            elsif piece == "+HI"
+                Shogi::Pieces::HI.ou_validation(board,present_position,next_position,turn)
+            end
+        end
+
     end
 end
