@@ -35,16 +35,32 @@ module Shogi
             puts "エラー!駒が動ける範囲外です"
             false
         end
+
+        def self.can_move_validation(board,next_position,move_direction,movement)
+            movement.each do |move|
+                return true if((0<= next_position[0]+move_direction*move[1] && next_position[0]+move_direction*move[1]<=8) && (0<= next_position[1]+move_direction*move[0] && next_position[1]+move_direction*move[0]))
+            end
+            false
+        end
+
         class P
             @movement = [[0,1]]
             def self.p_validation(board,present_position,next_position,move_direction)
                 Shogi::Pieces::validate_movement(board,present_position,next_position,move_direction,@movement)
+            end
+
+            def self.p_can_move_validation(board,next_position,move_direction)
+                Shogi::Pieces::can_move_validation(board,next_position,move_direction,@movement)
             end
         end
         class N
             @movement = [[1,2],[-1,2]]
             def self.n_validation(board,present_position,next_position,move_direction)
                 Shogi::Pieces::validate_movement(board,present_position,next_position,move_direction,@movement)
+            end
+
+            def self.n_can_move_validation(board,next_position,move_direction)
+                Shogi::Pieces::can_move_validation(board,next_position,move_direction,@movement)
             end
         end
 
@@ -54,6 +70,10 @@ module Shogi
         ]
             def self.k_validation(board,present_position,next_position,move_direction)
                 Shogi::Pieces::validate_movement(board,present_position,next_position,move_direction,@movement)
+            end
+
+            def self.k_can_move_validation(board,next_position,move_direction)
+                Shogi::Pieces::can_move_validation(board,next_position,move_direction,@movement)
             end
         end
 
@@ -68,6 +88,10 @@ module Shogi
             def self.b_validation(board,present_position,next_position,move_direction)
                 Shogi::Pieces::validate_movement(board,present_position,next_position,move_direction,@movement)
             end
+
+            def self.b_can_move_validation(board,next_position,move_direction)
+                Shogi::Pieces::can_move_validation(board,next_position,move_direction,@movement)
+            end
         end
 
         class L
@@ -78,6 +102,10 @@ module Shogi
             def self.l_validation(board,present_position,next_position,move_direction)
                 Shogi::Pieces::validate_movement(board,present_position,next_position,move_direction,@movement)
             end
+
+            def self.l_can_move_validation(board,next_position,move_direction)
+                Shogi::Pieces::can_move_validation(board,next_position,move_direction,@movement)
+            end
         end
 
         class S
@@ -85,12 +113,20 @@ module Shogi
             def self.s_validation(board,present_position,next_position,move_direction)
                 Shogi::Pieces::validate_movement(board,present_position,next_position,move_direction,@movement)
             end
+
+            def self.s_can_move_validation(board,next_position,move_direction)
+                Shogi::Pieces::can_move_validation(board,next_position,move_direction,@movement)
+            end
         end
 
         class G
             @movement = [[0,1],[1,1],[-1,1],[0,1],[1,0],[-1,0]]
             def self.g_validation(board,present_position,next_position,move_direction)
                 Shogi::Pieces::validate_movement(board,present_position,next_position,move_direction,@movement)
+            end
+
+            def self.g_can_move_validation(board,next_position,move_direction)
+                Shogi::Pieces::can_move_validation(board,next_position,move_direction,@movement)
             end
         end
 
@@ -105,12 +141,20 @@ module Shogi
             def self.r_validation(board,present_position,next_position,move_direction)
                 Shogi::Pieces::validate_movement(board,present_position,next_position,move_direction,@movement)
             end
+
+            def self.r_can_move_validation(board,next_position,move_direction)
+                Shogi::Pieces::can_move_validation(board,next_position,move_direction,@movement)
+            end
         end
 
         class TO 
             @movement = [[0,1],[1,1],[-1,1],[0,1],[1,0],[-1,0]]
             def self.to_validation(board,present_position,next_position,move_direction)
                 Shogi::Pieces::validate_movement(board,present_position,next_position,move_direction,@movement)
+            end
+
+            def self.to_can_move_validation(board,next_position,move_direction)
+                Shogi::Pieces::can_move_validation(board,next_position,move_direction,@movement)
             end
         end
 
@@ -119,6 +163,10 @@ module Shogi
             def self.ny_validation(board,present_position,next_position,move_direction)
                 Shogi::Pieces::validate_movement(board,present_position,next_position,move_direction,@movement)
             end
+
+            def self.ny_can_move_validation(board,next_position,move_direction)
+                Shogi::Pieces::can_move_validation(board,next_position,move_direction,@movement)
+            end
         end
 
         class NK 
@@ -126,12 +174,20 @@ module Shogi
             def self.nk_validation(board,present_position,next_position,move_direction)
                 Shogi::Pieces::validate_movement(board,present_position,next_position,move_direction,@movement)
             end
+
+            def self.nk_can_move_validation(board,next_position,move_direction)
+                Shogi::Pieces::can_move_validation(board,next_position,move_direction,@movement)
+            end
         end
 
         class NG 
             @movement = [[0,1],[1,1],[-1,1],[0,1],[1,0],[-1,0]]
             def self.ng_validation(board,present_position,next_position,move_direction)
                 Shogi::Pieces::validate_movement(board,present_position,next_position,move_direction,@movement)
+            end
+
+            def self.ng_can_move_validation(board,next_position,move_direction)
+                Shogi::Pieces::can_move_validation(board,next_position,move_direction,@movement)
             end
         end
 
@@ -147,6 +203,10 @@ module Shogi
             def self.um_validation(board,present_position,next_position,move_direction)
                 Shogi::Pieces::validate_movement(board,present_position,next_position,move_direction,@movement)
             end
+
+            def self.um_can_move_validation(board,next_position,move_direction)
+                Shogi::Pieces::can_move_validation(board,next_position,move_direction,@movement)
+            end
         end
 
         class RY 
@@ -160,6 +220,10 @@ module Shogi
             @movement.concat([1,1],[1,-1],[-1,1],[-1,-1])
             def self.ry_validation(board,present_position,next_position,move_direction)
                 Shogi::Pieces::validate_movement(board,present_position,next_position,move_direction,@movement)
+            end
+
+            def self.ry_can_move_validation(board,next_position,move_direction)
+                Shogi::Pieces::can_move_validation(board,next_position,move_direction,@movement)
             end
         end
     end
