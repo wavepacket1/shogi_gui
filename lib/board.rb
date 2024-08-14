@@ -22,8 +22,8 @@ module Shogi
             ["P", "P", "P", "P", "P", "P", "P", "P", "P"], # P7
             [nil, "B", nil, nil, nil, nil, nil, "R", nil],      # P8
             ["L", "N", "S", "G", "K", "G", "S", "N", "L"], # P9
-            [],#先手の持ち駒
-            [],#後手の持ち駒
+            ["L"],#先手の持ち駒
+            ["p"],#後手の持ち駒
         ]
         end
         
@@ -34,27 +34,56 @@ module Shogi
             end
             #取った駒を持ち駒に追加
             if(turn)
-                @board[9].push(@board[next_position[0]][next_position[1]])
+                @board[9].push(@board[next_position[0]][next_position[1]].upcase)
             else
-                @board[10].push(@board[next_position[0]][next_position[1]])
+                @board[10].push(@board[next_position[0]][next_position[1]].downcase)
             end
+        end
+
+        #持ち駒の駒を打つ時
+        def strike_piece(move_protocol)
+            return if(!strike_piece_validation)
+            next_position = [move_protocol[3].to_i-1,9-move_protocol[2].to_i]
+            piece = (move_protocol[-1]).to_s
+    
+            @board[next_position[0]][next_position[1]] = piece
+            #先手の持ち駒の時
+            if move_protocol[0..1]=="H0"
+                @board[9].delete_at(@board[9].index(piece))
+            #後手の持ち駒の時
+            elsif move_protocol[0..1]=="H1"
+                @board[10].delete_at(@board[10].index(piece))
+            end
+        end
+        def strike_piece_validation
+            #持ち駒がそもそも存在するかどうかを確認
+            #打つ場所に駒がないかどうかを確認
+            #駒が動けない場所かどうかを確認
+            #二歩のチェック
+            true
         end
 
         def move(move_protocol)
             #先手番を２回続けて動かすことはできない
-            if move_protocol[-1] =~ /[A-Z]/ && !@turn
+            if move_protocol[-1] =~ /[A-Z]/ && !@turn 
                 raise "先手番を２回続けて動かすことはできません"
-            elsif move_protocol[-1] =~ /[a-z]/ && @turn
+            elsif move_protocol[-1] =~ /[a-z]/ && @turn 
                 raise "後手番を２回続けて動かすことはできません"
             end
+            
+            #駒を打つ時のロジック
+            return strike_piece(move_protocol) if move_protocol[0]=="H"
+
             move_direction =if @turn 
                                 -1
                             else
                                 1
                             end
+
             present_position = [move_protocol[1].to_i-1,9-move_protocol[0].to_i]
             next_position = [move_protocol[3].to_i-1,9-move_protocol[2].to_i]
             piece = (move_protocol[-1]).to_s
+                    
 
             if(@board[present_position[0]][present_position[1]] == piece && piece_validation(@board,piece,present_position,next_position,move_direction))
                 #動いた先に駒があった時に持ち駒に追加するようにする
