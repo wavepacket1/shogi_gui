@@ -72,6 +72,10 @@ module Shogi
             end
         end
 
+        def reset
+            @board = initial_board
+        end
+
         ##次の位置まで駒が動けるかをvalidationする
         def piece_validation(board,piece,present_position,next_position,move_direction)
             if piece == "p" || piece == "P"
