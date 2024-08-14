@@ -29,16 +29,15 @@ module Shogi
         
         def take_piece(present_position,next_position,turn,piece)
             return if !@board[next_position[0]][next_position[1]]
-            #取った駒を持ち駒に追加
-            if(turn == -1)
-                @board[9].push(piece)
-            else
-                @board[10].push(piece)
+            if (turn && (@board[next_position[0]][next_position[1]]=~ /[A-Z]/) ) || (!turn && (@board[next_position[0]][next_position[1]]=~ /[a-z]/))
+                raise "移動先に自分の駒があります"
             end
-        end
-
-        def take_piece_validation(next_position,turn)
-
+            #取った駒を持ち駒に追加
+            if(turn)
+                @board[9].push(@board[next_position[0]][next_position[1]])
+            else
+                @board[10].push(@board[next_position[0]][next_position[1]])
+            end
         end
 
         def move(move_protocol)
@@ -53,17 +52,17 @@ module Shogi
                             else
                                 1
                             end
-            @turn = !@turn 
             present_position = [move_protocol[1].to_i-1,9-move_protocol[0].to_i]
             next_position = [move_protocol[3].to_i-1,9-move_protocol[2].to_i]
             piece = (move_protocol[-1]).to_s
 
             if(@board[present_position[0]][present_position[1]] == piece && piece_validation(@board,piece,present_position,next_position,move_direction))
                 #動いた先に駒があった時に持ち駒に追加するようにする
-                take_piece(present_position,next_position,move_direction,piece)
+                take_piece(present_position,next_position,@turn,piece)
                 @board[present_position[0]][present_position[1]] = nil
                 @board[next_position[0]][next_position[1]] = piece
             end
+            @turn = !@turn 
         end
 
         def display 
