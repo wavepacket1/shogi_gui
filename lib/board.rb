@@ -74,8 +74,23 @@ module Shogi
                 raise "その場所に駒は打てません"
             end
             #二歩のチェック
-
+            if(!validation_two_pawn(next_position))
+                raise "二歩です"
+            end
             true
+        end
+
+        def validation_two_pawn(next_position)
+            pawn_position=next_position[0]
+            (0..8).each do |i|
+                if @turn 
+                    board[pawn_position][i] == "P"
+                    return false
+                else
+                    board[pawn_position][i] == "p"
+                    return false
+                end
+            end
         end
 
         def can_move_validation(board,next_position,move_direction,piece)
@@ -97,6 +112,7 @@ module Shogi
                 Shogi::Pieces::R.r_can_move_validation(board,next_position,move_direction)
             end
         end
+
 
 
         def move(move_protocol)
