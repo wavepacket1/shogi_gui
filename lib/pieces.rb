@@ -10,23 +10,45 @@ module Shogi
         ##次の位置まで駒が動けるかをvalidationする
         def self.validate_movement(board,present_position,next_position,move_direction,movement)
             movement.each do |move|
-                if ((move_direction)*move[1] + present_position[0] != next_position[0]) && ((move_direction)*move[0] + present_position[1] != next_position[1]) 
-                    next
-                end
-                ## 次の位置の間に駒がないかをvalidationする
-                pieces_between_flag= true
-                (0..move[1]).each do |move_x_between|
-                    (0..move[0]).each do |move_y_between|
-                        if(board[(move_direction)*move_x_between+present_position[0]][(move_direction)*move_y_between+present_position[1]])
-                            flag = false
+                if ((move_direction)*move[1] + present_position[0] == next_position[0]) && ((move_direction)*move[0] + present_position[1] == next_position[1]) 
+                    #桂馬の時
+                    return true if (move[0] == 1 && move[1] == 2) || (move[0] == -1 && move[1] == 2)
+                    max_constant =  if move[0]!= 0
+                                        move[0].abs 
+                                    elsif move[1]!= 0
+                                        move[1].abs
+                                    else
+                                        0
+                                    end
+                    return true if max_constant == 0
+                    unit_move = move.map{|i| i/max_constant}
+                    return true if (max_constant.abs == 1)
+                    (1..max_constant).each do |constant|
+                        if(board[(move_direction)*constant*unit_move[1]+present_position[0]][(move_direction)*constant*unit_move[0]+present_position[1]])
+                            puts "エラー！動かそうとしている位置の間に駒があります"
+                            return false
                         end
                     end
+                    return true
                 end
-                return pieces_between_flag if pieces_between_flag
             end
+            puts "エラー!駒が動ける範囲外です"
             false
         end
 
+        # def self.piece_between_validate_movement(board,present_position,next_position,move_direction,movement)
+        #     pieces_between_flag = false
+        #     movement.each do |move|
+        #         if ((move_direction)*move[1] + present_position[0] == next_position[0]) && ((move_direction)*move[0] + present_position[1] != next_position[1]) 
+        #             next
+        #         end
+        #         if(board[(move_direction)*move[1]+present_position[0]][(move_direction)*move[0]+present_position[1]])
+        #             puts "エラー！動かそうとしている位置の間に駒があります"
+        #             return false
+        #         end
+        #     end
+        #     return true
+        # end
 
         class P
             @movement = [[0,1]]
