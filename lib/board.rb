@@ -3,6 +3,16 @@ require "byebug"
 
 module Shogi 
     class Board 
+        #駒と成駒の対応関係
+        RELEASION_PIECE_AND_PROMOTION_PIECE = {
+            "t"=>"p","T" => "P",
+            "y"=>"l","Y" => "L",
+            "e"=>"n","E" => "N",
+            "i"=>"s","I" => "S",
+            "z"=>"r","Z" => "R",
+            "u"=>"b","U" => "B"
+    }
+
         attr_reader :board
         def initialize
             #初期配置を作成
@@ -22,7 +32,7 @@ module Shogi
             ["P", "P", "P", "P", "P", "P", "P", "P", "P"], # P7
             [nil, "B", nil, nil, nil, nil, nil, "R", nil], # P8
             ["L", "N", "S", "G", "K", "G", "S", "N", "L"], # P9
-            ["T"],#先手の持ち駒
+            [],#先手の持ち駒
             [],#後手の持ち駒
         ]
         end
@@ -34,9 +44,18 @@ module Shogi
             end
             #取った駒を持ち駒に追加
             if(turn)
-                @board[9].push(@board[next_position[0]][next_position[1]].upcase)
+                #取る駒が成駒の時
+                if(promotion_piece?(@board[next_position[0]][next_position[1]]))
+                    @board[9].push(RELEASION_PIECE_AND_PROMOTION_PIECE[@board[next_position[0]][next_position[1]]].upcase)
+                else
+                    @board[9].push(@board[next_position[0]][next_position[1]].upcase)
+                end
             else
-                @board[10].push(@board[next_position[0]][next_position[1]].downcase)
+                if(promotion_piece?(@board[next_position[0]][next_position[1]]))
+                    @board[10].push(RELEASION_PIECE_AND_PROMOTION_PIECE[@board[next_position[0]][next_position[1]]].downcase)
+                else
+                    @board[10].push(@board[next_position[0]][next_position[1]].downcase)
+                end
             end
         end
 
@@ -54,6 +73,7 @@ module Shogi
                 @board[10].delete_at(@board[10].index(piece))
             end
         end
+
         def strike_piece_validation(piece,next_position,move_direction)
             #持ち駒がそもそも存在するかどうかを確認
             if @turn
@@ -148,16 +168,32 @@ module Shogi
 
             present_position = [move_protocol[1].to_i-1,9-move_protocol[0].to_i]
             next_position = [move_protocol[3].to_i-1,9-move_protocol[2].to_i]
-            piece = (move_protocol[-1]).to_s
-                    
-
-            if(@board[present_position[0]][present_position[1]] == piece && piece_validation(@board,piece,present_position,next_position,move_direction))
-                #動いた先に駒があった時に持ち駒に追加するようにする
-                take_piece(present_position,next_position,@turn,piece)
-                @board[present_position[0]][present_position[1]] = nil
-                @board[next_position[0]][next_position[1]] = piece
+            if  move_protocol.length == 6
+                before_piece = move_protocol[-2]
+                promote_piece = move_protocol[-1]
+                if promotion_piece?(promote_piece)
+                    raise "成れません" unless promotion_validation(next_position)
+                end
+                if(@board[present_position[0]][present_position[1]] == before_piece && piece_validation(@board,before_piece,present_position,next_position,move_direction))
+                    #動いた先に駒があった時に持ち駒に追加するようにする
+                    take_piece(present_position,next_position,@turn,before_piece)
+                    @board[present_position[0]][present_position[1]] = nil
+                    @board[next_position[0]][next_position[1]] = promote_piece
+                end
+            else
+                piece = (move_protocol[-1]).to_s
+                if(@board[present_position[0]][present_position[1]] == piece && piece_validation(@board,piece,present_position,next_position,move_direction))
+                    #動いた先に駒があった時に持ち駒に追加するようにする
+                    take_piece(present_position,next_position,@turn,piece)
+                    @board[present_position[0]][present_position[1]] = nil
+                    @board[next_position[0]][next_position[1]] = piece
+                end
             end
             @turn = !@turn 
+        end
+
+        def promotion_piece?(piece)
+            (piece == "T" || piece == "t") || (piece == "Y" || piece == "y") || (piece == "E" || piece == "e") || (piece == "I" || piece == "i") || (piece == "Z" || piece == "z") || (piece == "U" || piece == "u")
         end
 
         def display 
@@ -168,6 +204,23 @@ module Shogi
 
         def reset
             @board = initial_board
+        end
+
+        #成れるかどうかをチェックする
+        def promotion_validation(next_position)
+            if(@turn)
+                if next_position[0]<=2
+                    true
+                else
+                    false
+                end
+            else
+                if next_position[0]>=6
+                    true
+                else
+                    false
+                end
+            end
         end
 
         ##次の位置まで駒が動けるかをvalidationする
@@ -202,6 +255,5 @@ module Shogi
                 Shogi::Pieces::U.u_validation(board,present_position,next_position,move_direction)
             end
         end
-
     end
 end
