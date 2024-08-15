@@ -22,8 +22,8 @@ module Shogi
             ["P", "P", "P", "P", "P", "P", "P", "P", "P"], # P7
             [nil, "B", nil, nil, nil, nil, nil, "R", nil], # P8
             ["L", "N", "S", "G", "K", "G", "S", "N", "L"], # P9
-            ["P"],#先手の持ち駒
-            ["p"],#後手の持ち駒
+            ["T"],#先手の持ち駒
+            [],#後手の持ち駒
         ]
         end
         
@@ -74,7 +74,7 @@ module Shogi
                 raise "その場所に駒は打てません"
             end
             #二歩のチェック
-            if(!validation_two_pawn(next_position))
+            if((piece == "P" || piece == "p") && !validation_two_pawn(next_position))
                 raise "二歩です"
             end
             true
@@ -91,6 +91,7 @@ module Shogi
                     return false
                 end
             end
+            true
         end
 
         def can_move_validation(board,next_position,move_direction,piece)
@@ -110,6 +111,18 @@ module Shogi
                 Shogi::Pieces::G.g_can_move_validation(board,next_position,move_direction)
             elsif piece == "r" || piece == "R"
                 Shogi::Pieces::R.r_can_move_validation(board,next_position,move_direction)
+            elsif piece == "T" || piece == "t"
+                Shogi::Pieces::T.t_can_move_validation(board,next_position,move_direction)
+            elsif piece == "Y" || piece == "y"
+                Shogi::Pieces::Y.y_can_move_validation(board,next_position,move_direction)
+            elsif piece == "E" || piece == "e"
+                Shogi::Pieces::E.e_can_move_validation(board,next_position,move_direction)
+            elsif piece == "I" || piece == "i"
+                Shogi::Pieces::I.i_can_move_validation(board,next_psition,move_direction)
+            elsif piece == "Z" || piece == "z"
+                Shogi::Pieces::Z.z_can_move_validation(board,next_position,move_direction)
+            elsif piece == "U" || piece == "u"
+                Shogi::Pieces::U.u_can_move_validation(board,next_position,move_direction)
             end
         end
 
@@ -175,6 +188,18 @@ module Shogi
                 Shogi::Pieces::G.g_validation(board,present_position,next_position,move_direction)
             elsif piece == "r" || piece == "R"
                 Shogi::Pieces::R.r_validation(board,present_position,next_position,move_direction)
+            elsif piece == "T" || piece == "t"
+                Shogi::Pieces::T.t_validation(board,present_position,next_position,move_direction)
+            elsif piece == "Y" || piece == "y"
+                Shogi::Pieces::Y.y_validation(board,present_position,next_position,move_direction)
+            elsif piece == "E" || piece == "e"
+                Shogi::Pieces::E.e_validation(board,present_position,next_position,move_direction)
+            elsif piece == "I" || piece == "i"
+                Shogi::Pieces::I.i_validation(board,present_position,next_position,move_direction)
+            elsif piece == "Z" || piece == "z"
+                Shogi::Pieces::Z.z_validation(board,present_position,next_position,move_direction)
+            elsif piece == "U" || piece == "u"
+                Shogi::Pieces::U.u_validation(board,present_position,next_position,move_direction)
             end
         end
 
