@@ -1156,6 +1156,34 @@ RSpec.describe 'Board' do
             end
         end
 
+        context "持ち駒の時" do 
+            it "歩が打てること" do 
+                @shogi_board.move("7776P")
+                @shogi_board.move("7374p")
+                @shogi_board.move("7675P")
+                @shogi_board.move("3334p")
+                @shogi_board.move("7574P")
+                @shogi_board.move("3435p")
+                @shogi_board.move("7473PT")
+                @shogi_board.move("3536p")
+                @shogi_board.move("H072P")
+                expect(@shogi_board.instance_variable_get(:@board)).to eq([
+                    ["l", "n", "s", "g", "k", "g", "s", "n", "l"], # P1
+                    [nil, "r", "P", nil, nil, nil, nil, "b", nil], # P2
+                    ["p", "p", "T", "p", "p", "p", nil, "p", "p"], # P3
+                    [nil, nil, nil, nil, nil, nil, nil, nil, nil], # P4
+                    [nil, nil, nil, nil, nil, nil, nil, nil, nil], # P5
+                    [nil, nil, nil, nil, nil, nil, "p", nil, nil], # P6
+                    ["P", "P", nil, "P", "P", "P", "P", "P", "P"], # P7
+                    [nil, "B", nil, nil, nil, nil, nil, "R", nil], # P8
+                    ["L", "N", "S", "G", "K", "G", "S", "N", "L"], # P9
+                    [],#先手の持ち駒
+                    [],#後手の持ち駒
+            ]
+                )
+            end
+        end
+
         context "validation error" do 
 
         end

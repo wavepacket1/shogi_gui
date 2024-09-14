@@ -103,6 +103,7 @@ module Shogi
         def validation_two_pawn(next_position)
             pawn_position=next_position[0]
             (0..8).each do |i|
+                next if i == next_position[1]
                 if @turn 
                     board[pawn_position][i] == "P"
                     return false
