@@ -101,15 +101,13 @@ module Shogi
         end
 
         def validation_two_pawn(next_position)
-            pawn_position=next_position[0]
+            pawn_position=next_position[1]
             (0..8).each do |i|
-                next if i == next_position[1]
+                next if i == next_position[0]
                 if @turn 
-                    board[pawn_position][i] == "P"
-                    return false
+                    return false if board[i][pawn_position] == "P"
                 else
-                    board[pawn_position][i] == "p"
-                    return false
+                    return false if board[i][pawn_position] == "P"
                 end
             end
             true
