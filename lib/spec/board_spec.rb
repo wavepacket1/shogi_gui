@@ -1184,9 +1184,9 @@ RSpec.describe 'Board' do
             end
         end
 
-        context "validation error" do 
-
-        end
+        # context "validation error" do 
+            
+        # end
     end
 end
 
