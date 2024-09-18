@@ -202,7 +202,7 @@ module Shogi
         def can_move_validation(next_position, move_direction, piece)
             piece_object = create_piece_object(piece)
             unless piece_object.can_move_validation(@board,next_position,move_direction)
-                raise "不明な駒: #{piece.symbol}"
+                raise "不明な駒: #{piece}"
             end
             true
         end
@@ -211,7 +211,7 @@ module Shogi
         def piece_validation(piece, present_position, next_position, move_direction)
             piece_object = create_piece_object(piece)
             unless piece_object.validate_movement(@board,present_position,next_position,move_direction)
-                raise "不明な駒: #{piece.symbol}"
+                raise "不明な駒: #{piece}"
             end
             true
         end
