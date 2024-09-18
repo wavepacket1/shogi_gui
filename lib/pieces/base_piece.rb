@@ -31,22 +31,22 @@ module Shogi
             end
 
             private 
+            def calculate_unit_move(move,max_steps)
+                move.map { |i| i/ max_steps }
+            end
+
+            def calculate_max_steps(move)
+                [move[0].abs,move[1].abs].max
+            end
+
             def next_position_board_include?(next_position,move,move_direction)
                 target_row = next_position[0] + move_direction * move[1]
                 target_col = next_position[1] - move_direction * move[0]
                 (0..8).include?(target_row) && (0..8).include?(target_col)
             end
-            
-            def calculate_unit_move(move,max_steps)
-                move.map { |i| i/ max_steps }
-            end
 
             def knight_move?(move)
                 move == [1,2] || move == [-1,2]
-            end
-
-            def calculate_max_steps(move)
-                [move[0].abs,move[1].abs].max
             end
 
             def position_overlap?(present_position,next_position,move,max_steps,move_direction)
