@@ -13,13 +13,13 @@ module Shogi
                     return true if knight_move?(move)
 
                     max_steps = calculate_max_steps(move)
-                    next unless position_overlap?(present_position,next_position,move,max_steps,move_direction)
+                    next unless next_position?(present_position,next_position,move,max_steps,move_direction)
 
                     unit_move = calculate_unit_move(move,max_steps)
                     check_for_intermediate_pieces(board, present_position, unit_move, max_steps, move_direction)
                     
                     return true
-                end
+                end 
                 raise "エラー!駒が動ける範囲外です"
             end
 
@@ -49,7 +49,7 @@ module Shogi
                 move == [1,2] || move == [-1,2]
             end
 
-            def position_overlap?(present_position,next_position,move,max_steps,move_direction)
+            def next_position?(present_position,next_position,move,max_steps,move_direction)
                 target_row = present_position[0] + move_direction * move[1]
                 target_col = present_position[1] - move_direction * move[0]
                 target_row == next_position[0] && target_col == next_position[1]
