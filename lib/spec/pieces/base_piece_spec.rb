@@ -39,4 +39,30 @@ RSpec.describe Shogi::Pieces::BasePiece do
             end
         end
     end
+
+    describe 'can_move_validation' do 
+        let(:board) { Array.new(9) { Array.new(9,nil)}}
+        let(:next_position) { [5,4] }
+        let(:move_direction) { -1 }
+        let(:movement) { [[1,2],[-1,2]]}
+        let(:piece) { described_class.new(movement)}
+
+        context '次の動きが盤面に収まるものが一つある時' do 
+            before do 
+                allow(piece).to receive(:next_position_board_include?).and_return(true) 
+            end
+            it ' trueを返すこと' do 
+                expect(piece.can_move_validation(board,next_position,move_direction)).to be true
+            end
+        end
+
+        context '次の動きが盤面に収まるものがない時' do 
+            before do 
+                allow(piece).to receive(:next_position_board_include?).and_return(false)
+            end
+            it 'falseを返すこと' do
+                expect(piece.can_move_validation(board,next_position,move_direction)).to be false
+            end
+        end
+    end
 end
