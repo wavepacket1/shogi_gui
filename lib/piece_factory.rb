@@ -1,4 +1,3 @@
-require_relative 'pieces/base_piece'
 require_relative 'pieces/p'
 require_relative 'pieces/n'
 require_relative 'pieces/k'
