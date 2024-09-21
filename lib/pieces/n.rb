@@ -10,7 +10,7 @@ module Shogi
             end
 
             def can_move?(board,next_position)
-                can_move_validation(board,next_position)
+                can_move_validate(board,next_position)
             end
         end
     end

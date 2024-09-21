@@ -24,7 +24,7 @@ module Shogi
             end
 
             # 駒が動けるかを検証する
-            def can_move_validation(board,next_position,move_direction)
+            def can_move_validate(board,next_position,move_direction)
                 @movement.any? do |move|
                     next_position_board_include?(next_position,move,move_direction)
                 end

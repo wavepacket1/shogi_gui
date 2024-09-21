@@ -109,7 +109,7 @@ class Validation
     # 駒が指定位置に動けるか検証するメソッド
     def self.piece_can_move_validate(next_position, move_direction, piece,board)
         piece_object = PieceFactory::create_piece(piece)
-        unless piece_object.can_move_validation(board,next_position,move_direction)
+        unless piece_object.can_move_validate(board,next_position,move_direction)
             raise "不明な駒: #{piece}"
         end
         true
