@@ -1,4 +1,3 @@
-require_relative 'pieces'
 require_relative 'validation'
 require 'byebug'
 require 'yaml' 
@@ -86,7 +85,7 @@ module Shogi
             promote_piece = move_protocol[-1]
 
             if Validation::promotion_piece?(promote_piece)
-                raise "成れません" unless Validation::promotion_validation(next_position,@turn)
+                raise "成れません" unless Validation::promotion_validate(next_position,@turn)
             end
 
             if Validation::valid_move?(@board,before_piece, present_position, next_position, move_direction)
@@ -118,7 +117,7 @@ module Shogi
             next_position = parse_next_position(move_protocol)
             piece = extract_piece(move_protocol)
 
-            unless Validation::strike_piece_validation(piece, next_position, move_direction,@board,@turn)
+            unless Validation::strike_piece_validate(piece, next_position, move_direction,@board,@turn)
                 return
             end
 

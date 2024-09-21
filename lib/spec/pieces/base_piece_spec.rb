@@ -40,7 +40,7 @@ RSpec.describe Shogi::Pieces::BasePiece do
         end
     end
 
-    describe 'can_move_validation' do 
+    describe 'can_move_validate' do 
         let(:board) { Array.new(9) { Array.new(9,nil)}}
         let(:next_position) { [5,4] }
         let(:move_direction) { -1 }
@@ -52,7 +52,7 @@ RSpec.describe Shogi::Pieces::BasePiece do
                 allow(piece).to receive(:next_position_board_include?).and_return(true) 
             end
             it ' trueを返すこと' do 
-                expect(piece.can_move_validation(board,next_position,move_direction)).to be true
+                expect(piece.can_move_validate(board,next_position,move_direction)).to be true
             end
         end
 
@@ -61,7 +61,7 @@ RSpec.describe Shogi::Pieces::BasePiece do
                 allow(piece).to receive(:next_position_board_include?).and_return(false)
             end
             it 'falseを返すこと' do
-                expect(piece.can_move_validation(board,next_position,move_direction)).to be false
+                expect(piece.can_move_validate(board,next_position,move_direction)).to be false
             end
         end
     end
