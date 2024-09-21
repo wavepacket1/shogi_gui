@@ -1184,4 +1184,44 @@ RSpec.describe 'Board' do
             end
         end
     end
+
+    # # 現在、王手をかけられているかどうかを判定する
+    # describe "present_position_check?" do
+    #     let(:turn) { true }
+    #     let(:piece) { Shogi::Pieces::K.new }
+    #     let(:board) { Shogi::Board.new }
+    #     allow(board).to receive(:turn)
+    # end
+
+    # describe "board_row_check?" do 
+    #     # 盤の横方向
+    #     let(:board_row) {
+
+    #     }
+    #     # 間に駒があるかどうか
+    #     let(:piece_between_check_row) { false }
+    # end
+
+    # describe "board_col_check?" do 
+    #     # 盤の縦方向
+    #     let(:board_col) { }
+    #     # 間に駒があるかどうか 
+    #     let(:piece_between_check_col) { false }
+    # end
+
+    # describe "board_diagonal_check?" do 
+    #     #　盤の斜め方向
+    #     let(:board_diagonal) {} 
+    #     let(:piece_between_check_diagonal) { false }
+    # end
+
+    # describe "knight_check?" do 
+    #     # 桂馬の方向 
+    #     let(:knight_direction) { }
+    # end
+
+    # # 王手から逃れる手かどうかを判定する
+    # describe "next_position_check_escape?" do 
+
+    # end
 end
