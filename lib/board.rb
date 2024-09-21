@@ -1,30 +1,22 @@
-require_relative "pieces"
-require "byebug"
+require_relative 'pieces'
+require_relative 'validation'
+require 'byebug'
+require 'yaml' 
+
+# YAMLファイルの読み込み
+CONFIG = YAML.load_file(File.join(__dir__,'config/constants.yml'))
+
+#定数の定義
+HAND_INDEX_FIRST = CONFIG['HAND_INDEX_FIRST']
+HAND_INDEX_SECOND = CONFIG['HAND_INDEX_SECOND']
+
+# 持ち駒キーと対応する手駒インデックスのマッピング
+PLAYER_HAND_INDEX = CONFIG['PLAYER_HAND_INDEX']
+RELEASION_PIECE_AND_PROMOTION_PIECE = CONFIG['RELEASION_PIECE_AND_PROMOTION_PIECE'].freeze
 
 module Shogi
     class Board
-        # 定数の定義
-        HAND_INDEX_FIRST = 9
-        HAND_INDEX_SECOND = 10
-
-        # 持ち駒キーと対応する手駒インデックスのマッピング
-        PLAYER_HAND_INDEX = {
-            "H0" => HAND_INDEX_FIRST,
-            "H1" => HAND_INDEX_SECOND
-        }.freeze
-
-        # 駒と成駒の対応関係
-        RELEASION_PIECE_AND_PROMOTION_PIECE = {
-            "t" => "p", "T" => "P",
-            "y" => "l", "Y" => "L",
-            "e" => "n", "E" => "N",
-            "i" => "s", "I" => "S",
-            "z" => "r", "Z" => "R",
-            "u" => "b", "U" => "B"
-        }.freeze
-
         attr_reader :board
-
         def initialize
             @board = initial_board
             @turn = true # 先手番ならtrue, 後手番ならfalse
@@ -49,7 +41,7 @@ module Shogi
 
         # 手を実行するメソッド
         def move(move_protocol)
-            validate_turn(move_protocol)
+            Validation::validate_turn(move_protocol,@turn)
             move_direction = turn_value(@turn)
 
             if move_protocol.start_with?("H")
@@ -83,7 +75,7 @@ module Shogi
         def handle_normal_move(move_protocol, present_position, next_position, move_direction)
             piece = extract_piece(move_protocol)
 
-            if valid_move?(piece, present_position, next_position, move_direction)
+            if Validation::valid_move?(@board,piece, present_position, next_position, move_direction)
                 move_piece(present_position, next_position, piece, piece)
             end
         end
@@ -93,21 +85,13 @@ module Shogi
             before_piece = move_protocol[-2]
             promote_piece = move_protocol[-1]
 
-            if promotion_piece?(promote_piece)
-                raise "成れません" unless promotion_validation(next_position)
+            if Validation::promotion_piece?(promote_piece)
+                raise "成れません" unless Validation::promotion_validation(next_position,@turn)
             end
 
-            if valid_move?(before_piece, present_position, next_position, move_direction)
+            if Validation::valid_move?(@board,before_piece, present_position, next_position, move_direction)
                 move_piece(present_position, next_position, before_piece, promote_piece)
             end
-        end
-
-        # 移動が有効か検証するメソッド
-        def valid_move?(piece, present_position, next_position, move_direction)
-            current_piece = @board[present_position[0]][present_position[1]]
-            return false unless current_piece == piece
-
-            piece_validation(piece, present_position, next_position, move_direction)
         end
 
         # 駒を移動させるメソッド
@@ -134,97 +118,12 @@ module Shogi
             next_position = parse_next_position(move_protocol)
             piece = extract_piece(move_protocol)
 
-            unless strike_piece_validation(piece, next_position, move_direction)
+            unless Validation::strike_piece_validation(piece, next_position, move_direction,@board,@turn)
                 return
             end
 
             place_piece_on_board(piece, next_position)
             remove_piece_from_hand(move_protocol, piece)
-        end
-
-        # 駒を打つ際の検証を行うメソッド
-        def strike_piece_validation(piece, next_position, move_direction)
-            validate_hand_exists(piece)
-            validate_place_empty(next_position)
-            validate_can_move(next_position, move_direction, piece)
-            validate_two_pawn(piece, next_position)
-            true
-        end
-
-        # 持ち駒に指定された駒が存在するか検証するメソッド
-        def validate_hand_exists(piece)
-            hand = @turn ? @board[HAND_INDEX_FIRST] : @board[HAND_INDEX_SECOND]
-            unless hand.include?(piece)
-                raise "持ち駒が存在しません"
-            end
-        end
-
-        # 駒を打つ場所が空いているか検証するメソッド
-        def validate_place_empty(next_position)
-            if @board[next_position[0]][next_position[1]]
-                raise "打つ場所に駒があります"
-            end
-        end
-
-        # 駒を指定位置に打つことができるか検証するメソッド
-        def validate_can_move(next_position, move_direction, piece)
-            unless can_move_validation(next_position, move_direction, piece)
-                raise "その場所に駒は打てません"
-            end
-        end
-
-        # 二歩のルールを検証するメソッド
-        def validate_two_pawn(piece, next_position)
-            if pawn?(piece)
-                unless validation_two_pawn(next_position)
-                    raise "二歩です"
-                end
-            end
-        end
-
-        # 駒が歩かどうかを判定するメソッド
-        def pawn?(piece)
-            piece.downcase == "p"
-        end
-
-        # 指定列に二歩が存在するか検証するメソッド
-        def validation_two_pawn(next_position)
-            col = next_position[1]
-            target_pawn = @turn ? "P" : "p"
-            @board.each_with_index do |row, i|
-                next if i == next_position[0]
-                return false if row[col] == target_pawn
-            end
-            true
-        end
-
-        # 駒が指定位置に動けるか検証するメソッド
-        def can_move_validation(next_position, move_direction, piece)
-            piece_object = create_piece_object(piece)
-            unless piece_object.can_move_validation(@board,next_position,move_direction)
-                raise "不明な駒: #{piece}"
-            end
-            true
-        end
-
-        # 駒の移動検証を行うメソッド
-        def piece_validation(piece, present_position, next_position, move_direction)
-            piece_object = create_piece_object(piece)
-            unless piece_object.validate_movement(@board,present_position,next_position,move_direction)
-                raise "不明な駒: #{piece}"
-            end
-            true
-        end
-
-        def create_piece_object(piece)
-            Shogi::Pieces.const_get(piece.upcase).new
-        rescue NameError
-            raise "不明な駒: #{piece}"
-        end
-
-        # 駒が成れるかどうかを判定するメソッド
-        def promotion_piece?(piece)
-            RELEASION_PIECE_AND_PROMOTION_PIECE.key?(piece)
         end
 
         # 捕獲した駒を持ち駒に追加するメソッド
@@ -236,7 +135,7 @@ module Shogi
 
         # 駒を成りおよび持ち駒の所有者に応じて変換するメソッド
         def transform_piece(piece, turn)
-            base_piece = promotion_piece?(piece) ? RELEASION_PIECE_AND_PROMOTION_PIECE[piece] : piece
+            base_piece = Validation::promotion_piece?(piece) ? RELEASION_PIECE_AND_PROMOTION_PIECE[piece] : piece
             turn ? base_piece.upcase : base_piece.downcase
         end
 
@@ -282,16 +181,6 @@ module Shogi
             [present_position, next_position]
         end
 
-        # 現在のターンとmove_protocolの駒が一致するか検証するメソッド
-        def validate_turn(move_protocol)
-            last_char = move_protocol[-1]
-            if last_char =~ /[A-Z]/ && !@turn
-                raise "先手番を２回続けて動かすことはできません"
-            elsif last_char =~ /[a-z]/ && @turn
-                raise "後手番を２回続けて動かすことはできません"
-            end
-        end
-
         # ターンに応じた移動方向を決定するメソッド
         def turn_value(turn)
             turn ? -1 : 1
@@ -310,15 +199,6 @@ module Shogi
         # ボード上に駒を配置するメソッド
         def place_piece_on_board(piece, position)
             @board[position[0]][position[1]] = piece
-        end
-
-        # 成れるかどうかをチェックするメソッド
-        def promotion_validation(next_position)
-            if @turn
-                next_position[0] <= 2
-            else
-                next_position[0] >= 6
-            end
         end
     end
 end
