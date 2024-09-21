@@ -20,12 +20,12 @@ RSpec.describe Shogi::Pieces do
 
                 it 'disallows moving sideways' do
                     next_position = [6, 5]
-                    expect(Shogi::Pieces::P.new.validate_movement(board, present_position, next_position, move_direction)).to be false
+                    expect{Shogi::Pieces::P.new.validate_movement(board, present_position, next_position, move_direction)}.to raise_error("エラー!駒が動ける範囲外です")
                 end
         
                 it 'disallows moving backward' do
                     next_position = [7, 4]
-                    expect(Shogi::Pieces::P.new.validate_movement(board, present_position, next_position, move_direction)).to be false
+                    expect{Shogi::Pieces::P.new.validate_movement(board, present_position, next_position, move_direction)}.to raise_error("エラー!駒が動ける範囲外です")
                 end
         
                 it 'disallows moving if the target square is occupied by own piece' do
