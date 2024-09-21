@@ -1,4 +1,3 @@
-require_relative 'pieces'
 require_relative 'validation'
 require 'byebug'
 require 'yaml' 

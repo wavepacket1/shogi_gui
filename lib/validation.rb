@@ -1,6 +1,6 @@
 require 'yaml' 
-require_relative 'pieces'
 require_relative 'board'
+require_relative 'piece_factory'
 
 # YAMLファイルの読み込み
 CONFIG = YAML.load_file(File.join(__dir__,'config/constants.yml'))
@@ -44,7 +44,7 @@ class Validation
 
     # 駒の移動検証を行うメソッド
     def self.piece_validate(piece,present_position,next_position,move_direction,board)
-        piece_object = self.create_piece_object(piece)
+        piece_object = PieceFactory::create_piece(piece)
         unless piece_object.validate_movement(board,present_position,next_position,move_direction)
             raise "不明な駒: #{piece}"
         end
@@ -88,12 +88,6 @@ class Validation
         end
     end
 
-    def self.create_piece_object(piece)
-        Shogi::Pieces.const_get(piece.upcase).new
-    rescue NameError
-        raise "不明な駒: #{piece}"
-    end
-
     # 駒が歩かどうかを判定するメソッド
     def self.pawn?(piece)
         piece.downcase == "p"
@@ -114,7 +108,7 @@ class Validation
 
     # 駒が指定位置に動けるか検証するメソッド
     def self.piece_can_move_validate(next_position, move_direction, piece,board)
-        piece_object = self.create_piece_object(piece)
+        piece_object = PieceFactory::create_piece(piece)
         unless piece_object.can_move_validation(board,next_position,move_direction)
             raise "不明な駒: #{piece}"
         end
