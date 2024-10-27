@@ -16,7 +16,8 @@ class Game
             current_player = @players[@current_player_index]
             move_protocol = current_player.get_move
             begin 
-                @board.move(move_protocol)
+                turn = @current_player_index == 0 ? true : false
+                @board.move(move_protocol, turn)
             rescue => e 
                 puts "エラー: #{e.message}"
                 next

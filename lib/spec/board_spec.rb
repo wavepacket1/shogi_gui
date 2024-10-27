@@ -1185,6 +1185,37 @@ RSpec.describe 'Board' do
         end
     end
 
+
+    # move_protocolの処理
+    describe "move_for_usi_protocol" do
+        context '通常の駒移動の場合' do 
+            
+            let(:shogi_board) { Shogi::Board.new }
+            let(:usi_protocol) { "7g7f"}
+            it '正しい位置に動くこと' do 
+                shogi_board.move_for_usi_protocol(usi_protocol)
+                expect(shogi_board.board[5][2]).to eq('P')
+                expect(shogi_board.board[6][2]).to eq(nil)
+            end
+        end
+
+        # 持ち駒が駒台にあるかどうかは合法手の判定で行う。(USIプロトコルはステートレスなのでその責務は持たない        
+        context '持ち駒を打つ場合' do
+            let(:shogi_board) { Shogi::Board.new }
+            let(:usi_protocol) { "G*5b" }
+            it '正しい位置に打てること' do 
+                shogi_board.move_for_usi_protocol(usi_protocol)
+                expect(shogi_board.board[1][4]).to eq('G')
+            end
+        end
+
+        # context '成る場合' do 
+        #     let(:shogi_board) { Shogi::Board.new }
+        #     let(:usi_protocol) { ""}
+        # end
+    end
+
+
     # # 現在、王手をかけられているかどうかを判定する
     # describe "present_position_check?" do
     #     let(:turn) { true }

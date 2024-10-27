@@ -9,7 +9,7 @@ class Player
 
     def get_move 
         # ユーザーからの入力を取得するロジック
-        puts "#{@name}のターンです。移動元と移動先を入力してください(例: 7776P)"
+        puts "#{@name}のターンです。移動元と移動先を入力してください(例: 7g7f)"
         input = gets.chomp
     end
 end
