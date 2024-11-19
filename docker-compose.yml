@@ -1,22 +1,28 @@
-version: "3"
 services:
   db:
-    image: postgres:15.5
-    environment:
-      POSTGRES_DB: app_development
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: password
+    image: postgres:14
+    container_name: postgres_pta
     ports:
-      - "5433:5433"
+      - 5432:5432
     volumes:
-      - postgres_data:/var/lib/postgresql/data
-  back:
-    build:
-      context: ./back
-      dockerfile: Dockerfile
-    command: bash -c "rm -f tmp/pids/server.pid && bundle exec rails s -b '0.0.0.0'"
+      - db-store:/var/lib/postgresql/data
+    environment:
+      POSTGRES_PASSWORD: password
+  webapp:
+    #buildの"."はカレント(.)にあるDockerfileを参照してbuildしろということ
+    build: .
+    #rails7ではrails sではなく.bin/devでwebサーバーを起動させる(development)
+    command: bash -c "rm -f tmp/pids/server.pid && bundle exec rails s -p 3000 -b '0.0.0.0' "
     volumes:
-      - ./back:/app
+      - type: bind
+        source: ./railsapp
+        target: /railsapp
+      - type: volume
+        source: gemdata
+        target: /usr/local/bundle
+      - type: volume
+        source: node_modules
+        target: /railsapp/node_modules
     ports:
       - "3000:3000"
     depends_on:
@@ -24,15 +30,9 @@ services:
     tty: true
     stdin_open: true
     environment:
-      - RAILS_ENV=development
-  front:
-    build:
-      context: ./front/
-      dockerfile: Dockerfile
-    volumes:
-      - ./front:/app
-    command: yarn dev -p 4000
-    ports:
-      - "8000:4000"
+      MYSQL_PASSWORD: 
+      TZ: "Asia/Tokyo"
 volumes:
-  postgres_data:
+  gemdata:
+  node_modules:
+  db-store:
