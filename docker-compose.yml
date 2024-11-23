@@ -1,38 +1,36 @@
-version: "3"
-services:
-  db:
-    image: postgres:15.5
+version: '3.8'
+
+services: 
+  db: 
+    image: postgres:14
+    volumes: 
+      - db-data:/var/lib/postgresql/data
     environment:
-      POSTGRES_DB: app_development
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: password
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: shogi_app_development
     ports:
-      - "5433:5433"
+      - "5432:5432"
+  backend: 
+    build: ./backend
+    command: sh -c "rm -f tmp/pids/server.pid && bundle exec rails server -b 0.0.0.0"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
-  back:
-    build:
-      context: ./back
-      dockerfile: Dockerfile
-    command: bash -c "rm -f tmp/pids/server.pid && bundle exec rails s -b '0.0.0.0'"
-    volumes:
-      - ./back:/app
+      - ./backend:/app
     ports:
       - "3000:3000"
     depends_on:
       - db
-    tty: true
-    stdin_open: true
     environment:
-      - RAILS_ENV=development
-  front:
-    build:
-      context: ./front/
-      dockerfile: Dockerfile
+      DATABASE_URL: postgres://postgres:postgres@db:5432/shogi_app_development
+  frontend:
+    build: ./frontend
+    command: npm run dev -- --host 0.0.0.0
     volumes:
-      - ./front:/app
-    command: yarn dev -p 4000
+      - ./frontend:/app
+      - /app/node_modules
     ports:
-      - "8000:4000"
+      - "5173:5173"
+    depends_on:
+      - backend
 volumes:
-  postgres_data:
+  db-data:
