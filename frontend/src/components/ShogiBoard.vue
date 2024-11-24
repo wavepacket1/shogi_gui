@@ -1,0 +1,192 @@
+<template>
+    <div class="shogi-board">
+        <div
+        v-for="y in Array.from({ length: 9 }, (_, i) => i)"
+        :key="'row-' + y"
+        class="shogi-row"
+        >
+            <div
+            v-for="x in Array.from({ length: 9 }, (_, i) => i)"
+            :key="'cell-' + x + '-' + y"
+            class="shogi-cell"
+            :data-x="x"
+            :data-y="y"
+            >
+                <span
+                    v-if="getPiece(x, y)"
+                    :class="['shogi-piece', getPiece(x, y).owner]"
+                    :data-id="getPiece(x, y).id"
+                >
+                    {{ getJapanesePiece(getPiece(x, y)) }}
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- <div class="pieces-in-hand">
+        <div class="player">
+            <h3>先手 持ち駒</h3>
+            <div v-if="piecesInHandB">
+                <span v-for="(count, piece) in piecesInHandB" :key="piece">
+                    {{  pieceMapper[piece] }} x{{ count }}
+                </span>
+            </div>
+        </div>
+        <div class="player">
+            <h3>後手 持ち駒</h3>
+            <div v-if="piecesInHandW">
+                <span v-for="(count, piece) in piecesInHandW" :key="piece">
+                    {{  pieceMapper[piece] }} x{{ count }}
+                </span>
+            </div>
+        </div>
+    </div> -->
+</template>
+
+<script lang="ts">
+import { defineComponent, ref, onMounted, computed } from 'vue';
+import { useBoardStore } from '@/store';
+import { pieceMapper } from '@/utils/pieceMapper';
+
+interface ShogiPiece {
+    piece_type: string;
+    promoted: boolean;
+    owner: 'b' | 'w';
+    id: number;
+    position_x: number;
+    position_y: number;
+}
+
+export default defineComponent({
+    name: 'ShogiBoard',
+    setup() {
+        const boardStore = useBoardStore();
+        const isLoading = ref(true);
+        const isError = ref(false);
+        const errorMessage = ref('');
+
+        const fetchBoard = async () => {
+            try {
+                isLoading.value = true;
+                isError.value = false;
+                await boardStore.fetchBoard(1); // 盤面IDを指定
+            } catch (error) {
+                console.error('盤面の取得に失敗しました:', error);
+                isError.value = true;
+                errorMessage.value = '盤面の取得に失敗しました。';
+            } finally {
+                isLoading.value = false;
+            }
+        };
+
+        const getJapanesePiece = (piece: ShogiPiece): string => {
+            if (!piece) {
+                return '';
+            }
+            const key = piece.promoted ? `+${piece.piece_type}` : piece.piece_type;
+            return pieceMapper[key] || '';
+        };
+
+        // const piecesInHandB = computed(() => {
+        //     const pieces = boardStore.shogiData?.piecesInHand || {};
+        //     const result: { [key: string]: number } = {};
+        //     for (const [piece, count] of Object.entries(pieces)) {
+        //         if (/[A-Z]/.test(piece)) { // Senteの持ち駒
+        //             result[piece] = count;
+        //         }
+        //     }
+        //     return result;
+        // });
+
+        // const piecesInHandW = computed(() => {
+        //     const pieces = boardStore.shogiData?.piecesInHand || {};
+        //     const result: { [key: string]: number } = {};
+        //     for (const [piece, count] of Object.entries(pieces)) {
+        //         if (/[a-z]/.test(piece)) { // Goteの持ち駒
+        //             const upperPiece = piece.toUpperCase();
+        //             result[upperPiece] = count;
+        //         }
+        //     }
+        //     return result;
+        // });
+
+        const getPiece = (x: number, y: number): ShogiPiece | null => {
+            const piece = boardStore.shogiData.board[y][x]
+            return piece;
+        }
+
+        onMounted(() => {
+            fetchBoard();
+        });
+
+        return {
+            getJapanesePiece,
+            // piecesInHandB,
+            // piecesInHandW,
+            pieceMapper,
+            isLoading,
+            isError,
+            errorMessage,
+            getPiece
+        };
+    },
+});
+</script>
+
+<style scoped>
+/* 既存のスタイルを維持 */
+.shogi-board {
+    display: grid;
+    grid-template-rows: repeat(9, 50px);
+    grid-template-columns: repeat(9, 50px);
+    border: 2px solid #333;
+    width: 450px;
+    height: 450px;
+    margin: 20px auto;
+    background-color: #f0d9b5;
+}
+
+.shogi-row {
+    display: contents;
+}
+
+.shogi-cell {
+    border: 1px solid #999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    background-color: #f0d9b5;
+}
+
+.shogi-piece {
+    font-size: 24px;
+    font-weight: bold;
+    cursor: grab;
+}
+
+.shogi-piece.b {
+    color: black;
+}
+
+.shogi-piece.w {
+    color: black;
+    transform: rotate(180deg);
+}
+
+/* .pieces-in-hand {
+    display: flex;
+    justify-content: space-around;
+  margin: 20px 0;
+} */
+
+/* .player {
+    text-align: center;
+}
+
+.player span {
+    display: inline-block;
+    margin: 0 5px;
+    font-size: 20px;
+} */
+</style>
