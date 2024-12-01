@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import { getBoardSFEN, createGameAPI, updatePiecePositionAPI } from '@/services/api';
+import { getBoardSFEN, createGameAPI, updatePiecePositionAPI, getDefaultBoardAPI } from '@/services/api';
 import { parseSFEN, ShogiSFEN } from '@/utils/sfenParser';
 
 interface Game {
@@ -63,19 +63,6 @@ export const useBoardStore = defineStore('board', {
                 piece.position_y = y;
             }
         },
-
-        async fetchBoard(id: number) {
-            await this.handleAsyncAction(async () => {
-                const response = await getBoardSFENAPI(id);
-                const parsed = parseSFEN(response.data);
-                if (parsed) {
-                    this.shogiData.board = parsed.board;
-                    this.shogiData.piecesInHand = parsed.piecesInHand;
-                } else {
-                    throw new Error('SFENの解析に失敗しました');
-                }
-            }, 'ボードの取得に失敗しました');
-        },
     
         async movePiece(pieceId: number, toX: number, toY: number) {
             await this.handleAsyncAction(async () => {
@@ -90,6 +77,15 @@ export const useBoardStore = defineStore('board', {
                 this.game = response.data.game;
                 this.shogiData.board = response.data.board;
             }, 'ゲームの作成に失敗しました');
+        },
+
+        async getDefaultBoard() {
+            await this.handleAsyncAction(async () => {
+                const response = await getDefaultBoardAPI();
+                const parsed = parseSFEN(response.sfen);
+                this.shogiData.board = parsed.board;
+                this.shogiData.piecesInHand = parsed.piecesInHand;
+            }, 'デフォルトボードの取得に失敗しました');
         }
     }
 });

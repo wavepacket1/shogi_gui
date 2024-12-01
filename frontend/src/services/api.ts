@@ -49,7 +49,7 @@ export const updatePiecePositionAPI = (pieceId: number, x: number, y: number) =>
     });
 };
 
-export const getDefaultBoard = async () => {
+export const getDefaultBoardAPI = async () => {
     const response = await api.get('/boards/default');
     return response.data;
 };

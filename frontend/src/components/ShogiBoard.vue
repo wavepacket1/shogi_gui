@@ -66,23 +66,6 @@ export default defineComponent({
         const isLoading = ref(true);
         const isError = ref(false);
         const errorMessage = ref('');
-        const sfen = ref('');
-        const legalFlag = ref(false);
-
-        const fetchBoard = async () => {
-            try {
-                isLoading.value = true;
-                isError.value = false;
-                debugger;
-                await boardStore.fetchBoard(boardStore.board.id); // 変更
-            } catch (error) {
-                console.error('盤面の取得に失敗しました:', error);
-                isError.value = true;
-                errorMessage.value = '盤面の取得に失敗しました。';
-            } finally {
-                isLoading.value = false;
-            }
-        };
 
         const getJapanesePiece = (piece: ShogiPiece): string => {
             if (!piece) {
@@ -136,9 +119,7 @@ export default defineComponent({
         const fetchDefaultBoard = async () => {
             try {
                 isLoading.value = true;
-                const data = await getDefaultBoard();
-                sfen.value = data.sfen;
-                legalFlag.value = data.legal_flag;
+                await boardStore.getDefaultBoard();
             } catch (error) {
                 console.error('エラー:', error);
                 errorMessage.value = 'デフォルト盤面の取得に失敗しました。';
@@ -161,8 +142,6 @@ export default defineComponent({
             errorMessage,
             getPiece,
             handleCellClick,
-            sfen,
-            legalFlag
         };
     },
 });
