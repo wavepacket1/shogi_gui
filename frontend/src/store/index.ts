@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia';
-import { getBoardSFEN, createGameAPI, updatePiecePositionAPI, getDefaultBoardAPI } from '@/services/api';
-import { parseSFEN, ShogiSFEN } from '@/utils/sfenParser';
+import { createGameAPI, updatePiecePositionAPI, getDefaultBoardAPI } from '@/services/api';
+import { parseSFEN } from '@/utils/sfenParser';
 
 interface Game {
     id: number;

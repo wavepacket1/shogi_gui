@@ -1,7 +1,7 @@
 <template>
   <div id="app">
     <h1>将棋盤</h1>
-    <button @click="startGame">ゲーム開始</button> <!-- 追加 -->
+    <button @click="startGame">対局開始</button> <!-- 追加 -->
     <ShogiBoard />
   </div>
 </template>
