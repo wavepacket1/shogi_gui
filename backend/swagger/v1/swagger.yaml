@@ -1,0 +1,125 @@
+openapi: 3.0.1
+info:
+  title: Shogi API
+  version: 'v1'
+paths:
+  /api/v1/boards:
+    post:
+      summary: Create a new board
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Board'
+      responses:
+        '201':
+          description: Board created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BoardResponse'
+        '422':
+          description: Unprocessable Entity
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v1/boards/{id}:
+    get:
+      summary: Retrieve a specific board
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: A single board
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BoardResponse'
+        '404':
+          description: Board not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v1/pieces/{id}:
+    patch:
+      summary: Update a piece's position
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Piece'
+      responses:
+        '200':
+          description: Piece updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PieceResponse'
+        '422':
+          description: Unprocessable Entity
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+components:
+  schemas:
+    Board:
+      type: object
+      properties:
+        name:
+          type: string
+        active_player:
+          type: string
+          enum: [b, w]
+      required:
+        - name
+        - active_player
+    BoardResponse:
+      type: object
+      properties:
+        status:
+          type: string
+        board:
+          $ref: '#/components/schemas/Board'
+    Piece:
+      type: object
+      properties:
+        position_x:
+          type: integer
+          minimum: 0
+          maximum: 8
+        position_y:
+          type: integer
+          minimum: 0
+          maximum: 8
+      required:
+        - position_x
+        - position_y
+    PieceResponse:
+      type: object
+      properties:
+        status:
+          type: string
+        piece:
+          $ref: '#/components/schemas/Piece'
+    Error:
+      type: object
+      properties:
+        status:
+          type: string
+        message:
+          type: string

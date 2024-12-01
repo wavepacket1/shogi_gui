@@ -39,6 +39,17 @@ export const useBoardStore = defineStore('board', {
                     }
                 }
             }
+        },
+        async movePiece(pieceId: number, toX: number, toY: number) {
+            try {
+                this.isError = false;
+                // APIエンドポイントにリクエストを送信
+                await updatePiecePositionAPI(pieceId, toX, toY); // updatePiecePositionAPIはAPI呼び出し関数
+                this.updatePiecePosition(pieceId, toX, toY);
+            } catch (error) {
+                console.error('駒の移動に失敗しました', error);
+                this.isError = true;
+            }
         }
     }
 });

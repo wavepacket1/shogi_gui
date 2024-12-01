@@ -11,6 +11,7 @@
             class="shogi-cell"
             :data-x="x"
             :data-y="y"
+            @click="handleCellClick(x, y)"
             >
                 <span
                     v-if="getPiece(x, y)"
@@ -115,6 +116,19 @@ export default defineComponent({
             return piece;
         }
 
+        const selectedPiece = ref<ShogiPiece | null>(null);
+
+        const handleCellClick = (x: number, y: number) => {
+            const piece = getPiece(x, y);
+            if (selectedPiece.value) {
+                // 移動を試みる
+                boardStore.movePiece(selectedPiece.value.id, x, y);
+                selectedPiece.value = null;
+            } else if (piece) {
+                selectedPiece.value = piece;
+            }
+        };
+
         onMounted(() => {
             fetchBoard();
         });
@@ -127,7 +141,8 @@ export default defineComponent({
             isLoading,
             isError,
             errorMessage,
-            getPiece
+            getPiece,
+            handleCellClick
         };
     },
 });
