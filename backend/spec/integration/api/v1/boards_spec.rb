@@ -33,4 +33,22 @@ RSpec.describe 'api/v1/boards', type: :request do
             end
         end
     end
+
+    path '/api/v1/boards/default' do
+        get('デフォルトボードの取得') do
+            tags 'Boards'
+            produces 'application/json'
+
+            response(200, '成功') do
+                schema type: :object,
+                    properties: {
+                        sfen: { type: :string },
+                        legal_flag: { type: :boolean }
+                    },
+                    required: ['sfen', 'legal_flag']
+
+                run_test!
+            end
+        end
+    end
 end

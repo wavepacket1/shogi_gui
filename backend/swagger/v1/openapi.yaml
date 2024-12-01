@@ -1,3 +1,4 @@
+---
 openapi: 3.0.1
 info:
   title: API V1
@@ -7,16 +8,16 @@ paths:
     get:
       summary: ボードの取得
       tags:
-        - Boards
+      - Boards
       parameters:
-        - name: id
-          in: path
-          description: ボードID
-          required: true
-          schema:
-            type: integer
+      - name: id
+        in: path
+        description: ボードID
+        required: true
+        schema:
+          type: integer
       responses:
-        "200":
+        '200':
           description: 成功
           content:
             application/json:
@@ -28,9 +29,9 @@ paths:
                   legal_flag:
                     type: boolean
                 required:
-                  - sfen
-                  - legal_flag
-        "404":
+                - sfen
+                - legal_flag
+        '404':
           description: ボードが見つかりません
           content:
             application/json:
@@ -42,18 +43,38 @@ paths:
                   message:
                     type: string
                 required:
-                  - status
-                  - message
+                - status
+                - message
+  "/api/v1/boards/default":
+    get:
+      summary: デフォルトボードの取得
+      tags:
+      - Boards
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  sfen:
+                    type: string
+                  legal_flag:
+                    type: boolean
+                required:
+                - sfen
+                - legal_flag
   "/api/v1/games":
     post:
       summary: ゲーム作成
       tags:
-        - Games
+      - Games
       parameters: []
       responses:
-        "201":
+        '201':
           description: ゲームが作成されました
-        "422":
+        '422':
           description: 無効なリクエスト
       requestBody:
         content:
@@ -63,32 +84,26 @@ paths:
               properties:
                 name:
                   type: string
-                status:
-                  type: string
-                  enum:
-                    - active
-                    - finished
               required:
-                - name
-                - status
+              - name
   "/api/v1/pieces/{id}":
     patch:
       summary: 駒の更新
       tags:
-        - Pieces
+      - Pieces
       parameters:
-        - name: id
-          in: path
-          description: 駒ID
-          required: true
-          schema:
-            type: integer
+      - name: id
+        in: path
+        description: 駒ID
+        required: true
+        schema:
+          type: integer
       responses:
-        "200":
+        '200':
           description: 更新成功
-        "404":
+        '404':
           description: 駒が見つかりません
-        "422":
+        '422':
           description: 無効なリクエスト
       requestBody:
         content:
@@ -105,17 +120,17 @@ paths:
                   minimum: 1
                   maximum: 9
               required:
-                - position_x
-                - position_y
+              - position_x
+              - position_y
 servers:
-  - url: http://{defaultHost}
-    variables:
-      defaultHost:
-        default: localhost:3000
+- url: http://{defaultHost}
+  variables:
+    defaultHost:
+      default: localhost:3000
 tags:
-  - name: Games
-    description: ゲーム関連のAPI
-  - name: Boards
-    description: ボード関連のAPI
-  - name: Pieces
-    description: 駒関連のAPI
+- name: Games
+  description: ゲーム関連のAPI
+- name: Boards
+  description: ボード関連のAPI
+- name: Pieces
+  description: 駒関連のAPI

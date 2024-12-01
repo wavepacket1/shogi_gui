@@ -7,7 +7,7 @@ const api = axios.create({
     }
 });
 
-export const getBoardSFEN = (id: number) =>  {
+export const getBoardSFENAPI = (id: number) =>  {
     return api.get(`/boards/${id}`);
 };
 
@@ -31,17 +31,27 @@ export const postMove = (boardID: number, move: Move) => {
     });
 }
 
-export const createGame = (name: string) => {
-    return api.post('/games', { game: { name }});
+export const createGameAPI = (name: string) => {
+    return api.post('/games', { 
+        game: { 
+            name: name, 
+            status: 'active' 
+        }
+    });
 }
 
 export const updatePiecePositionAPI = (pieceId: number, x: number, y: number) => {
-    return api.patch(`/pieces/${pieceId}`, { // 修正: axios.patch から api.patch に変更
+    return api.patch(`/pieces/${pieceId}`, { 
         piece: {
             position_x: x,
             position_y: y
         }
     });
+};
+
+export const getDefaultBoard = async () => {
+    const response = await api.get('/boards/default');
+    return response.data;
 };
 
 export default api;

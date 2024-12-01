@@ -1,66 +1,100 @@
 import { defineStore } from 'pinia';
-import { getBoardSFEN } from '@/services/api';
+import { getBoardSFEN, createGameAPI, updatePiecePositionAPI } from '@/services/api';
 import { parseSFEN, ShogiSFEN } from '@/utils/sfenParser';
 
+interface Game {
+    id: number;
+    name: string;
+    status: string;
+}
+
+interface ShogiPiece {
+    id: number;
+    position_x: number;
+    position_y: number;
+}
+
+interface ShogiData {
+    board: (ShogiPiece | null)[][];
+    piecesInHand: Record<string, number>;
+}
+
+interface BoardState {
+    shogiData: ShogiData;
+    isError: boolean;
+    game: Game | null;
+}
+
 export const useBoardStore = defineStore('board', {
-    state: () => ({
-        shogiData: {
-            board: Array.from({ length: 9 }, () => Array(9).fill(null)), // 初期化済みの9x9ボード
-            piecesInHand: {} as Record<string, number>, // piecesInHandも初期化
-        },
+    state: (): BoardState => ({
+        shogiData: initializeShogiData(),
         isError: false, // エラーの有無を管理
         game: null as any,
     }),
     actions: {
-        async fetchBoard(id: number) {
+        async handleAsyncAction(asyncAction: () => Promise<void>, errorMessage?: string) {
+            this.isError = false;
             try {
-                this.isError = false;
-                const response = await getBoardSFEN(id);
+                await asyncAction();
+            } catch (error: unknown) {
+                if(error instanceof Error) {
+                    console.error(errorMessage || 'エラーが発生しました', error.message);
+                } else {
+                    console.error(errorMessage || '未知のエラーが発生しました', error);
+                }
+                this.isError = true;
+            }
+        },
+
+        findPiece(pieceId: number): ShogiPiece | undefined {
+            for (const row of this.shogiData.board) {
+                const piece = row.find((p) => p?.id === pieceId);
+                if (piece) {
+                    return piece;
+                }
+            }
+            return undefined;
+        },
+
+        updatePiecePosition(pieceId: number, x: number, y: number) {
+            const piece = this.findPiece(pieceId);
+            if (piece) {
+                piece.position_x = x;
+                piece.position_y = y;
+            }
+        },
+
+        async fetchBoard(id: number) {
+            await this.handleAsyncAction(async () => {
+                const response = await getBoardSFENAPI(id);
                 const parsed = parseSFEN(response.data);
                 if (parsed) {
                     this.shogiData.board = parsed.board;
                     this.shogiData.piecesInHand = parsed.piecesInHand;
                 } else {
-                    console.error('SFENの解析に失敗しました');
-                    this.isError = true;
+                    throw new Error('SFENの解析に失敗しました');
                 }
-            } catch (error) {
-                console.error('ボードの取得に失敗しました', error);
-                this.isError = true;
-            }
+            }, 'ボードの取得に失敗しました');
         },
-        updatePiecePosition(pieceId: number, x: number, y: number) {
-            if (this.shogiData.board) {
-                for (const row of this.shogiData.board) {
-                    const piece = row.find((p) => p?.id === pieceId);
-                    if (piece) {
-                        piece.position_x = x;
-                        piece.position_y = y;
-                        break; // 駒が見つかったらそれ以上のループは不要
-                    }
-                }
-            }
-        },
+    
         async movePiece(pieceId: number, toX: number, toY: number) {
-            try {
-                this.isError = false;
-                // APIエンドポイントにリクエストを送信
-                await updatePiecePositionAPI(pieceId, toX, toY); // updatePiecePositionAPIはAPI呼び出し関数
+            await this.handleAsyncAction(async () => {
+                await updatePiecePositionAPI(pieceId, toX, toY);
                 this.updatePiecePosition(pieceId, toX, toY);
-            } catch (error) {
-                console.error('駒の移動に失敗しました', error);
-                this.isError = true;
-            }
+            }, '駒の移動に失敗しました');
         },
 
         async createGame() {
-            try {
-                const response = await this.createGame('新しいゲーム');
+            await this.handleAsyncAction(async () => {
+                const response = await createGameAPI('新しいゲーム');
                 this.game = response.data.game;
                 this.shogiData.board = response.data.board;
-            } catch (error) {
-                console.error('ゲームの作成に失敗しました', error);
-            }
-        },
+            }, 'ゲームの作成に失敗しました');
+        }
     }
+});
+
+const initializeShogiData = (): ShogiData => ({
+    board: Array.from({ length: 9 }, () => Array(9).fill(null)) as (ShogiPiece | null)[][],
+    piecesInHand: {},
 });
