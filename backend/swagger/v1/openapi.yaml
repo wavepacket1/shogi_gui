@@ -82,9 +82,6 @@ paths:
                   id:
                     type: integer
                     example: 1
-                  name:
-                    type: string
-                    example: My New Game
                   status:
                     type: string
                     example: active
@@ -97,17 +94,13 @@ paths:
                 properties:
                   error:
                     type: string
-                    example: 'Validation failed: Name can''t be blank'
+                    example: Validation failed
       requestBody:
         content:
           application/json:
             schema:
               type: object
               properties:
-                name:
-                  type: string
-                  example: My New Game
-                  description: 作成するゲームの名前
                 status:
                   type: string
                   enum:
@@ -115,9 +108,7 @@ paths:
                   - completed
                   example: active
                   description: ゲームの状態。activeは進行中、completedは終了済みを表します
-              required:
-              - name
-              - status
+              required: status
   "/api/v1/pieces/{id}":
     patch:
       summary: 駒の更新

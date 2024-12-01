@@ -1,5 +1,6 @@
 <template>
     <div> 手数 {{  getStepNumber }}</div>
+    <div> 手番 {{ getOwner }}</div>
 
     <div class = "shogi-container">
         <div class="pieces-in-hand pieces-in-hand-top">
@@ -130,6 +131,12 @@ export default defineComponent({
             }
         });
 
+        const getOwner = computed(() => {
+            if (boardStore.game !== null) {
+                return boardStore.active_player==='b' ? '先手' : '後手';
+            }
+        });
+
         onMounted(() => {
             fetchDefaultBoard();
         });
@@ -145,6 +152,7 @@ export default defineComponent({
             getPiece,
             getStepNumber,
             handleCellClick,
+            getOwner
         };
     },
 });

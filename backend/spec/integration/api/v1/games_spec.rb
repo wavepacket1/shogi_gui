@@ -12,11 +12,6 @@ RSpec.describe 'api/v1/games', type: :request do
             parameter name: :game, in: :body, schema: {
                 type: :object, 
                 properties: {
-                    name: { 
-                        type: :string,
-                        example: 'My New Game',
-                        description: '作成するゲームの名前'
-                    },
                     status: {
                         type: :string, 
                         enum: ['active', 'completed'],
@@ -24,28 +19,27 @@ RSpec.describe 'api/v1/games', type: :request do
                         description: 'ゲームの状態。activeは進行中、completedは終了済みを表します'
                     }
                 },
-                required: ['name', 'status']
+                required: 'status'
             }
 
             response '201', 'ゲームが作成されました' do 
                 schema type: :object,
                     properties: {
                         id: { type: :integer, example: 1 },
-                        name: { type: :string, example: 'My New Game' },
                         status: { type: :string, example: 'active' },
                     }
                 
-                let(:game) { { name: 'My New Game', status: 'active' }}
+                let(:game) {{ status: 'active' }}
                 run_test!
             end
 
             response '422', '無効なパラメータ' do
                 schema type: :object, 
                     properties: {
-                        error: { type: :string, example: "Validation failed: Name can't be blank" }
+                        error: { type: :string, example: "Validation failed" }
                     }
 
-                let(:game) { { name: '' }}
+                let(:game) { { status: '' }}
                 run_test!
             end
         end

@@ -5,8 +5,9 @@ module Api
     class GamesController < ApplicationController
       def create
         @game = Game.new(game_params)
+
         if @game.save
-          @board = @game.create_board(name: "Game #{@game.id}", step_number: Game.where(id: @game.id).count - 1)
+          @board = @game.create_board
           render json: { status: 'success', game: @game, board: @board }, status: :created
         else
           render json: { status: 'error', message: @game.errors.full_messages.join(', ') },
@@ -26,7 +27,7 @@ module Api
       private
 
       def game_params
-        params.require(:game).permit(:name, :status)
+        params.require(:game).permit(:status)
       end
     end
   end

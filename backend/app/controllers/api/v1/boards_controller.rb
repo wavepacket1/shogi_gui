@@ -11,11 +11,7 @@ module Api
             end
 
             def create
-                byebug
-                @board = Board.new(board_params)
-                @board.active_player = 'b' # 初期プレイヤーを設定
-                @board.sfen = default_sfen
-                byebug
+                @board = Board.new
                 if @board.save 
                     render json: { status: 'success', board: @board }, status: :created
                 else
@@ -40,10 +36,6 @@ module Api
                 @board = Board.find(params[:id])
             rescue ActiveRecord::RecordNotFound
                 render json: { status: 'error', message: 'ボードが見つかりません。' }, status: :not_found
-            end
-
-            def board_params
-                params.require(:board).permit(:name, :active_player)
             end
         end
     end
