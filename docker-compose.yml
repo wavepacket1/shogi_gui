@@ -22,6 +22,8 @@ services:
       - db
     environment:
       DATABASE_URL: postgres://postgres:postgres@db:5432/shogi_app_development
+    tty: true
+    stdin_open: true
   frontend:
     build: ./frontend
     command: npm run dev -- --host 0.0.0.0
