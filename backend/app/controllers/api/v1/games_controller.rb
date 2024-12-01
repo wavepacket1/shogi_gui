@@ -6,7 +6,7 @@ module Api
       def create
         @game = Game.new(game_params)
         if @game.save
-          @board = @game.create_board(name: "Game #{@game.id}")
+          @board = @game.create_board(name: "Game #{@game.id}", step_number: Game.where(id: @game.id).count - 1)
           render json: { status: 'success', game: @game, board: @board }, status: :created
         else
           render json: { status: 'error', message: @game.errors.full_messages.join(', ') },

@@ -23,8 +23,9 @@
             </div>
         </div>
     </div>
+    <div> 手数 {{  getStepNumber }}</div>
 
-    <!-- <div class="pieces-in-hand">
+    <div class="pieces-in-hand">
         <div class="player">
             <h3>先手 持ち駒</h3>
             <div v-if="piecesInHandB">
@@ -41,14 +42,13 @@
                 </span>
             </div>
         </div>
-    </div> -->
+    </div>
 </template>
 
 <script lang="ts">
 import { defineComponent, ref, onMounted, computed } from 'vue';
 import { useBoardStore } from '@/store';
 import { pieceMapper } from '@/utils/pieceMapper';
-import { getDefaultBoard } from '../services/api';
 
 interface ShogiPiece {
     piece_type: string;
@@ -75,28 +75,28 @@ export default defineComponent({
             return pieceMapper[key] || '';
         };
 
-        // const piecesInHandB = computed(() => {
-        //     const pieces = boardStore.shogiData?.piecesInHand || {};
-        //     const result: { [key: string]: number } = {};
-        //     for (const [piece, count] of Object.entries(pieces)) {
-        //         if (/[A-Z]/.test(piece)) { // Senteの持ち駒
-        //             result[piece] = count;
-        //         }
-        //     }
-        //     return result;
-        // });
+        const piecesInHandB = computed(() => {
+            const pieces = boardStore.shogiData?.piecesInHand || {};
+            const result: { [key: string]: number } = {};
+            for (const [piece, count] of Object.entries(pieces)) {
+                if (/[A-Z]/.test(piece)) { // Senteの持ち駒
+                    result[piece] = count;
+                }
+            }
+            return result;
+        });
 
-        // const piecesInHandW = computed(() => {
-        //     const pieces = boardStore.shogiData?.piecesInHand || {};
-        //     const result: { [key: string]: number } = {};
-        //     for (const [piece, count] of Object.entries(pieces)) {
-        //         if (/[a-z]/.test(piece)) { // Goteの持ち駒
-        //             const upperPiece = piece.toUpperCase();
-        //             result[upperPiece] = count;
-        //         }
-        //     }
-        //     return result;
-        // });
+        const piecesInHandW = computed(() => {
+            const pieces = boardStore.shogiData?.piecesInHand || {};
+            const result: { [key: string]: number } = {};
+            for (const [piece, count] of Object.entries(pieces)) {
+                if (/[a-z]/.test(piece)) { // Goteの持ち駒
+                    const upperPiece = piece.toUpperCase();
+                    result[upperPiece] = count;
+                }
+            }
+            return result;
+        });
 
         const getPiece = (x: number, y: number): ShogiPiece | null => {
             const piece = boardStore.shogiData.board[y][x]
@@ -128,19 +128,26 @@ export default defineComponent({
             }
         };
 
+        const getStepNumber = computed(() => {
+            if (boardStore.game !== null) {
+                return boardStore.step_number;
+            }
+        });
+
         onMounted(() => {
             fetchDefaultBoard();
         });
 
         return {
             getJapanesePiece,
-            // piecesInHandB,
-            // piecesInHandW,
+            piecesInHandB,
+            piecesInHandW,
             pieceMapper,
             isLoading,
             isError,
             errorMessage,
             getPiece,
+            getStepNumber,
             handleCellClick,
         };
     },
@@ -187,20 +194,4 @@ export default defineComponent({
     color: black;
     transform: rotate(180deg);
 }
-
-/* .pieces-in-hand {
-    display: flex;
-    justify-content: space-around;
-  margin: 20px 0;
-} */
-
-/* .player {
-    text-align: center;
-}
-
-.player span {
-    display: inline-block;
-    margin: 0 5px;
-    font-size: 20px;
-} */
 </style>

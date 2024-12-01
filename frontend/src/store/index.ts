@@ -21,6 +21,8 @@ interface ShogiData {
 
 interface BoardState {
     shogiData: ShogiData;
+    step_number: number;
+    board_id: number | null;
     isError: boolean;
     game: Game | null;
 }
@@ -28,6 +30,8 @@ interface BoardState {
 export const useBoardStore = defineStore('board', {
     state: (): BoardState => ({
         shogiData: initializeShogiData(),
+        step_number: 0,
+        board_id: null,
         isError: false, // エラーの有無を管理
         game: null as any,
     }),
@@ -75,7 +79,11 @@ export const useBoardStore = defineStore('board', {
             await this.handleAsyncAction(async () => {
                 const response = await createGameAPI('新しいゲーム');
                 this.game = response.data.game;
-                this.shogiData.board = response.data.board;
+                this.board_id = response.data.board.id;
+                this.step_number = response.data.board.step_number;
+                const parsed = parseSFEN(response.data.board.sfen);
+                this.shogiData.board = parsed.board;
+                this.shogiData.piecesInHand = parsed.piecesInHand;
             }, 'ゲームの作成に失敗しました');
         },
 
