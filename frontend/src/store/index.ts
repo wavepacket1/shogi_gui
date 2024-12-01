@@ -82,11 +82,11 @@ export const useBoardStore = defineStore('board', {
                 const response = await createGameAPI('新しいゲーム');
                 this.game = response.data.game;
                 this.board_id = response.data.board.id;
-                this.active_player = response.data.board.active_player;
-                this.step_number = response.data.board.step_number;
                 const parsed = parseSFEN(response.data.board.sfen);
                 this.shogiData.board = parsed.board;
                 this.shogiData.piecesInHand = parsed.piecesInHand;
+                this.active_player = parsed.playerToMove;
+                this.step_number = parsed.moveCount;
             }, 'ゲームの作成に失敗しました');
         },
 

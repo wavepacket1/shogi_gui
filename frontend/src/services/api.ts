@@ -34,7 +34,6 @@ export const postMove = (boardID: number, move: Move) => {
 export const createGameAPI = (name: string) => {
     return api.post('/games', { 
         game: { 
-            name: name, 
             status: 'active' 
         }
     });
