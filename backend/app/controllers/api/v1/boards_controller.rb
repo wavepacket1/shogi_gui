@@ -5,7 +5,7 @@ module Api
 
             def show
                 render json: {
-                    sfen: @board.to_sfen, # current_sfen から to_sfen に変更
+                    sfen: @board.to_sfen,
                     legal_flag: true
                 }, status: :ok
             end

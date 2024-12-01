@@ -6,6 +6,7 @@ Rails.application.routes.draw do
     namespace :v1 do 
       resources :boards, only: [:show, :create]
       resources :pieces, only: [:update]
+      resources :games, only: [:create, :show] # ゲーム用ルートを追加
     end
   end
 end

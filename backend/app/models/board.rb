@@ -1,5 +1,6 @@
 class Board < ApplicationRecord
     has_many :pieces, dependent: :destroy
+    belongs_to :game
 
     def to_sfen(include: nil)
         grid = Array.new(9) { Array.new(9, '') }

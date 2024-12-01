@@ -24,12 +24,26 @@ RSpec.configure do |config|
       paths: {},
       servers: [
         {
-          url: 'https://{defaultHost}',
+          url: 'http://{defaultHost}',
           variables: {
             defaultHost: {
-              default: 'www.example.com'
+              default: 'localhost:3000'
             }
           }
+        }
+      ],
+      tags: [
+        {
+          name: 'Games',
+          description: 'ゲーム関連のAPI'
+        },
+        {
+          name: 'Boards',
+          description: 'ボード関連のAPI'
+        },
+        {
+          name: 'Pieces',
+          description: '駒関連のAPI'
         }
       ]
     }

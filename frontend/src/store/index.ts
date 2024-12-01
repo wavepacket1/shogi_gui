@@ -9,6 +9,7 @@ export const useBoardStore = defineStore('board', {
             piecesInHand: {} as Record<string, number>, // piecesInHandも初期化
         },
         isError: false, // エラーの有無を管理
+        game: null as any,
     }),
     actions: {
         async fetchBoard(id: number) {
@@ -50,6 +51,16 @@ export const useBoardStore = defineStore('board', {
                 console.error('駒の移動に失敗しました', error);
                 this.isError = true;
             }
-        }
+        },
+
+        async createGame() {
+            try {
+                const response = await this.createGame('新しいゲーム');
+                this.game = response.data.game;
+                this.shogiData.board = response.data.board;
+            } catch (error) {
+                console.error('ゲームの作成に失敗しました', error);
+            }
+        },
     }
 });

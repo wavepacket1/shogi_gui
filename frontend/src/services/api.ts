@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-    baseURL: 'http://localhost:3000/api/v1',
+    baseURL: 'http://localhost:3000/api/v1', // 確認: URLスキームがhttpまたはhttpsであること
     headers: {
         'Content-Type': 'application/json',
     }
@@ -27,14 +27,16 @@ export const postMove = (boardID: number, move: Move) => {
             to_x: move.to_x,
             to_y: move.to_y,
             promotion: move.promotion,
-
-
         }
-     });
+    });
+}
+
+export const createGame = (name: string) => {
+    return api.post('/games', { game: { name }});
 }
 
 export const updatePiecePositionAPI = (pieceId: number, x: number, y: number) => {
-    return axios.patch(`/api/v1/pieces/${pieceId}`, {
+    return api.patch(`/pieces/${pieceId}`, { // 修正: axios.patch から api.patch に変更
         piece: {
             position_x: x,
             position_y: y

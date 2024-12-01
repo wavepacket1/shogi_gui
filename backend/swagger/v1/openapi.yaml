@@ -1,0 +1,121 @@
+openapi: 3.0.1
+info:
+  title: API V1
+  version: v1
+paths:
+  "/api/v1/boards/{id}":
+    get:
+      summary: ボードの取得
+      tags:
+        - Boards
+      parameters:
+        - name: id
+          in: path
+          description: ボードID
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  sfen:
+                    type: string
+                  legal_flag:
+                    type: boolean
+                required:
+                  - sfen
+                  - legal_flag
+        "404":
+          description: ボードが見つかりません
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  message:
+                    type: string
+                required:
+                  - status
+                  - message
+  "/api/v1/games":
+    post:
+      summary: ゲーム作成
+      tags:
+        - Games
+      parameters: []
+      responses:
+        "201":
+          description: ゲームが作成されました
+        "422":
+          description: 無効なリクエスト
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                status:
+                  type: string
+                  enum:
+                    - active
+                    - finished
+              required:
+                - name
+                - status
+  "/api/v1/pieces/{id}":
+    patch:
+      summary: 駒の更新
+      tags:
+        - Pieces
+      parameters:
+        - name: id
+          in: path
+          description: 駒ID
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: 更新成功
+        "404":
+          description: 駒が見つかりません
+        "422":
+          description: 無効なリクエスト
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                position_x:
+                  type: integer
+                  minimum: 1
+                  maximum: 9
+                position_y:
+                  type: integer
+                  minimum: 1
+                  maximum: 9
+              required:
+                - position_x
+                - position_y
+servers:
+  - url: http://{defaultHost}
+    variables:
+      defaultHost:
+        default: localhost:3000
+tags:
+  - name: Games
+    description: ゲーム関連のAPI
+  - name: Boards
+    description: ボード関連のAPI
+  - name: Pieces
+    description: 駒関連のAPI
