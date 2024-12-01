@@ -7,7 +7,7 @@ class AddGameToBoards < ActiveRecord::Migration[7.0]
     default_game = Game.first || Game.create!(
       name: 'Default Game', 
       active_player: 'b',
-      status: 'active'
+      status: 'active',
     )
 
     # game_idがNULLのboardsレコードを更新

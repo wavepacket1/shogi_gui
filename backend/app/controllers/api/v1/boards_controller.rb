@@ -11,8 +11,11 @@ module Api
             end
 
             def create
+                byebug
                 @board = Board.new(board_params)
                 @board.active_player = 'b' # 初期プレイヤーを設定
+                @board.sfen = default_sfen
+                byebug
                 if @board.save 
                     render json: { status: 'success', board: @board }, status: :created
                 else

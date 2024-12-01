@@ -74,8 +74,30 @@ paths:
       responses:
         '201':
           description: ゲームが作成されました
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    example: 1
+                  name:
+                    type: string
+                    example: My New Game
+                  status:
+                    type: string
+                    example: active
         '422':
-          description: 無効なリクエスト
+          description: 無効なパラメータ
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: 'Validation failed: Name can''t be blank'
       requestBody:
         content:
           application/json:
@@ -84,8 +106,18 @@ paths:
               properties:
                 name:
                   type: string
+                  example: My New Game
+                  description: 作成するゲームの名前
+                status:
+                  type: string
+                  enum:
+                  - active
+                  - completed
+                  example: active
+                  description: ゲームの状態。activeは進行中、completedは終了済みを表します
               required:
               - name
+              - status
   "/api/v1/pieces/{id}":
     patch:
       summary: 駒の更新

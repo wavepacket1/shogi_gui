@@ -7,50 +7,45 @@ RSpec.describe 'api/v1/games', type: :request do
         post('ゲーム作成') do
             tags 'Games'
             consumes 'application/json'
+            produces 'application/json'
+
             parameter name: :game, in: :body, schema: {
-                type: :object,
+                type: :object, 
                 properties: {
-                name: { type: :string }
+                    name: { 
+                        type: :string,
+                        example: 'My New Game',
+                        description: '作成するゲームの名前'
+                    },
+                    status: {
+                        type: :string, 
+                        enum: ['active', 'completed'],
+                        example: 'active',
+                        description: 'ゲームの状態。activeは進行中、completedは終了済みを表します'
+                    }
                 },
-                required: ['name']
+                required: ['name', 'status']
             }
 
-            response(201, 'ゲームが作成されました') do
+            response '201', 'ゲームが作成されました' do 
                 schema type: :object,
                     properties: {
-                        status: { type: :string },
-                        game: {
-                        type: :object,
-                        properties: {
-                            id: { type: :integer },
-                            name: { type: :string },
-                            status: { type: :string }
-                        },
-                        required: ['id', 'name', 'status']
-                        },
-                        board: {
-                        type: :object,
-                        properties: {
-                            id: { type: :integer },
-                            name: { type: :string },
-                            active_player: { type: :string }
-                        },
-                        required: ['id', 'name', 'active_player']
-                        }
-                    },
-                    required: ['status', 'game', 'board']
-
+                        id: { type: :integer, example: 1 },
+                        name: { type: :string, example: 'My New Game' },
+                        status: { type: :string, example: 'active' },
+                    }
+                
+                let(:game) { { name: 'My New Game', status: 'active' }}
                 run_test!
             end
 
-            response(422, '無効なリクエスト') do
-                schema type: :object,
+            response '422', '無効なパラメータ' do
+                schema type: :object, 
                     properties: {
-                        status: { type: :string },
-                        message: { type: :string }
-                    },
-                    required: ['status', 'message']
+                        error: { type: :string, example: "Validation failed: Name can't be blank" }
+                    }
 
+                let(:game) { { name: '' }}
                 run_test!
             end
         end
