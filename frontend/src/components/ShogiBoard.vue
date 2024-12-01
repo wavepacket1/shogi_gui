@@ -1,45 +1,41 @@
 <template>
-    <div class="shogi-board">
-        <div
-        v-for="y in Array.from({ length: 9 }, (_, i) => i)"
-        :key="'row-' + y"
-        class="shogi-row"
-        >
-            <div
-            v-for="x in Array.from({ length: 9 }, (_, i) => i)"
-            :key="'cell-' + x + '-' + y"
-            class="shogi-cell"
-            :data-x="x"
-            :data-y="y"
-            @click="handleCellClick(x, y)"
-            >
-                <span
-                    v-if="getPiece(x, y)"
-                    :class="['shogi-piece', getPiece(x, y).owner]"
-                    :data-id="getPiece(x, y).id"
-                >
-                    {{ getJapanesePiece(getPiece(x, y)) }}
-                </span>
-            </div>
-        </div>
-    </div>
     <div> 手数 {{  getStepNumber }}</div>
 
-    <div class="pieces-in-hand">
-        <div class="player">
-            <h3>先手 持ち駒</h3>
-            <div v-if="piecesInHandB">
-                <span v-for="(count, piece) in piecesInHandB" :key="piece">
-                    {{  pieceMapper[piece] }} x{{ count }}
-                </span>
+    <div class = "shogi-container">
+        <div class="pieces-in-hand pieces-in-hand-top">
+            <div v-for="(count, piece) in piecesInHandW" :key="piece" class="piece">
+                {{ pieceMapper[piece] }} x{{ count }}
             </div>
         </div>
-        <div class="player">
-            <h3>後手 持ち駒</h3>
-            <div v-if="piecesInHandW">
-                <span v-for="(count, piece) in piecesInHandW" :key="piece">
-                    {{  pieceMapper[piece] }} x{{ count }}
-                </span>
+
+        <div class="shogi-board">
+            <div
+            v-for="y in Array.from({ length: 9 }, (_, i) => i)"
+            :key="'row-' + y"
+            class="shogi-row"
+            >
+                <div
+                v-for="x in Array.from({ length: 9 }, (_, i) => i)"
+                :key="'cell-' + x + '-' + y"
+                class="shogi-cell"
+                :data-x="x"
+                :data-y="y"
+                @click="handleCellClick(x, y)"
+                >
+                    <span
+                        v-if="getPiece(x, y)"
+                        :class="['shogi-piece', getPiece(x, y).owner]"
+                        :data-id="getPiece(x, y).id"
+                    >
+                        {{ getJapanesePiece(getPiece(x, y)) }}
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <div class="pieces-in-hand pieces-in-hand-bottom">
+            <div v-for="(count, piece) in piecesInHandB" :key="piece" class="piece">
+                {{ pieceMapper[piece] }} x{{ count }}
             </div>
         </div>
     </div>
@@ -155,8 +151,31 @@ export default defineComponent({
 </script>
 
 <style scoped>
+.shogi-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+.pieces-in-hand {
+    display: flex;
+    justify-content: center;
+    gap: 5px;
+    width: 450px;
+}
+
+.pieces-in-hand-top {
+    order: 1;
+}
+
+.pieces-in-hand-bottom {
+    order: 3;
+}
+
 /* 既存のスタイルを維持 */
 .shogi-board {
+    order: 2;
     display: grid;
     grid-template-rows: repeat(9, 50px);
     grid-template-columns: repeat(9, 50px);
