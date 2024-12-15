@@ -17,7 +17,6 @@ class Api::V1::MovesController < ApplicationController
 
     case move_info[:type]
     when :move
-      byebug
       piece = board_array[move_info[:from_row]][move_info[:from_col]]
       board_array[move_info[:from_row]][move_info[:from_col]] = nil
       piece = promote_piece(piece) if move_info[:promoted]
