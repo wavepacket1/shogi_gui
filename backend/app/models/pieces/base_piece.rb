@@ -1,10 +1,11 @@
 module Pieces
     class BasePiece
-        attr_reader :movement, :can_jump
+        attr_reader :movement, :can_jump, :promoted
 
         def initialize(movement, can_jump: false)
             @movement = movement
             @can_jump = can_jump
+            @promoted = promoted
         end
 
         def validate_movement(board, present_position, next_position, move_direction)

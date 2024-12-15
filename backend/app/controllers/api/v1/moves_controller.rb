@@ -39,6 +39,10 @@ class Api::V1::MovesController < ApplicationController
 
   private 
 
+  def promote_piece(piece)
+    "+#{piece}"
+  end
+
   def legal_move?(board_array, hand, side, move_info)
     true
   end
