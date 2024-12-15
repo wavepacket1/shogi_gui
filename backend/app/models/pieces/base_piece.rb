@@ -1,18 +1,18 @@
 module Pieces
     class BasePiece
-        attr_reader :movement,:can_jump
+        attr_reader :movement, :can_jump
 
-        def initialize(movement,can_jump: false)
+        def initialize(movement, can_jump: false)
             @movement = movement
             @can_jump = can_jump
         end
 
-        def validate_movement(board,present_position,next_position,move_direction)
+        def validate_movement(board, present_position, next_position, move_direction)
             @movement.each do |move|
                 return true if knight_move?(move)
 
                 max_steps = calculate_max_steps(move)
-                next unless next_position?(present_position,next_position,move,max_steps,move_direction)
+                next unless next_position?(present_position, next_position, move, max_steps, move_direction)
 
                 unit_move = calculate_unit_move(move,max_steps)
                 check_for_intermediate_pieces(board, present_position, unit_move, max_steps, move_direction)
@@ -23,14 +23,14 @@ module Pieces
         end
 
         # 駒が動けるかを検証する
-        def can_move_validation(board,next_position,move_direction)
+        def can_move_validation(board, next_position, move_direction)
             @movement.any? do |move|
-                next_position_board_include?(next_position,move,move_direction)
+                next_position_board_include?(next_position, move, move_direction)
             end
         end
 
         private 
-        def calculate_unit_move(move,max_steps)
+        def calculate_unit_move(move, max_steps)
             move.map { |i| i/ max_steps }
         end
 
@@ -38,7 +38,7 @@ module Pieces
             [move[0].abs,move[1].abs].max
         end
 
-        def next_position_board_include?(next_position,move,move_direction)
+        def next_position_board_include?(next_position, move, move_direction)
             target_row = next_position[0] + move_direction * move[1]
             target_col = next_position[1] - move_direction * move[0]
             (0..8).include?(target_row) && (0..8).include?(target_col)
@@ -48,13 +48,13 @@ module Pieces
             move == [1,2] || move == [-1,2]
         end
 
-        def next_position?(present_position,next_position,move,max_steps,move_direction)
+        def next_position?(present_position, next_position, move, max_steps, move_direction)
             target_row = present_position[0] + move_direction * move[1]
             target_col = present_position[1] - move_direction * move[0]
             target_row == next_position[0] && target_col == next_position[1]
         end
 
-        def intermediate_piece?(board,present_position,unit_move,step,move_direction)
+        def intermediate_piece?(board, present_position, unit_move, step, move_direction)
             intermediate_row = present_position[0] + move_direction * (unit_move[1] * step)
             intermediate_col = present_position[1] - move_direction * (unit_move[0] * step)
             board[intermediate_row][intermediate_col]
