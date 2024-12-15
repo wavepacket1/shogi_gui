@@ -6,10 +6,10 @@ class Api::V1::MovesController < ApplicationController
 
     board_array = parsed_data[:board_array]
     side = parsed_data[:side]
-    hand = parsed_data
+    hand = parsed_data[:hand]
     move_number = parsed_data[:move_number]
 
-    move_info = Board.parse_move(move_str, board_array, hand, side)
+    move_info = Board.parse_move(move_str)
 
     unless legal_move?(board_array, hand, side, move_info)
       return render json: { status: 'error', message: '不正な手です。' }, status: :unprocessable_entity
@@ -17,6 +17,7 @@ class Api::V1::MovesController < ApplicationController
 
     case move_info[:type]
     when :move
+      byebug
       piece = board_array[move_info[:from_row]][move_info[:from_col]]
       board_array[move_info[:from_row]][move_info[:from_col]] = nil
       piece = promote_piece(piece) if move_info[:promoted]
@@ -37,6 +38,10 @@ class Api::V1::MovesController < ApplicationController
   end
 
   private 
+
+  def legal_move?(board_array, hand, side, move_info)
+    true
+  end
 
   def set_game_and_board
     @game = Game.find(params[:game_id])

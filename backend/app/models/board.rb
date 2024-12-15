@@ -51,7 +51,7 @@ class Board < ApplicationRecord
         [from_line, from_step, to_line, to_step]
     end
 
-    def self.parse_move(move, board_array, hand, side)
+    def self.parse_move(move)
         if move.include?('*')
             piece, rest = move.split('*')
             to_row, to_col = convert_square_to_indices(rest)
