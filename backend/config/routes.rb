@@ -9,8 +9,9 @@ Rails.application.routes.draw do
           get 'default', to: 'boards#default'
         end
       end
-      resources :pieces, only: [:update]
       resources :games, only: [:create, :show] 
+
+      patch '/games/:game_id/boards/:board_id/move', to: 'moves#move'
     end
   end
 end

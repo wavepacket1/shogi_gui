@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import { createGameAPI, updatePiecePositionAPI, getDefaultBoardAPI } from '@/services/api';
+import { createGameAPI, updatePositionAPI, getDefaultBoardAPI } from '@/services/api';
 import { parseSFEN } from '@/utils/sfenParser';
 
 interface Game {
@@ -62,7 +62,7 @@ export const useBoardStore = defineStore('board', {
             return undefined;
         },
 
-        updatePiecePosition(pieceId: number, x: number, y: number) {
+        updatePosition(pieceId: number, x: number, y: number) {
             const piece = this.findPiece(pieceId);
             if (piece) {
                 piece.position_x = x;
@@ -72,8 +72,8 @@ export const useBoardStore = defineStore('board', {
     
         async movePiece(pieceId: number, toX: number, toY: number) {
             await this.handleAsyncAction(async () => {
-                await updatePiecePositionAPI(pieceId, toX, toY);
-                this.updatePiecePosition(pieceId, toX, toY);
+                await updatePositionAPI(pieceId, toX, toY);
+                this.updatePosition(pieceId, toX, toY);
             }, '駒の移動に失敗しました');
         },
 

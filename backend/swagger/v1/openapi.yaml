@@ -109,42 +109,80 @@ paths:
                   example: active
                   description: ゲームの状態。activeは進行中、completedは終了済みを表します
               required: status
-  "/api/v1/pieces/{id}":
+  "/api/v1/games/{game_id}/boards/{board_id}/move":
     patch:
-      summary: 駒の更新
+      summary: 駒の移動API
       tags:
-      - Pieces
+      - Moves
       parameters:
-      - name: id
+      - name: game_id
         in: path
-        description: 駒ID
+        description: Game ID
+        required: true
+        schema:
+          type: integer
+      - name: board_id
+        in: path
+        description: Board ID
         required: true
         schema:
           type: integer
       responses:
         '200':
-          description: 更新成功
-        '404':
-          description: 駒が見つかりません
+          description: Board updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: boolean
+                    example: true
+                  legal_flag:
+                    type: boolean
+                    example: true
+                  board_id:
+                    type: integer
+                    example: 123
+                  sfen:
+                    type: string
+                    example: lnsgkgsnl/1r5b1/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL
+                      b - 0
         '422':
-          description: 無効なリクエスト
+          description: Invalid move or parameters
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: boolean
+                    example: false
+                  legal_flag:
+                    type: boolean
+                    example: false
+                  board_id:
+                    type: integer
+                    example: 123
+                  sfen:
+                    type: string
+                    example: lnsgkgsnl/1r5b1/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL
+                      b - 0
+                  message:
+                    type: string
+                    example: 'Invalid move: 8h2b+'
       requestBody:
         content:
           application/json:
             schema:
               type: object
               properties:
-                position_x:
-                  type: integer
-                  minimum: 1
-                  maximum: 9
-                position_y:
-                  type: integer
-                  minimum: 1
-                  maximum: 9
+                move:
+                  type: string
+                  description: 指し手の表記
+                  example: 7g7f
               required:
-              - position_x
-              - position_y
+              - move
 servers:
 - url: http://{defaultHost}
   variables:

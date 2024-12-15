@@ -1,67 +1,53 @@
-
 require 'swagger_helper'
 
-RSpec.describe 'api/v1/pieces', type: :request do
-    path '/api/v1/pieces/{id}' do
-        patch('駒の更新') do
-            tags 'Pieces'
+RSpec.describe 'API::V1::Moves', type: :request do 
+    path '/api/v1/games/{game_id}/boards/{board_id}/move' do 
+        patch '駒の移動API' do 
+            tags 'Moves'
             consumes 'application/json'
-            parameter name: :id, in: :path, type: :integer, description: '駒ID'
-            parameter name: :piece, in: :body, schema: {
+            produces 'application/json'
+
+            parameter name: :game_id, in: :path, type: :integer, description: 'Game ID'
+            parameter name: :board_id, in: :path, type: :integer, description: 'Board ID'
+
+            parameter name: :move, in: :body, schema: {
                 type: :object,
                 properties: {
-                position_x: { type: :integer, minimum: 1, maximum: 9 },
-                position_y: { type: :integer, minimum: 1, maximum: 9 }
+                    move: { type: :string, description: '指し手の表記', example: '7g7f' }
                 },
-                required: ['position_x', 'position_y']
+                required: ['move']
             }
 
-            response(200, '更新成功') do
+            response '200', 'Board updated successfully' do 
                 schema type: :object,
                     properties: {
-                        status: { type: :string },
-                        piece: {
-                        type: :object,
-                        properties: {
-                            id: { type: :integer },
-                            position_x: { type: :integer },
-                            position_y: { type: :integer }
-                        },
-                        required: ['id', 'position_x', 'position_y']
-                        }
-                    },
-                    required: ['status', 'piece']
+                        status: { type: :boolean, example: true },
+                        legal_flag: { type: :boolean, example: true },
+                        board_id: { type: :integer, example: 123 },
+                        sfen: { type: :string, example: 'lnsgkgsnl/1r5b1/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL b - 0' },
+                    }
+                
+                let(:game_id) { 1 }
+                let(:board_id) { 123 }
+                let(:move) { { move: '7g7f' }}
 
-                let(:piece_record) { Piece.create(piece_type: 'P', owner: 'b', position_x: 1, position_y: 1) }
-                let(:id) { piece_record.id }
-                let(:piece) { { position_x: 2, position_y: 2 } }
                 run_test!
             end
 
-            response(404, '駒が見つかりません') do
+            response '422', 'Invalid move or parameters' do 
                 schema type: :object,
                     properties: {
-                        status: { type: :string },
-                        message: { type: :string }
-                    },
-                    required: ['status', 'message']
+                        status: { type: :boolean, example: false },
+                        legal_flag: { type: :boolean, example: false }, 
+                        board_id: { type: :integer, example: 123 },
+                        sfen: { type: :string, example: 'lnsgkgsnl/1r5b1/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL b - 0' },
+                        message: { type: :string, example: 'Invalid move: 8h2b+' }
+                    }
 
-                let(:id) { 'invalid' }
-                let(:piece) { { position_x: 2, position_y: 2 } }
-                run_test!
-            end
+                let(:game_id) { 1 }
+                let(:board_id) { 123 }
+                let(:move) { { move: 'invalid_move' }}
 
-            response(422, '無効なリクエスト') do
-                schema type: :object,
-                    properties: {
-                        status: { type: :string },
-                        message: { type: :string }
-                    },
-                    required: ['status', 'message']
-
-                let(:piece_record) { Piece.create(piece_type: 'P', owner: 'b', position_x: 1, position_y: 1) }
-                let(:id) { piece_record.id }
-                let(:piece) { { position_x: 10, position_y: 10 } }
                 run_test!
             end
         end
