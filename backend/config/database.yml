@@ -1,0 +1,21 @@
+default: &default
+  adapter: postgresql
+  encoding: unicode
+  host: db
+  username: postgres
+  password: postgres
+  pool: 5
+
+development:
+  <<: *default
+  database: shogi_app_development
+
+test:
+  <<: *default
+  database: shogi_app_test
+
+production:
+  <<: *default
+  database: shogi_app_production
+  username: shogi_app
+  password: <%= ENV['SHOGIAPP_DATABASE_PASSWORD'] %>

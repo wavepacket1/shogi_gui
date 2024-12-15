@@ -1,0 +1,197 @@
+---
+openapi: 3.0.1
+info:
+  title: API V1
+  version: v1
+paths:
+  "/api/v1/boards/{id}":
+    get:
+      summary: ボードの取得
+      tags:
+      - Boards
+      parameters:
+      - name: id
+        in: path
+        description: ボードID
+        required: true
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  sfen:
+                    type: string
+                  legal_flag:
+                    type: boolean
+                required:
+                - sfen
+                - legal_flag
+        '404':
+          description: ボードが見つかりません
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  message:
+                    type: string
+                required:
+                - status
+                - message
+  "/api/v1/boards/default":
+    get:
+      summary: デフォルトボードの取得
+      tags:
+      - Boards
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  sfen:
+                    type: string
+                  legal_flag:
+                    type: boolean
+                required:
+                - sfen
+                - legal_flag
+  "/api/v1/games":
+    post:
+      summary: ゲーム作成
+      tags:
+      - Games
+      parameters: []
+      responses:
+        '201':
+          description: ゲームが作成されました
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    example: 1
+                  status:
+                    type: string
+                    example: active
+        '422':
+          description: 無効なパラメータ
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Validation failed
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  enum:
+                  - active
+                  - completed
+                  example: active
+                  description: ゲームの状態。activeは進行中、completedは終了済みを表します
+              required: status
+  "/api/v1/games/{game_id}/boards/{board_id}/move":
+    patch:
+      summary: 駒の移動API
+      tags:
+      - Moves
+      parameters:
+      - name: game_id
+        in: path
+        description: Game ID
+        required: true
+        schema:
+          type: integer
+      - name: board_id
+        in: path
+        description: Board ID
+        required: true
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: Board updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: boolean
+                    example: true
+                  legal_flag:
+                    type: boolean
+                    example: true
+                  board_id:
+                    type: integer
+                    example: 123
+                  sfen:
+                    type: string
+                    example: lnsgkgsnl/1r5b1/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL
+                      b - 0
+        '422':
+          description: Invalid move or parameters
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: boolean
+                    example: false
+                  legal_flag:
+                    type: boolean
+                    example: false
+                  board_id:
+                    type: integer
+                    example: 123
+                  sfen:
+                    type: string
+                    example: lnsgkgsnl/1r5b1/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL
+                      b - 0
+                  message:
+                    type: string
+                    example: 'Invalid move: 8h2b+'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                move:
+                  type: string
+                  description: 指し手の表記
+                  example: 7g7f
+              required:
+              - move
+servers:
+- url: http://{defaultHost}
+  variables:
+    defaultHost:
+      default: localhost:3000
+tags:
+- name: Games
+  description: ゲーム関連のAPI
+- name: Boards
+  description: ボード関連のAPI
+- name: Pieces
+  description: 駒関連のAPI
