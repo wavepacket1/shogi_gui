@@ -12,7 +12,7 @@ module Api
 
             def create
                 @board = Board.new
-                if @board.save 
+                if @board.save
                     render json: { status: 'success', board: @board }, status: :created
                 else
                     render json: { status: 'error', message: @board.errors.full_messages.join(", ") }, status: :unprocessable_entity
