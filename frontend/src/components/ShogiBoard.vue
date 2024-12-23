@@ -56,6 +56,12 @@ interface ShogiPiece {
     position_y: number;
 }
 
+interface Cell {
+	x: number;
+	y: number;
+} 
+
+
 export default defineComponent({
     name: 'ShogiBoard',
     setup() {
@@ -65,9 +71,7 @@ export default defineComponent({
         const errorMessage = ref('');
 
         const getJapanesePiece = (piece: ShogiPiece): string => {
-            if (!piece) {
-                return '';
-            }
+            if (!piece) return '';
             const key = piece.promoted ? `+${piece.piece_type}` : piece.piece_type;
             return pieceMapper[key] || '';
         };
@@ -103,7 +107,19 @@ export default defineComponent({
         const selectedPiece = ref<ShogiPiece | null>(null);
 
         const handleCellClick = (x: number, y: number) => {
-            const piece = getPiece(x, y);
+            
+	const clickedCell = { x, y }
+
+	if(boardStore.selectedCell){
+		boardStore.setMoveToCell(clickedCell)
+		boardStore.movePiece(selectedPiece.value.id, x, y);
+		boardStore.setMoveToCell(null);	
+	} else {
+		boardStore.setSelectedCell(clickedCell)
+	};
+}
+	    
+const piece = getPiece(x, y);
             if (selectedPiece.value) {
                 // 移動を試みる
                 boardStore.movePiece(selectedPiece.value.id, x, y);
