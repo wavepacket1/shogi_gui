@@ -109,25 +109,25 @@ export default defineComponent({
         const handleCellClick = (x: number, y: number) => {
             
 	const clickedCell = { x, y }
-
-	if(boardStore.selectedCell){
-		boardStore.setMoveToCell(clickedCell)
-		boardStore.movePiece(selectedPiece.value.id, x, y);
-		boardStore.setMoveToCell(null);	
-	} else {
-		boardStore.setSelectedCell(clickedCell)
-	};
+//
+//	if(boardStore.selectedCell){
+//		boardStore.setMoveToCell(clickedCell)
+//		boardStore.movePiece(selectedPiece.value.id, x, y);
+//		boardStore.setMoveToCell(null);	
+//	} else {
+//		boardStore.setSelectedCell(clickedCell)
+//	};
 }
 	    
-const piece = getPiece(x, y);
-            if (selectedPiece.value) {
-                // 移動を試みる
-                boardStore.movePiece(selectedPiece.value.id, x, y);
-                selectedPiece.value = null;
-            } else if (piece) {
-                selectedPiece.value = piece;
-            }
-        };
+//const piece = getPiece(x, y);
+//            if (selectedPiece.value) {
+//                // 移動を試みる
+//                boardStore.movePiece(selectedPiece.value.id, x, y);
+//                selectedPiece.value = null;
+//            } else if (piece) {
+//                selectedPiece.value = piece;
+//            }
+//        };
 
         const fetchDefaultBoard = async () => {
             try {
