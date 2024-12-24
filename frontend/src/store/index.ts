@@ -41,7 +41,7 @@ export const useBoardStore = defineStore('board', {
         board_id: null,
         isError: false, // エラーの有無を管理
         game: null as any,
-	selectedCell: {x: null, y: null}
+	SelectedCell: {x: null, y: null}
     }),
     actions: {
         async handleAsyncAction(asyncAction: () => Promise<void>, errorMessage?: string) {
@@ -77,6 +77,11 @@ try {
             }
         },
     
+	SetMovetoCell(ClickedCell:SelectedCell) {
+		this.selectedCell.x = ClickedCell.x;
+		this.selectedCell.y = ClickedCell.y;
+	}
+
         async movePiece(pieceId: number, toX: number, toY: number) {
             await this.handleAsyncAction(async () => {
                 await updatePositionAPI(pieceId, toX, toY);

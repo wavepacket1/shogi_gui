@@ -108,14 +108,14 @@ export default defineComponent({
 
         const handleCellClick = (x: number, y: number) => {
             
-	const clickedCell = { x, y }
+	const ClickedCell = { x, y }
 //
-//	if(boardStore.selectedCell){
-//		boardStore.setMoveToCell(clickedCell)
-//		boardStore.movePiece(selectedPiece.value.id, x, y);
-//		boardStore.setMoveToCell(null);	
+//	if(boardStore.SelectedCell){
+//		boardStore.SetCell(ClickedCell)
+//		boardStore.movePiece(SelectedPiece.value.id, x, y);
+//		boardStore.SetCell(null);	
 //	} else {
-//		boardStore.setSelectedCell(clickedCell)
+//		boardStore.SetCell(ClickedCell)
 //	};
 }
 	    
