@@ -28,6 +28,11 @@ interface BoardState {
     game: Game | null;
 }
 
+interface selectedCell {
+	x: number|null;
+	y: number|null;
+}
+
 export const useBoardStore = defineStore('board', {
     state: (): BoardState => ({
         shogiData: initializeShogiData(),
@@ -36,11 +41,13 @@ export const useBoardStore = defineStore('board', {
         board_id: null,
         isError: false, // エラーの有無を管理
         game: null as any,
+	selectedCell: {x: null, y: null}
     }),
     actions: {
         async handleAsyncAction(asyncAction: () => Promise<void>, errorMessage?: string) {
             this.isError = false;
-            try {
+
+try {
                 await asyncAction();
             } catch (error: unknown) {
                 if(error instanceof Error) {
