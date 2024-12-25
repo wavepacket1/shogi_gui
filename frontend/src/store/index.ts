@@ -59,29 +59,19 @@ try {
             }
         },
 
-        findPiece(pieceId: number): ShogiPiece | undefined {
-            for (const row of this.shogiData.board) {
-                const piece = row.find((p) => p?.id === pieceId);
-                if (piece) {
-                    return piece;
-                }
-            }
-            return undefined;
+        findPiece(pieceId: number, x: number, y: number): ShogiPiece | undefined {
+		const piece = this.shogiData.board[y][x]
+		return this.shogiData.board[y][x] || undefined;
         },
 
-        updatePosition(pieceId: number, x: number, y: number) {
-            const piece = this.findPiece(pieceId);
+        SetCell(pieceId: number, x: number, y: number) {
+            const piece = this.findPiece(pieceId, x, y);
             if (piece) {
-                piece.position_x = x;
-                piece.position_y = y;
+		this.selectedCell.x = ClickedCell.x;
+		this.selectedCell.y = ClickedCell.y;
             }
         },
     
-	SetMovetoCell(ClickedCell:SelectedCell) {
-		this.selectedCell.x = ClickedCell.x;
-		this.selectedCell.y = ClickedCell.y;
-	}
-
         async movePiece(pieceId: number, toX: number, toY: number) {
             await this.handleAsyncAction(async () => {
                 await updatePositionAPI(pieceId, toX, toY);
