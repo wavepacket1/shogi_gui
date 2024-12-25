@@ -104,31 +104,22 @@ export default defineComponent({
             return piece;
         }
 
-        const selectedPiece = ref<ShogiPiece | null>(null);
-
         const handleCellClick = (x: number, y: number) => {
             
 	const ClickedCell = { x, y }
-//
-//	if(boardStore.SelectedCell){
-//		boardStore.SetCell(ClickedCell)
-//		boardStore.movePiece(SelectedPiece.value.id, x, y);
-//		boardStore.SetCell(null);	
-//	} else {
-//		boardStore.SetCell(ClickedCell)
-//	};
+	const piece = getPiece(x, y)
+
+	if(boardStore.SelectedCell){
+		boardStore.SetCell(ClickedCell)
+		game_id = boardStore.game_id;
+		board_id = boardStore.board_id;
+		boardStore.movePiece(game_id, board_id, piece, x, y);
+		boardStore.SetCell(null);	
+	} else {
+		boardStore.SetCell(ClickedCell)
+	};
 }
 	    
-//const piece = getPiece(x, y);
-//            if (selectedPiece.value) {
-//                // 移動を試みる
-//                boardStore.movePiece(selectedPiece.value.id, x, y);
-//                selectedPiece.value = null;
-//            } else if (piece) {
-//                selectedPiece.value = piece;
-//            }
-//        };
-
         const fetchDefaultBoard = async () => {
             try {
                 isLoading.value = true;

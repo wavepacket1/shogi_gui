@@ -59,23 +59,17 @@ try {
             }
         },
 
-        findPiece(pieceId: number, x: number, y: number): ShogiPiece | undefined {
-		const piece = this.shogiData.board[y][x]
-		return this.shogiData.board[y][x] || undefined;
-        },
-
-        SetCell(pieceId: number, x: number, y: number) {
-            const piece = this.findPiece(pieceId, x, y);
+        SetCell(piece: string, x: number, y: number) {
             if (piece) {
 		this.selectedCell.x = ClickedCell.x;
 		this.selectedCell.y = ClickedCell.y;
             }
         },
     
-        async movePiece(pieceId: number, toX: number, toY: number) {
+        async movePiece(piece: string, X: number, Y: number) {
             await this.handleAsyncAction(async () => {
-                await updatePositionAPI(pieceId, toX, toY);
-                this.updatePosition(pieceId, toX, toY);
+                await updatePositionAPI(piece, X, Y);
+                this.updatePosition(piece, X, Y);
             }, '駒の移動に失敗しました');
         },
 
