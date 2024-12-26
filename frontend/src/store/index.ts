@@ -8,12 +8,6 @@ interface Game {
     status: string;
 }
 
-interface ShogiPiece {
-    id: number;
-    position_x: number;
-    position_y: number;
-}
-
 interface ShogiData {
     board: (ShogiPiece | null)[][];
     piecesInHand: Record<string, number>;
@@ -40,7 +34,7 @@ export const useBoardStore = defineStore('board', {
         active_player: null,
         board_id: null,
         isError: false, // エラーの有無を管理
-        game: null as any,
+        game_id: null,
 	SelectedCell: {x: null, y: null}
     }),
     actions: {
@@ -66,7 +60,7 @@ try {
             }
         },
     
-        async movePiece(piece: string, X: number, Y: number) {
+        async movePiece(game_id: string, board_id: number, piece: string,  X: number, Y: number) {
             await this.handleAsyncAction(async () => {
                 await updatePositionAPI(piece, X, Y);
                 this.updatePosition(piece, X, Y);
