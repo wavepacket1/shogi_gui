@@ -62,7 +62,10 @@ try {
     
         async movePiece(game_id: string, board_id: number, piece: string,  X: number, Y: number) {
             await this.handleAsyncAction(async () => {
-                await updatePositionAPI(game_id, board_id, X, Y);
+                response = await updatePositionAPI(game_id, board_id, X, Y);
+		data = await response.json();
+		this.shogiData.board = data.board;
+		this.shogiData.game = data.game;
             }, '駒の移動に失敗しました');
         },
 
