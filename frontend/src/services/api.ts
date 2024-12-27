@@ -39,7 +39,7 @@ export const createGameAPI = (name: string) => {
     });
 }
 
-export const updatePositionAPI = (board_id: number, game_id: number, move: string) => {
+export const updatePositionAPI = (board_id: number, game_id: number, x, y) => {
     return api.patch(`/games/${game_id}/boards/${board_id}/move`, { 
         move
     });

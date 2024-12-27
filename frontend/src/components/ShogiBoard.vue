@@ -113,7 +113,7 @@ export default defineComponent({
 		boardStore.SetCell(ClickedCell)
 		game_id = boardStore.game_id;
 		board_id = boardStore.board_id;
-		boardStore.movePiece(game_id, board_id, piece, x, y);
+		boardStore.movePiece(game_id, board_id, x, y);
 		boardStore.SetCell(null);	
 	} else {
 		boardStore.SetCell(ClickedCell)
