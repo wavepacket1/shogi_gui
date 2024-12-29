@@ -84,13 +84,15 @@ try {
             }, 'ゲームの作成に失敗しました');
         },
 
-        async getDefaultBoard() {
+        async fetchBoard() {
             await this.handleAsyncAction(async () => {
                 const response = await api.api.v1BoardsDefaultList();
                 const parsed = parseSFEN(response.data.sfen);
                 this.shogiData.board = parsed.board;
                 this.shogiData.piecesInHand = parsed.piecesInHand;
-            }, 'デフォルトボードの取得に失敗しました');
+                this.active_player = parsed.playerToMove;
+                this.step_number = parsed.moveCount;
+            }, 'ボードの取得に失敗しました');
         }
     }
 });
