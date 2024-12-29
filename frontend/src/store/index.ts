@@ -4,8 +4,9 @@ import { parseSFEN } from '@/utils/sfenParser';
 
 interface Game {
     id: number;
-    name: string;
+    name?: string;
     status: string;
+    board_id: number;
 }
 
 interface ShogiData {
@@ -20,11 +21,29 @@ interface BoardState {
     board_id: number | null;
     isError: boolean;
     game: Game | null;
+    selectedCell: {x: number|null, y: number|null};
+    game_id: number | null;
 }
 
 interface selectedCell {
 	x: number|null;
 	y: number|null;
+}
+
+export interface ShogiPiece {
+    piece_type: string;
+    promoted: boolean;
+    owner: 'b' | 'w';
+    id: number;
+    position_x: number;
+    position_y: number;
+}
+
+export interface ParsedSFEN {
+    board: (ShogiPiece | null)[][];
+    piecesInHand: Record<string, number>;
+    playerToMove: 'b' | 'w';
+    moveCount: number;
 }
 
 const api = new Api({ baseUrl: 'http://localhost:3000' });
@@ -37,34 +56,38 @@ export const useBoardStore = defineStore('board', {
         board_id: null,
         isError: false, // エラーの有無を管理
         game_id: null,
-	SelectedCell: {x: null, y: null}
+        selectedCell: {x: null, y: null},
+        game: null
     }),
     actions: {
-        async handleAsyncAction(asyncAction: () => Promise<void>, errorMessage?: string) {
+        async handleAsyncAction(asyncAction: () => Promise<void>, errorMessage: string = 'エラーが発生しました') {
             this.isError = false;
-
-try {
+            try {
                 await asyncAction();
             } catch (error: unknown) {
                 if(error instanceof Error) {
-                    console.error(errorMessage || 'エラーが発生しました', error.message);
+                    console.error(errorMessage, error.message);
                 } else {
-                    console.error(errorMessage || '未知のエラーが発生しました', error);
+                    console.error(errorMessage, error);
                 }
                 this.isError = true;
             }
         },
 
-        SetCell(piece: string, x: number, y: number) {
-            if (piece) {
-                this.selectedCell.x = ClickedCell.x;
-                this.selectedCell.y = ClickedCell.y;
+        SetCell(clickedCell: {x: number, y: number} | null) {
+            if (clickedCell) {
+                this.selectedCell.x = clickedCell.x;
+                this.selectedCell.y = clickedCell.y;
+            } else {
+                this.selectedCell.x = null;
+                this.selectedCell.y = null;
             }
         },
     
-        async movePiece(game_id: string, board_id: number,  X: number, Y: number) {
+        async movePiece(game_id: number, board_id: number, X: number, Y: number) {
             await this.handleAsyncAction(async () => {
                 const response = await api.api.v1GamesBoardsMovePartialUpdate(game_id, board_id, { move: `${X}${Y}` });
+                if (!response.data.sfen) throw new Error('SFEN data is missing');
                 const parsed = parseSFEN(response.data.sfen);
                 this.shogiData.board = parsed.board;
                 this.shogiData.piecesInHand = parsed.piecesInHand;
@@ -74,7 +97,14 @@ try {
         async createGame() {
             await this.handleAsyncAction(async () => {
                 const response = await api.api.v1GamesCreate({ status: 'active' });
-                this.game = response.data;
+                if (!response.data.id || !response.data.status || !response.data.board_id || !response.data.sfen) {
+                    throw new Error('Invalid game data');
+                }
+                this.game = {
+                    id: response.data.id,
+                    status: response.data.status,
+                    board_id: response.data.board_id
+                };
                 this.board_id = response.data.board_id;
                 const parsed = parseSFEN(response.data.sfen);
                 this.shogiData.board = parsed.board;

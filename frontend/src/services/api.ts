@@ -293,13 +293,12 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     ) =>
       this.request<
         {
-          /** @example 1 */
           id?: number;
-          /** @example "active" */
           status?: string;
+          board_id?: number;
+          sfen?: string;
         },
         {
-          /** @example "Validation failed" */
           error?: string;
         }
       >({

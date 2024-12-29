@@ -1,7 +1,12 @@
+import type { ParsedSFEN } from '@/store';
+
 export interface ShogiPiece {
     piece_type: string;
     promoted: boolean;
     owner: 'b' | 'w';
+    id: number;
+    position_x: number;
+    position_y: number;
 }
 
 export type ShogiBoard = (ShogiPiece | null)[][];
@@ -13,16 +18,20 @@ export interface ShogiSFEN {
     moveCount: number;
 }
 
-export const parseSFEN = (sfen: string): ShogiSFEN | null => {
+export function parseSFEN(sfen: string): ParsedSFEN {
     const parts = sfen.split(' ');
-    if (parts.length < 4) return null;
+    if (parts.length < 4) {
+        throw new Error('Invalid SFEN format');
+    }
 
     const [boardPart, playerToMove, piecesInHandPart, moveCountPart] = parts;
 
     const board: ShogiBoard = Array.from({ length: 9 }, () => Array(9).fill(null));
 
     const rows = boardPart.split('/');
-    if (rows.length !== 9) return null;
+    if (rows.length !== 9) {
+        throw new Error('Invalid SFEN board format');
+    }
 
     rows.forEach((row, y) => {
         let x = 0;
@@ -39,7 +48,14 @@ export const parseSFEN = (sfen: string): ShogiSFEN | null => {
                     piece_type = row[i];
                 }
                 const owner = piece_type === piece_type.toUpperCase() ? 'b' : 'w';
-                board[y][x] = { piece_type, promoted, owner};
+                board[y][x] = { 
+                    piece_type, 
+                    promoted, 
+                    owner,
+                    id: 0,
+                    position_x: x,
+                    position_y: y
+                };
                 x++;
             }
         }
@@ -70,4 +86,4 @@ export const parseSFEN = (sfen: string): ShogiSFEN | null => {
         piecesInHand,
         moveCount,
     };
-};
+}
