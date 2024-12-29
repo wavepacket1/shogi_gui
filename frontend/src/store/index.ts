@@ -2,19 +2,19 @@ import { defineStore } from 'pinia';
 import { Api } from '@/services/api';
 import { parseSFEN } from '@/utils/sfenParser';
 
-interface Game {
+export interface Game {
     id: number;
     name?: string;
     status: string;
     board_id: number;
 }
 
-interface ShogiData {
+export interface ShogiData {
     board: (ShogiPiece | null)[][];
     piecesInHand: Record<string, number>;
 }
 
-interface BoardState {
+export interface BoardState {
     shogiData: ShogiData;
     step_number: number;
     active_player: 'b' | 'w' | null;
@@ -25,7 +25,7 @@ interface BoardState {
     game_id: number | null;
 }
 
-interface selectedCell {
+export interface selectedCell {
 	x: number|null;
 	y: number|null;
 }

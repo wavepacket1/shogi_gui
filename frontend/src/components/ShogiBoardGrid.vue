@@ -21,15 +21,7 @@
 import { defineComponent } from 'vue';
 import type { PropType } from 'vue';
 import { pieceMapper } from '@/utils/pieceMapper';
-
-interface ShogiPiece {
-    piece_type: string;
-    promoted: boolean;
-    owner: 'b' | 'w';
-    id: number;
-    position_x: number;
-    position_y: number;
-}
+import type { ShogiPiece } from '@/store';
 
 export default defineComponent({
     name: 'ShogiBoardGrid',

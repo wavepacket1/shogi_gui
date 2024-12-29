@@ -46,7 +46,8 @@ export default defineComponent({
         const handleCellClick = (x: number, y: number) => {
             const clickedCell = { x, y };
             
-            if (boardStore.SelectedCell) {
+            if (boardStore.selectedCell) {
+                if (boardStore.game_id === null || boardStore.board_id === null) return;
                 boardStore.SetCell(clickedCell);
                 boardStore.movePiece(boardStore.game_id, boardStore.board_id, x, y);
                 boardStore.SetCell(null);
