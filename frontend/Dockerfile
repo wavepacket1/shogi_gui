@@ -3,11 +3,13 @@ FROM node:18
 # 作業ディレクトリの設定
 WORKDIR /app
 
-# パッケージのインストール
+# package.jsonとpackage-lock.jsonをコピー
 COPY package*.json ./
+
+# 依存関係のインストール
 RUN npm install
 
-# アプリケーションコードをコピー
+# その他のファイルをコピー
 COPY . .
 
 # ポートの公開
