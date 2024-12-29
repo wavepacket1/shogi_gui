@@ -19,7 +19,7 @@ export default defineComponent({
             required: true,
         },
     },
-    setup(props) {
+    setup() {
         return {
             pieceMapper,
         };

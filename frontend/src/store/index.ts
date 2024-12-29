@@ -46,6 +46,14 @@ export interface ParsedSFEN {
     moveCount: number;
 }
 
+interface GameResponse {
+    [key: string]: unknown;
+    id?: number;
+    status?: string;
+    board_id?: number;
+    sfen?: string;
+}
+
 const api = new Api({ baseUrl: 'http://localhost:3000' });
 
 export const useBoardStore = defineStore('board', {
@@ -86,32 +94,80 @@ export const useBoardStore = defineStore('board', {
     
         async movePiece(game_id: number, board_id: number, X: number, Y: number) {
             await this.handleAsyncAction(async () => {
-                const response = await api.api.v1GamesBoardsMovePartialUpdate(game_id, board_id, { move: `${X}${Y}` });
-                if (!response.data.sfen) throw new Error('SFEN data is missing');
+                if (this.selectedCell.x === null || this.selectedCell.y === null) {
+                    throw new Error('No piece selected');
+                }
+
+                const convertPosition = (x: number, y: number) => ({
+                    x: 9 - x,
+                    y: String.fromCharCode(97 + y) // 'a'-'i' for 1-9
+                });
+                
+                const from = convertPosition(this.selectedCell.x, this.selectedCell.y);
+                const to = convertPosition(X, Y);
+                const usiMove = `${from.x}${from.y}${to.x}${to.y}`;
+
+                const response = await api.api.v1GamesBoardsMovePartialUpdate(
+                    game_id, 
+                    board_id, 
+                    { move: usiMove }
+                );
+
+                if (!response.data.sfen) {
+                    throw new Error('SFEN data is missing');
+                }
+
                 const parsed = parseSFEN(response.data.sfen);
                 this.shogiData.board = parsed.board;
                 this.shogiData.piecesInHand = parsed.piecesInHand;
+                this.SetCell(null); // 選択状態をリセット
             }, '駒の移動に失敗しました');
         },
 
         async createGame() {
             await this.handleAsyncAction(async () => {
+                // ゲームの作成
                 const response = await api.api.v1GamesCreate({ status: 'active' });
-                if (!response.data.id || !response.data.status || !response.data.board_id || !response.data.sfen) {
-                    throw new Error('Invalid game data');
+                const data = response.data as GameResponse;
+                
+                // レスポンスの検証
+                const requiredFields = ['id', 'status', 'board_id', 'sfen'];
+                if (requiredFields.some(field => !data[field])) {
+                    throw new Error('Invalid game data: Missing required fields');
                 }
-                this.game = {
-                    id: response.data.id,
-                    status: response.data.status,
-                    board_id: response.data.board_id
-                };
-                this.board_id = response.data.board_id;
-                const parsed = parseSFEN(response.data.sfen);
-                this.shogiData.board = parsed.board;
-                this.shogiData.piecesInHand = parsed.piecesInHand;
-                this.active_player = parsed.playerToMove;
-                this.step_number = parsed.moveCount;
+
+                // ゲーム情報の更新
+                if (!data.id || !data.status || !data.board_id) {
+                    throw new Error('Invalid game data: Missing required fields');
+                }
+
+                this.updateGameState({
+                    id: data.id as number,
+                    status: data.status as string,
+                    board_id: data.board_id as number
+                });
+
+                // 将棋盤の状態を更新
+                if (!data.sfen) {
+                    throw new Error('Invalid game data: Missing SFEN data');
+                }
+
+                this.updateBoardState(data.sfen!);
             }, 'ゲームの作成に失敗しました');
+        },
+
+        // ヘルパーメソッド
+        updateGameState(gameData: Pick<Game, 'id' | 'status' | 'board_id'>) {
+            this.game = gameData;
+            this.board_id = gameData.board_id;
+        },
+
+        updateBoardState(sfen: string) {
+            const parsed = parseSFEN(sfen);
+            this.shogiData.board = parsed.board;
+            this.shogiData.piecesInHand = parsed.piecesInHand;
+            this.active_player = parsed.playerToMove;
+            this.step_number = parsed.moveCount;
         },
 
         async fetchBoard() {
