@@ -1,8 +1,8 @@
 <template>
-    <div> 手数 {{  getStepNumber }}</div>
+    <div> 手数 {{ getStepNumber }}</div>
     <div> 手番 {{ getOwner }}</div>
 
-    <div class = "shogi-container">
+    <div class="shogi-container">
         <div class="pieces-in-hand pieces-in-hand-top">
             <div v-for="(count, piece) in piecesInHandW" :key="piece" class="piece">
                 {{ pieceMapper[piece] }} x{{ count }}
@@ -10,24 +10,16 @@
         </div>
 
         <div class="shogi-board">
-            <div
-            v-for="y in Array.from({ length: 9 }, (_, i) => i)"
-            :key="'row-' + y"
-            class="shogi-row"
-            >
+            <div v-for="y in Array.from({ length: 9 }, (_, i) => i)" :key="'row-' + y" class="shogi-row">
                 <div
-                v-for="x in Array.from({ length: 9 }, (_, i) => i)"
-                :key="'cell-' + x + '-' + y"
-                class="shogi-cell"
-                :data-x="x"
-                :data-y="y"
-                @click="handleCellClick(x, y)"
+                    v-for="x in Array.from({ length: 9 }, (_, i) => i)"
+                    :key="'cell-' + x + '-' + y"
+                    class="shogi-cell"
+                    :data-x="x"
+                    :data-y="y"
+                    @click="handleCellClick(x, y)"
                 >
-                    <span
-                        v-if="getPiece(x, y)"
-                        :class="['shogi-piece', getPiece(x, y).owner]"
-                        :data-id="getPiece(x, y).id"
-                    >
+                    <span v-if="getPiece(x, y)" :class="['shogi-piece', getPiece(x, y).owner]" :data-id="getPiece(x, y).id">
                         {{ getJapanesePiece(getPiece(x, y)) }}
                     </span>
                 </div>
@@ -55,12 +47,6 @@ interface ShogiPiece {
     position_x: number;
     position_y: number;
 }
-
-interface Cell {
-	x: number;
-	y: number;
-} 
-
 
 export default defineComponent({
     name: 'ShogiBoard',
@@ -100,26 +86,24 @@ export default defineComponent({
         });
 
         const getPiece = (x: number, y: number): ShogiPiece | null => {
-            const piece = boardStore.shogiData.board[y][x]
-            return piece;
-        }
+            return boardStore.shogiData.board[y][x];
+        };
 
         const handleCellClick = (x: number, y: number) => {
-            
-	const ClickedCell = { x, y }
-	const piece = getPiece(x, y)
+            const clickedCell = { x, y };
+            const piece = getPiece(x, y);
 
-	if(boardStore.SelectedCell){
-		boardStore.SetCell(ClickedCell)
-		const game_id = boardStore.game_id;
-		const board_id = boardStore.board_id;
-		boardStore.movePiece(game_id, board_id, x, y);
-		boardStore.SetCell(null);	
-	} else {
-		boardStore.SetCell(ClickedCell)
-	};
-}
-	    
+            if (boardStore.SelectedCell) {
+                boardStore.SetCell(clickedCell);
+                const game_id = boardStore.game_id;
+                const board_id = boardStore.board_id;
+                boardStore.movePiece(game_id, board_id, x, y);
+                boardStore.SetCell(null);
+            } else {
+                boardStore.SetCell(clickedCell);
+            }
+        };
+
         const fetchDefaultBoard = async () => {
             try {
                 isLoading.value = true;
@@ -132,17 +116,9 @@ export default defineComponent({
             }
         };
 
-        const getStepNumber = computed(() => {
-            if (boardStore.game !== null) {
-                return boardStore.step_number;
-            }
-        });
+        const getStepNumber = computed(() => boardStore.step_number);
 
-        const getOwner = computed(() => {
-            if (boardStore.game !== null) {
-                return boardStore.active_player==='b' ? '先手' : '後手';
-            }
-        });
+        const getOwner = computed(() => (boardStore.active_player === 'b' ? '先手' : '後手'));
 
         onMounted(() => {
             fetchDefaultBoard();
@@ -159,7 +135,7 @@ export default defineComponent({
             getPiece,
             getStepNumber,
             handleCellClick,
-            getOwner
+            getOwner,
         };
     },
 });
@@ -188,7 +164,6 @@ export default defineComponent({
     order: 3;
 }
 
-/* 既存のスタイルを維持 */
 .shogi-board {
     order: 2;
     display: grid;
