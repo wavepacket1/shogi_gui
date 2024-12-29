@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import { createGameAPI, updatePositionAPI, getDefaultBoardAPI } from '@/services/api';
+import { Api } from '@/services/api';
 import { parseSFEN } from '@/utils/sfenParser';
 
 interface Game {
@@ -26,6 +26,8 @@ interface selectedCell {
 	x: number|null;
 	y: number|null;
 }
+
+const api = new Api({ baseUrl: 'http://localhost:3000' });
 
 export const useBoardStore = defineStore('board', {
     state: (): BoardState => ({
@@ -55,27 +57,26 @@ try {
 
         SetCell(piece: string, x: number, y: number) {
             if (piece) {
-		this.selectedCell.x = ClickedCell.x;
-		this.selectedCell.y = ClickedCell.y;
+                this.selectedCell.x = ClickedCell.x;
+                this.selectedCell.y = ClickedCell.y;
             }
         },
     
         async movePiece(game_id: string, board_id: number,  X: number, Y: number) {
             await this.handleAsyncAction(async () => {
-                response = await updatePositionAPI(game_id, board_id, X, Y);
-		data = await response.json();
-		const parsed = parseSFEN(data.board.sfen);
-		this.shogiData.board = parsed.board;
-		this.shogiData.game = parsed.game;
+                const response = await api.api.v1GamesBoardsMovePartialUpdate(game_id, board_id, { move: `${X}${Y}` });
+                const parsed = parseSFEN(response.data.sfen);
+                this.shogiData.board = parsed.board;
+                this.shogiData.piecesInHand = parsed.piecesInHand;
             }, '駒の移動に失敗しました');
         },
 
         async createGame() {
             await this.handleAsyncAction(async () => {
-                const response = await createGameAPI('新しいゲーム');
-                this.game = response.data.game;
-                this.board_id = response.data.board.id;
-                const parsed = parseSFEN(response.data.board.sfen);
+                const response = await api.api.v1GamesCreate({ status: 'active' });
+                this.game = response.data;
+                this.board_id = response.data.board_id;
+                const parsed = parseSFEN(response.data.sfen);
                 this.shogiData.board = parsed.board;
                 this.shogiData.piecesInHand = parsed.piecesInHand;
                 this.active_player = parsed.playerToMove;
@@ -85,8 +86,8 @@ try {
 
         async getDefaultBoard() {
             await this.handleAsyncAction(async () => {
-                const response = await getDefaultBoardAPI();
-                const parsed = parseSFEN(response.sfen);
+                const response = await api.api.v1BoardsDefaultList();
+                const parsed = parseSFEN(response.data.sfen);
                 this.shogiData.board = parsed.board;
                 this.shogiData.piecesInHand = parsed.piecesInHand;
             }, 'デフォルトボードの取得に失敗しました');

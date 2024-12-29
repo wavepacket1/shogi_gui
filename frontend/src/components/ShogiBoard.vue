@@ -111,8 +111,8 @@ export default defineComponent({
 
 	if(boardStore.SelectedCell){
 		boardStore.SetCell(ClickedCell)
-		game_id = boardStore.game_id;
-		board_id = boardStore.board_id;
+		const game_id = boardStore.game_id;
+		const board_id = boardStore.board_id;
 		boardStore.movePiece(game_id, board_id, x, y);
 		boardStore.SetCell(null);	
 	} else {
