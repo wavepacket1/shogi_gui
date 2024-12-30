@@ -1,7 +1,7 @@
 <template>
     <div class="pieces-in-hand">
-        <div v-for="(count, piece) in pieces" :key="piece" class="piece-container">
-            <div class="piece-shape" :class="{ 'gote': isGote }">
+        <div v-for="(count, piece) in pieces" :key="piece" class="piece-container" @click="() => $emit('piece-click', piece)">
+            <div class="piece-shape" :class="{ 'gote': isGote, 'selected': selectedPiece === piece }">
                 <div class="piece-symbol">{{ pieceMapper[piece] }}</div>
                 <div class="piece-count" v-if="count > 1">{{ count }}</div>
             </div>
@@ -24,11 +24,21 @@ export default defineComponent({
         isGote: {
             type: Boolean,
             default: false
+        },
+        selectedPiece: {
+            type: String,
+            default: undefined
         }
     },
-    setup() {
+    emits: ['piece-click'],
+    setup(props, { emit }) {
+        const handlePieceClick = (piece: string) => {
+            emit('piece-click', piece);
+        };
+
         return {
             pieceMapper,
+            handlePieceClick
         };
     },
 });
@@ -153,5 +163,32 @@ export default defineComponent({
 
 .piece-shape.gote .piece-count {
     transform: rotate(180deg);
+}
+
+.piece-shape.selected {
+    background: 
+        repeating-linear-gradient(
+            -65deg,
+            #E4C38B 0px,
+            #E4C38B 4px,
+            #D4B375 4px,
+            #D4B375 8px
+        ),
+        linear-gradient(
+            155deg,
+            #F4D39B 0%,
+            #D4B375 45%,
+            #C4A365 80%,
+            #B39355 100%
+        );
+    box-shadow: 
+        0 0 0 2px #FFD700,
+        0 2px 4px rgba(0, 0, 0, 0.2),
+        inset 0 1px 3px rgba(255, 255, 255, 0.6);
+}
+
+.piece-shape:hover {
+    cursor: pointer;
+    filter: brightness(1.1);
 }
 </style>

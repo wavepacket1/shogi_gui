@@ -9,6 +9,8 @@
             class="pieces-in-hand-top" 
             :pieces="piecesInHandW"
             :isGote="true"
+            :selectedPiece="selectedHandPiece"
+            @piece-click="handlePieceClick"
         />
 
         <ShogiBoardGrid 
@@ -21,6 +23,8 @@
             class="pieces-in-hand-bottom" 
             :pieces="piecesInHandB"
             :isGote="false"
+            :selectedPiece="selectedHandPiece"
+            @piece-click="handlePieceClick"
         />
     </div>
 
@@ -50,6 +54,7 @@ export default defineComponent({
         const errorMessage = ref('');
         const showPromotionModal = ref(false);
         const pendingMove = ref<{x: number, y: number} | null>(null);
+        const selectedHandPiece = ref<string | undefined>(undefined);
 
         const getStepNumber = computed(() => boardStore.step_number);
 
@@ -88,6 +93,25 @@ export default defineComponent({
             return isInPromotionZone;
         };
 
+        const handlePieceClick = (piece: string) => {
+            // 先手の場合は大文字の駒のみ、後手の場合は小文字の駒のみ選択可能
+            const isUpperCase = piece === piece.toUpperCase();
+            if ((boardStore.active_player === 'b' && !isUpperCase) || 
+                (boardStore.active_player === 'w' && isUpperCase)) {
+                return; // 相手の持ち駒は選択できない
+            }
+            
+            // 既に選択されている駒をクリックした場合は選択解除
+            if (selectedHandPiece.value === piece) {
+                selectedHandPiece.value = undefined;
+                boardStore.SetCell(null);
+                return;
+            }
+
+            selectedHandPiece.value = piece;
+            boardStore.SetCell(null); // 盤面の選択を解除
+        };
+
         const handleCellClick = async (x: number, y: number) => {
             try {
                 if (!boardStore.game?.id || !boardStore.board_id) {
@@ -123,6 +147,7 @@ export default defineComponent({
             } catch (error) {
                 console.error('Error in handleCellClick:', error);
                 boardStore.SetCell(null);
+                selectedHandPiece.value = undefined;
             }
         };
 
@@ -176,6 +201,8 @@ export default defineComponent({
             initializeGame,
             showPromotionModal,
             handlePromotion,
+            handlePieceClick,
+            selectedHandPiece,
         };
     },
 });

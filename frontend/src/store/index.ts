@@ -204,6 +204,15 @@ export const useBoardStore = defineStore('board', {
             this.shogiData.piecesInHand = parsed.piecesInHand;
             this.active_player = parsed.playerToMove;
             this.step_number = parsed.moveCount;
+        },
+
+        async dropPiece(game_id: number, board_id: number, piece: string, x: number, y: number) {
+            await this.handleAsyncAction(async () => {
+                const pos = this._convertPosition(x, y);
+                const usiMove = `${piece}*${pos.x}${pos.y}`;
+                const response = await this._executeMove(game_id, board_id, usiMove);
+                await this._updateGameStateFromResponse(response);
+            }, '駒を打つことができませんでした');
         }
     }
 });
