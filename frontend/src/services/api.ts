@@ -230,7 +230,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Boards
-     * @name v1BoardsDetail
+     * @name V1BoardsDetail
      * @summary ボードの取得
      * @request GET:/api/v1/boards/{id}
      */
@@ -255,7 +255,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Boards
-     * @name v1BoardsDefaultList
+     * @name V1BoardsDefaultList
      * @summary デフォルトボードの取得
      * @request GET:/api/v1/boards/default
      */
@@ -277,7 +277,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Games
-     * @name v1GamesCreate
+     * @name V1GamesCreate
      * @summary ゲーム作成
      * @request POST:/api/v1/games
      */
@@ -293,12 +293,13 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     ) =>
       this.request<
         {
+          /** @example 1 */
           id?: number;
+          /** @example "active" */
           status?: string;
-          board_id?: number;
-          sfen?: string;
         },
         {
+          /** @example "Validation failed" */
           error?: string;
         }
       >({
@@ -314,7 +315,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Moves
-     * @name v1GamesBoardsMovePartialUpdate
+     * @name V1GamesBoardsMovePartialUpdate
      * @summary 駒の移動API
      * @request PATCH:/api/v1/games/{game_id}/boards/{board_id}/move
      */

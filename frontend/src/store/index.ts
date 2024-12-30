@@ -47,11 +47,8 @@ export interface ParsedSFEN {
 }
 
 interface GameResponse {
-    [key: string]: unknown;
     id?: number;
     status?: string;
-    board_id?: number;
-    sfen?: string;
 }
 
 const api = new Api({ baseUrl: 'http://localhost:3000' });
@@ -126,33 +123,33 @@ export const useBoardStore = defineStore('board', {
 
         async createGame() {
             await this.handleAsyncAction(async () => {
-                // ゲームの作成
                 const response = await api.api.v1GamesCreate({ status: 'active' });
+                console.log('Game creation response:', response.data); // デバッグ用
+
                 const data = response.data as GameResponse;
                 
-                // レスポンスの検証
-                const requiredFields = ['id', 'status', 'board_id', 'sfen'];
-                if (requiredFields.some(field => !data[field])) {
+                if (!data.id || !data.status) {
                     throw new Error('Invalid game data: Missing required fields');
                 }
+
+                // game_idを設定
+                this.game_id = data.id;  // この行を追加
 
                 // ゲーム情報の更新
-                if (!data.id || !data.status || !data.board_id) {
-                    throw new Error('Invalid game data: Missing required fields');
-                }
-
                 this.updateGameState({
-                    id: data.id as number,
-                    status: data.status as string,
-                    board_id: data.board_id as number
+                    id: data.id,
+                    status: data.status,
+                    board_id: data.id  // 一時的にidを使用
+                });
+
+                console.log('Game state after update:', {  // デバッグ用
+                    game_id: this.game_id,
+                    board_id: this.board_id,
+                    game: this.game
                 });
 
                 // 将棋盤の状態を更新
-                if (!data.sfen) {
-                    throw new Error('Invalid game data: Missing SFEN data');
-                }
-
-                this.updateBoardState(data.sfen!);
+                await this.fetchBoard();
             }, 'ゲームの作成に失敗しました');
         },
 

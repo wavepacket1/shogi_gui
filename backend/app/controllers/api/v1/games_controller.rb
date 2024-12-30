@@ -6,23 +6,21 @@ module Api
       def create
         @game = Game.new(game_params)
 
-        if @game.save
+        @game.errors.add(:status, "can't be blank") if game_params[:status].blank?
+        
+        if @game.errors.empty? && @game.save
           @board = @game.create_board!
           render json: {
-            status: 'success',
-            data: {
-              game: @game,
-              board: @board
-            }
+            id: @game.id,
+            status: @game.status
           }, status: :created
         else
           render json: {
-            status: 'error',
-            message: @game.errors.full_messages.join(', ')
+            error: @game.errors.full_messages.join(', ')
           }, status: :unprocessable_entity
         end
       rescue ActiveRecord::RecordInvalid => e
-        render json: { status: 'error', message: e.message }, status: :unprocessable_entity
+        render json: { error: e.message }, status: :unprocessable_entity
       end
 
       def show

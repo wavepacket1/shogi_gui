@@ -43,16 +43,58 @@ export default defineComponent({
 
         const getOwner = computed(() => (boardStore.active_player === 'b' ? '先手' : '後手'));
 
-        const handleCellClick = (x: number, y: number) => {
-            const clickedCell = { x, y };
-            
-            if (boardStore.selectedCell) {
-                if (boardStore.game_id === null || boardStore.board_id === null) return;
-                boardStore.SetCell(clickedCell);
-                boardStore.movePiece(boardStore.game_id, boardStore.board_id, x, y);
-                boardStore.SetCell(null);
-            } else {
-                boardStore.SetCell(clickedCell);
+        const initializeGame = async () => {
+            try {
+                isLoading.value = true;
+                await boardStore.createGame();  // ゲームを作成
+                console.log('Game initialized:', {  // デバッグ用
+                    game_id: boardStore.game_id,
+                    board_id: boardStore.board_id
+                });
+            } catch (error) {
+                errorMessage.value = 'ゲームの初期化に失敗しました';
+                console.error('Error initializing game:', error);
+            } finally {
+                isLoading.value = false;
+            }
+        };
+
+        const handleCellClick = async (x: number, y: number) => {
+            try {
+                if (!boardStore.game_id || !boardStore.board_id) {
+                    console.error('Game not initialized:', {
+                        game_id: boardStore.game_id,
+                        board_id: boardStore.board_id
+                    });
+                    await initializeGame();  // ゲームが初期化されていない場合は初期化を試みる
+                    return;
+                }
+
+                const clickedCell = { x, y };
+                
+                // 駒が選択されていない場合
+                if (boardStore.selectedCell.x === null || boardStore.selectedCell.y === null) {
+                    boardStore.SetCell(clickedCell);
+                    return;
+                }
+
+                // 同じマスをクリックした場合は選択解除
+                if (boardStore.selectedCell.x === x && boardStore.selectedCell.y === y) {
+                    boardStore.SetCell(null);
+                    return;
+                }
+
+                // 必要な値のチェック
+                if (boardStore.game_id === null || boardStore.board_id === null) {
+                    console.error('game_id or board_id is null');
+                    return;
+                }
+
+                // 駒の移動
+                await boardStore.movePiece(boardStore.game_id, boardStore.board_id, x, y);
+                boardStore.SetCell(null);  // 移動後に選択を解除
+            } catch (error) {
+                console.error('Error in handleCellClick:', error);
             }
         };
 
@@ -68,8 +110,8 @@ export default defineComponent({
             }
         };
 
-        onMounted(() => {
-            fetchDefaultBoard();
+        onMounted(async () => {
+            await initializeGame();  // コンポーネントマウント時にゲームを初期化
         });
 
         return {
@@ -100,6 +142,7 @@ export default defineComponent({
             getStepNumber,
             handleCellClick,
             getOwner,
+            initializeGame,
         };
     },
 });
