@@ -28,7 +28,6 @@ export interface BoardState {
     isError: boolean;
     game: Game | null;
     selectedCell: {x: number|null, y: number|null};
-    game_id: number | null;
 }
 
 export interface selectedCell {
@@ -56,6 +55,7 @@ interface GameResponse {
     game_id?: number;
     status?: string;
     board_id?: number;
+    sfen?: string;
 }
 
 export const useBoardStore = defineStore('board', {
@@ -64,10 +64,9 @@ export const useBoardStore = defineStore('board', {
         step_number: 0,
         active_player: null,
         board_id: null,
-        isError: false, // エラーの有無を管理
-        game_id: null,
+        isError: false,
+        game: null,
         selectedCell: {x: null, y: null},
-        game: null
     }),
     actions: {
         async handleAsyncAction(asyncAction: () => Promise<void>, errorMessage: string = 'エラーが発生しました') {
@@ -122,6 +121,9 @@ export const useBoardStore = defineStore('board', {
                 const parsed = parseSFEN(response.data.sfen);
                 this.shogiData.board = parsed.board;
                 this.shogiData.piecesInHand = parsed.piecesInHand;
+                this.active_player = parsed.playerToMove;
+                this.step_number = parsed.moveCount;
+            
                 this.SetCell(null); // 選択状態をリセット
             }, '駒の移動に失敗しました');
         },
@@ -129,28 +131,25 @@ export const useBoardStore = defineStore('board', {
         async createGame() {
             await this.handleAsyncAction(async () => {
                 const response = await gamesApi.apiV1GamesPost({ status: 'active' });
-                console.log('Game creation response:', response.data); // デバッグ用
+                console.log('API Response:', response.data);
 
                 const data = response.data as GameResponse;
                 
                 if (!data.game_id || !data.status || !data.board_id) {
+                    console.log('Missing fields:', {
+                        game_id: data.game_id,
+                        status: data.status,
+                        board_id: data.board_id
+                    });
                     throw new Error('Invalid game data: Missing required fields');
                 }
 
-                this.game_id = data.game_id;
                 this.updateGameState({
                     id: data.game_id,
                     status: data.status,
                     board_id: data.board_id
                 });
 
-                console.log('Game state after update:', {  // デバッグ用
-                    game_id: this.game_id,
-                    board_id: this.board_id,
-                    game: this.game
-                });
-
-                // 将棋盤の状態を更新
                 await this.fetchBoard();
             }, 'ゲームの作成に失敗しました');
         },
@@ -161,14 +160,6 @@ export const useBoardStore = defineStore('board', {
             this.board_id = gameData.board_id;
         },
 
-        updateBoardState(sfen: string) {
-            const parsed = parseSFEN(sfen);
-            this.shogiData.board = parsed.board;
-            this.shogiData.piecesInHand = parsed.piecesInHand;
-            this.active_player = parsed.playerToMove;
-            this.step_number = parsed.moveCount;
-        },
-
         async fetchBoard() {
             await this.handleAsyncAction(async () => {
                 const response = await boardsApi.apiV1BoardsDefaultGet();
@@ -177,6 +168,7 @@ export const useBoardStore = defineStore('board', {
                 this.shogiData.piecesInHand = parsed.piecesInHand;
                 this.active_player = parsed.playerToMove;
                 this.step_number = parsed.moveCount;
+                console.log(this.step_number);
             }, 'ボードの取得に失敗しました');
         }
     }

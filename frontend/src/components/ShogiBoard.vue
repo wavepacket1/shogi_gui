@@ -47,8 +47,8 @@ export default defineComponent({
             try {
                 isLoading.value = true;
                 await boardStore.createGame();  // ゲームを作成
-                console.log('Game initialized:', {  // デバッグ用
-                    game_id: boardStore.game_id,
+                console.log('Game initialized:', {
+                    game_id: boardStore.game?.id,
                     board_id: boardStore.board_id
                 });
             } catch (error) {
@@ -61,9 +61,9 @@ export default defineComponent({
 
         const handleCellClick = async (x: number, y: number) => {
             try {
-                if (!boardStore.game_id || !boardStore.board_id) {
+                if (!boardStore.game?.id || !boardStore.board_id) {
                     console.error('Game not initialized:', {
-                        game_id: boardStore.game_id,
+                        game_id: boardStore.game?.id,
                         board_id: boardStore.board_id
                     });
                     await initializeGame();  // ゲームが初期化されていない場合は初期化を試みる
@@ -85,13 +85,13 @@ export default defineComponent({
                 }
 
                 // 必要な値のチェック
-                if (boardStore.game_id === null || boardStore.board_id === null) {
+                if (!boardStore.game?.id || !boardStore.board_id) {
                     console.error('game_id or board_id is null');
                     return;
                 }
 
                 // 駒の移動
-                await boardStore.movePiece(boardStore.game_id, boardStore.board_id, x, y);
+                await boardStore.movePiece(boardStore.game.id, boardStore.board_id, x, y);
                 boardStore.SetCell(null);  // 移動後に選択を解除
             } catch (error) {
                 console.error('Error in handleCellClick:', error);
