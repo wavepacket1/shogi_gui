@@ -23,6 +23,11 @@
             :isGote="false"
         />
     </div>
+
+    <PromotionModal 
+        :is-open="showPromotionModal"
+        @promote="handlePromotion"
+    />
 </template>
 
 <script lang="ts">
@@ -30,17 +35,21 @@ import { defineComponent, ref, onMounted, computed } from 'vue';
 import { useBoardStore } from '@/store';
 import PiecesInHand from './PiecesInHand.vue';
 import ShogiBoardGrid from './ShogiBoardGrid.vue';
+import PromotionModal from './PromotionModal.vue';
 
 export default defineComponent({
     name: 'ShogiBoard',
     components: {
         PiecesInHand,
         ShogiBoardGrid,
+        PromotionModal
     },
     setup() {
         const boardStore = useBoardStore();
         const isLoading = ref(true);
         const errorMessage = ref('');
+        const showPromotionModal = ref(false);
+        const pendingMove = ref<{x: number, y: number} | null>(null);
 
         const getStepNumber = computed(() => boardStore.step_number);
 
@@ -62,13 +71,26 @@ export default defineComponent({
             }
         };
 
+        const canPromote = (fromY: number, toY: number, piece: any) => {
+            // 成れる条件をチェック
+            const isInPromotionZone = (
+                (piece.owner === 'b' && (toY <= 2 || fromY <= 2)) ||
+                (piece.owner === 'w' && (toY >= 6 || fromY >= 6))
+            );
+            
+            // 既に成っている駒は除外
+            if (piece.promoted) return false;
+
+            // 成れない駒（金将、玉将）は除外
+            const cantPromotePieces = ['G', 'K'];
+            if (cantPromotePieces.includes(piece.piece_type.toUpperCase())) return false;
+
+            return isInPromotionZone;
+        };
+
         const handleCellClick = async (x: number, y: number) => {
             try {
                 if (!boardStore.game?.id || !boardStore.board_id) {
-                    console.error('Game not initialized:', {
-                        game: boardStore.game,
-                        board_id: boardStore.board_id
-                    });
                     await initializeGame();
                     return;
                 }
@@ -79,7 +101,6 @@ export default defineComponent({
                 if (boardStore.selectedCell.x === null || boardStore.selectedCell.y === null) {
                     if (currentPiece && currentPiece.owner === boardStore.active_player) {
                         boardStore.SetCell(clickedCell);
-                        console.log('Selected piece:', currentPiece);
                     }
                     return;
                 }
@@ -89,12 +110,35 @@ export default defineComponent({
                     return;
                 }
 
-                await boardStore.movePiece(boardStore.game.id, boardStore.board_id, x, y);
+                const selectedPiece = boardStore.shogiData.board[boardStore.selectedCell.y][boardStore.selectedCell.x];
+                if (canPromote(boardStore.selectedCell.y, y, selectedPiece)) {
+                    showPromotionModal.value = true;
+                    pendingMove.value = { x, y };
+                    return;
+                }
+
+                await boardStore.movePiece(boardStore.game.id, boardStore.board_id, x, y, false);
+                boardStore.SetCell(null);
 
             } catch (error) {
                 console.error('Error in handleCellClick:', error);
                 boardStore.SetCell(null);
             }
+        };
+
+        const handlePromotion = async (shouldPromote: boolean) => {
+            if (pendingMove.value && boardStore.game?.id && boardStore.board_id) {
+                await boardStore.movePiece(
+                    boardStore.game.id,
+                    boardStore.board_id,
+                    pendingMove.value.x,
+                    pendingMove.value.y,
+                    shouldPromote
+                );
+                boardStore.SetCell(null);
+            }
+            showPromotionModal.value = false;
+            pendingMove.value = null;
         };
 
         onMounted(async () => {
@@ -130,6 +174,8 @@ export default defineComponent({
             handleCellClick,
             getOwner,
             initializeGame,
+            showPromotionModal,
+            handlePromotion,
         };
     },
 });

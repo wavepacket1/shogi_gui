@@ -93,10 +93,10 @@ export const useBoardStore = defineStore('board', {
             }
         },
     
-        async movePiece(game_id: number, board_id: number, X: number, Y: number) {
+        async movePiece(game_id: number, board_id: number, X: number, Y: number, promote: boolean = false) {
             await this.handleAsyncAction(async () => {
                 this._validatePieceSelection();
-                const usiMove = this._createUSIMove(X, Y);
+                const usiMove = this._createUSIMove(X, Y, promote);
                 const response = await this._executeMove(game_id, board_id, usiMove);
                 await this._updateGameStateFromResponse(response);
                 this.SetCell(null);
@@ -155,10 +155,10 @@ export const useBoardStore = defineStore('board', {
             };
         },
 
-        _createUSIMove(toX: number, toY: number): string {
+        _createUSIMove(toX: number, toY: number, promote: boolean): string {
             const from = this._convertPosition(this.selectedCell.x!, this.selectedCell.y!);
             const to = this._convertPosition(toX, toY);
-            return `${from.x}${from.y}${to.x}${to.y}`;
+            return `${from.x}${from.y}${to.x}${to.y}${promote ? '+' : ''}`;
         },
 
         async _executeMove(game_id: number, board_id: number, usiMove: string) {
