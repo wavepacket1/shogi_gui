@@ -62,39 +62,36 @@ export default defineComponent({
         const handleCellClick = async (x: number, y: number) => {
             try {
                 if (!boardStore.game?.id || !boardStore.board_id) {
-                    console.error('Game not initialized:', {
-                        game_id: boardStore.game?.id,
-                        board_id: boardStore.board_id
-                    });
-                    await initializeGame();  // ゲームが初期化されていない場合は初期化を試みる
+                    console.error('Game not initialized');
+                    await initializeGame();
                     return;
                 }
 
                 const clickedCell = { x, y };
+                const currentPiece = boardStore.shogiData.board[y][x];  // クリックされたマスの駒を確認
                 
                 // 駒が選択されていない場合
                 if (boardStore.selectedCell.x === null || boardStore.selectedCell.y === null) {
-                    boardStore.SetCell(clickedCell);
+                    // 自分の駒がある場合のみ選択可能
+                    if (currentPiece && currentPiece.owner === boardStore.active_player) {
+                        boardStore.SetCell(clickedCell);
+                        console.log('Selected piece:', currentPiece);
+                    }
                     return;
                 }
 
-                // 同じマスをクリックした場合は選択解除
+                // 同じマスをクリックした場合は選択解除のみ
                 if (boardStore.selectedCell.x === x && boardStore.selectedCell.y === y) {
                     boardStore.SetCell(null);
                     return;
                 }
 
-                // 必要な値のチェック
-                if (!boardStore.game?.id || !boardStore.board_id) {
-                    console.error('game_id or board_id is null');
-                    return;
-                }
-
-                // 駒の移動
+                // 移動先のバリデーション
                 await boardStore.movePiece(boardStore.game.id, boardStore.board_id, x, y);
-                boardStore.SetCell(null);  // 移動後に選択を解除
+
             } catch (error) {
                 console.error('Error in handleCellClick:', error);
+                boardStore.SetCell(null);  // エラー時は選択状態をリセット
             }
         };
 

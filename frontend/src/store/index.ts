@@ -27,12 +27,12 @@ export interface BoardState {
     board_id: number | null;
     isError: boolean;
     game: Game | null;
-    selectedCell: {x: number|null, y: number|null};
+    selectedCell: {x: number | null, y: number | null};
 }
 
 export interface selectedCell {
-	x: number|null;
-	y: number|null;
+	x: number | null;
+	y: number | null;
 }
 
 export interface ShogiPiece {
@@ -95,54 +95,21 @@ export const useBoardStore = defineStore('board', {
     
         async movePiece(game_id: number, board_id: number, X: number, Y: number) {
             await this.handleAsyncAction(async () => {
-                if (this.selectedCell.x === null || this.selectedCell.y === null) {
-                    throw new Error('No piece selected');
-                }
-
-                const convertPosition = (x: number, y: number) => ({
-                    x: 9 - x,
-                    y: String.fromCharCode(97 + y) // 'a'-'i' for 1-9
-                });
-                
-                const from = convertPosition(this.selectedCell.x, this.selectedCell.y);
-                const to = convertPosition(X, Y);
-                const usiMove = `${from.x}${from.y}${to.x}${to.y}`;
-
-                const response = await movesApi.apiV1GamesGameIdBoardsBoardIdMovePatch(
-                    game_id,
-                    board_id,
-                    { move: usiMove }
-                );
-
-                if (!response.data.sfen) {
-                    throw new Error('SFEN data is missing');
-                }
-
-                this.board_id = response.data.board_id ?? null;
-                const parsed = parseSFEN(response.data.sfen);
-                this.shogiData.board = parsed.board;
-                this.shogiData.piecesInHand = parsed.piecesInHand;
-                this.active_player = parsed.playerToMove;
-                this.step_number = parsed.moveCount;
-                console.log(this.shogiData);
-            
-                this.SetCell(null); // 選択状態をリセット
+                this._validatePieceSelection();
+                const usiMove = this._createUSIMove(X, Y);
+                const response = await this._executeMove(game_id, board_id, usiMove);
+                await this._updateGameStateFromResponse(response);
+                this.SetCell(null);
             }, '駒の移動に失敗しました');
         },
 
         async createGame() {
             await this.handleAsyncAction(async () => {
                 const response = await gamesApi.apiV1GamesPost({ status: 'active' });
-                console.log('API Response:', response.data);
 
                 const data = response.data as GameResponse;
                 
                 if (!data.game_id || !data.status || !data.board_id) {
-                    console.log('Missing fields:', {
-                        game_id: data.game_id,
-                        status: data.status,
-                        board_id: data.board_id
-                    });
                     throw new Error('Invalid game data: Missing required fields');
                 }
 
@@ -172,6 +139,71 @@ export const useBoardStore = defineStore('board', {
                 this.step_number = parsed.moveCount;
                 console.log(this.step_number);
             }, 'ボードの取得に失敗しました');
+        },
+
+        // ヘルパーメソッド
+        _validatePieceSelection() {
+            if (this.selectedCell.x === null || this.selectedCell.y === null) {
+                throw new Error('No piece selected');
+            }
+        },
+
+        _convertPosition(x: number, y: number) {
+            return {
+                x: 9 - x,
+                y: String.fromCharCode(97 + y)
+            };
+        },
+
+        _createUSIMove(toX: number, toY: number): string {
+            const from = this._convertPosition(this.selectedCell.x!, this.selectedCell.y!);
+            const to = this._convertPosition(toX, toY);
+            return `${from.x}${from.y}${to.x}${to.y}`;
+        },
+
+        async _executeMove(game_id: number, board_id: number, usiMove: string) {
+            console.log('Move attempt:', {
+                game_id,
+                board_id,
+                usiMove,
+                currentState: {
+                    selectedCell: this.selectedCell,
+                    board: this.shogiData.board
+                }
+            });
+
+            const response = await movesApi.apiV1GamesGameIdBoardsBoardIdMovePatch(
+                game_id,
+                board_id,
+                { move: usiMove }
+            );
+
+            console.log('Move response:', {
+                sfen: response.data.sfen,
+                status: response.status
+            });
+
+            if (!response.data.sfen) {
+                throw new Error('SFEN data is missing');
+            }
+
+            return response;
+        },
+
+        async _updateGameStateFromResponse(response: any) {
+            const parsed = parseSFEN(response.data.sfen);
+            console.log('Parsed SFEN:', {
+                board: parsed.board,
+                piecesInHand: parsed.piecesInHand,
+                playerToMove: parsed.playerToMove,
+                moveCount: parsed.moveCount
+            });
+
+            this.board_id = response.data.board_id ?? null;
+            this.shogiData.board = parsed.board;
+            this.shogiData.piecesInHand = parsed.piecesInHand;
+            this.active_player = parsed.playerToMove;
+            this.step_number = parsed.moveCount;
         }
     }
 });
