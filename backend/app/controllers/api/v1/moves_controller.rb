@@ -17,8 +17,22 @@ class Api::V1::MovesController < ApplicationController
 
     case move_info[:type]
     when :move
-      piece = board_array[move_info[:from_row]][move_info[:from_col]]
+      from_piece = board_array[move_info[:from_row]][move_info[:from_col]]
+      to_piece = board_array[move_info[:to_row]][move_info[:to_col]]
+      
+      # 移動先に相手の駒がある場合、手駒に加える
+      if to_piece
+          captured_piece = to_piece.gsub(/^\+/, '')  # 成り駒は基本形に戻す
+          # 手番が先手(b)なら大文字、後手(w)なら小文字で持ち駒に追加
+          captured_piece = side == 'b' ? captured_piece.upcase : captured_piece.downcase
+          hand[captured_piece] = (hand[captured_piece] || 0) + 1
+      end
+
+      # 移動元の駒を消す
       board_array[move_info[:from_row]][move_info[:from_col]] = nil
+      
+      # 移動先に駒を置く（必要に応じて成り駒に）
+      piece = from_piece
       piece = promote_piece(piece) if move_info[:promoted]
       board_array[move_info[:to_row]][move_info[:to_col]] = piece
     when :drop

@@ -63,18 +63,14 @@ export function parseSFEN(sfen: string): ParsedSFEN {
 
     //持ち駒の解析
     let piecesInHand: { [key: string]: number } = {};
+    console.log('piecesInHandPart:', piecesInHandPart);
     if (piecesInHandPart !== '-') {
         const regex = /([PRBLNSGKprblnsgk])(\d*)/g;
         let match;
         while ((match = regex.exec(piecesInHandPart)) !== null) {
             const piece = match[1];
             const count = match[2] ? parseInt(match[2], 10) : 1;
-            if (/[A-Z]/.test(piece)) {
-                piecesInHand[piece] = (piecesInHand[piece] || 0) + count;
-            } else {
-                const upperPiece = piece.toUpperCase();
-                piecesInHand[upperPiece] = (piecesInHand[upperPiece] || 0) + count;
-            }
+            piecesInHand[piece] = (piecesInHand[piece] || 0) + count;
         }
     }
 

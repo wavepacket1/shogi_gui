@@ -100,13 +100,21 @@ class Board < ApplicationRecord
         # handは { 'R' => 2, 'B' => 1, 'p' => 3 } のようなハッシュを想定
         # 大文字は先手の駒、 小文字は後手の駒を示す
         hand_str = if hand.empty?
-                        '-'
-                    else
-                        # 駒と数を連結
-                        hand.map do |piece, count|
-                            count == 1 ? piece : "#{piece}#{count}"
-                        end.join
-                    end
+            '-'
+        else
+            # 先手の持ち駒（大文字）を先に処理
+            sente_pieces = hand.select { |piece, _| piece == piece.upcase }.sort.map do |piece, count|
+                count == 1 ? piece : "#{count}#{piece}"
+            end
+
+            # 後手の持ち駒（小文字）を後に処理
+            gote_pieces = hand.select { |piece, _| piece == piece.downcase }.sort.map do |piece, count|
+                count == 1 ? piece : "#{count}#{piece}"
+            end
+
+            # 先手と後手の持ち駒を連結
+            (sente_pieces + gote_pieces).join
+        end
     
         # 4. 手数を文字列化
         move_number_str = move_number.to_s

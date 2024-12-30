@@ -95,20 +95,8 @@ export default defineComponent({
             }
         };
 
-        const fetchDefaultBoard = async () => {
-            try {
-                isLoading.value = true;
-                await boardStore.fetchBoard();
-            } catch (error) {
-                errorMessage.value = '将棋盤の読み込みに失敗しました';
-                console.error('Error fetching board:', error);
-            } finally {
-                isLoading.value = false;
-            }
-        };
-
         onMounted(async () => {
-            await initializeGame();  // コンポーネントマウント時にゲームを初期化
+            await initializeGame();
         });
 
         return {
@@ -154,11 +142,11 @@ export default defineComponent({
 }
 
 .pieces-in-hand-top {
-    order: 1;
+    order: 0;
 }
 
 .pieces-in-hand-bottom {
-    order: 3;
+    order: 2;
 }
 
 .game-info {
