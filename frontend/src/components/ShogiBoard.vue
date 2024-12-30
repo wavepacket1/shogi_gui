@@ -7,7 +7,8 @@
     <div class="shogi-container">
         <PiecesInHand 
             class="pieces-in-hand-top" 
-            :pieces="piecesInHandW" 
+            :pieces="piecesInHandW"
+            :isGote="true"
         />
 
         <ShogiBoardGrid 
@@ -18,7 +19,8 @@
 
         <PiecesInHand 
             class="pieces-in-hand-bottom" 
-            :pieces="piecesInHandB" 
+            :pieces="piecesInHandB"
+            :isGote="false"
         />
     </div>
 </template>
