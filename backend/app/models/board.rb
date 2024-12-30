@@ -138,15 +138,18 @@ class Board < ApplicationRecord
         hand_hash = {}
         i = 0
         while i < hand_str.size
-            piece = hand_str[i]
-            i += 1
+            # 数字から始まる場合の処理
             count = 0
             while i < hand_str.size && hand_str[i] =~ /\d/
                 count = count * 10 + hand_str[i].to_i
                 i += 1
             end
-            count = 1 if count == 0
+            count = 1 if count == 0  # 数字がない場合は1個
+
+            # 駒の種類を取得
+            piece = hand_str[i]
             hand_hash[piece] = count
+            i += 1
         end
         hand_hash
     end

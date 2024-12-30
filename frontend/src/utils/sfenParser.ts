@@ -65,11 +65,11 @@ export function parseSFEN(sfen: string): ParsedSFEN {
     let piecesInHand: { [key: string]: number } = {};
     console.log('piecesInHandPart:', piecesInHandPart);
     if (piecesInHandPart !== '-') {
-        const regex = /([PRBLNSGKprblnsgk])(\d*)/g;
+        const regex = /(\d*)([PRBLNSGKprblnsgk])/g;
         let match;
         while ((match = regex.exec(piecesInHandPart)) !== null) {
-            const piece = match[1];
-            const count = match[2] ? parseInt(match[2], 10) : 1;
+            const count = match[1] ? parseInt(match[1], 10) : 1;
+            const piece = match[2];
             piecesInHand[piece] = (piecesInHand[piece] || 0) + count;
         }
     }
