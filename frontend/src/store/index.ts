@@ -1,6 +1,12 @@
 import { defineStore } from 'pinia';
-import { Api } from '@/services/api';
+import { GamesApi, BoardsApi, MovesApi } from '@/services/api/api';
 import { parseSFEN } from '@/utils/sfenParser';
+import { Configuration } from '@/services/api/configuration';
+
+const config = new Configuration({ basePath: 'http://localhost:3000' });
+const gamesApi = new GamesApi(config);
+const boardsApi = new BoardsApi(config);
+const movesApi = new MovesApi(config);
 
 export interface Game {
     id: number;
@@ -47,11 +53,10 @@ export interface ParsedSFEN {
 }
 
 interface GameResponse {
-    id?: number;
+    game_id?: number;
     status?: string;
+    board_id?: number;
 }
-
-const api = new Api({ baseUrl: 'http://localhost:3000' });
 
 export const useBoardStore = defineStore('board', {
     state: (): BoardState => ({
@@ -104,9 +109,9 @@ export const useBoardStore = defineStore('board', {
                 const to = convertPosition(X, Y);
                 const usiMove = `${from.x}${from.y}${to.x}${to.y}`;
 
-                const response = await api.api.v1GamesBoardsMovePartialUpdate(
-                    game_id, 
-                    board_id, 
+                const response = await movesApi.apiV1GamesGameIdBoardsBoardIdMovePatch(
+                    game_id,
+                    board_id,
                     { move: usiMove }
                 );
 
@@ -123,23 +128,20 @@ export const useBoardStore = defineStore('board', {
 
         async createGame() {
             await this.handleAsyncAction(async () => {
-                const response = await api.api.v1GamesCreate({ status: 'active' });
+                const response = await gamesApi.apiV1GamesPost({ status: 'active' });
                 console.log('Game creation response:', response.data); // デバッグ用
 
                 const data = response.data as GameResponse;
                 
-                if (!data.id || !data.status) {
+                if (!data.game_id || !data.status || !data.board_id) {
                     throw new Error('Invalid game data: Missing required fields');
                 }
 
-                // game_idを設定
-                this.game_id = data.id;  // この行を追加
-
-                // ゲーム情報の更新
+                this.game_id = data.game_id;
                 this.updateGameState({
-                    id: data.id,
+                    id: data.game_id,
                     status: data.status,
-                    board_id: data.id  // 一時的にidを使用
+                    board_id: data.board_id
                 });
 
                 console.log('Game state after update:', {  // デバッグ用
@@ -169,7 +171,7 @@ export const useBoardStore = defineStore('board', {
 
         async fetchBoard() {
             await this.handleAsyncAction(async () => {
-                const response = await api.api.v1BoardsDefaultList();
+                const response = await boardsApi.apiV1BoardsDefaultGet();
                 const parsed = parseSFEN(response.data.sfen);
                 this.shogiData.board = parsed.board;
                 this.shogiData.piecesInHand = parsed.piecesInHand;

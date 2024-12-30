@@ -11,8 +11,9 @@ module Api
         if @game.errors.empty? && @game.save
           @board = @game.create_board!
           render json: {
-            id: @game.id,
-            status: @game.status
+            game_id: @game.id,
+            status: @game.status,
+            board_id: @board.id
           }, status: :created
         else
           render json: {
