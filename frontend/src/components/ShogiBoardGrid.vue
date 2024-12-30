@@ -5,6 +5,7 @@
                 v-for="x in Array.from({ length: 9 }, (_, i) => i)"
                 :key="'cell-' + x + '-' + y"
                 class="shogi-cell"
+                :class="{ 'selected': isSelected(x, y) }"
                 :data-x="x"
                 :data-y="y"
                 @click="() => $emit('cellClick', x, y)"
@@ -30,16 +31,25 @@ export default defineComponent({
             type: Array as PropType<(ShogiPiece | null)[][]>,
             required: true,
         },
+        selectedCell: {
+            type: Object as PropType<{x: number | null, y: number | null}>,
+            required: true
+        }
     },
-    setup() {
+    setup(props) {
         const getJapanesePiece = (piece: ShogiPiece): string => {
             if (!piece) return '';
             const key = piece.promoted ? `+${piece.piece_type}` : piece.piece_type;
             return pieceMapper[key] || '';
         };
 
+        const isSelected = (x: number, y: number) => {
+            return props.selectedCell.x === x && props.selectedCell.y === y;
+        };
+
         return {
             getJapanesePiece,
+            isSelected
         };
     },
 });
@@ -83,5 +93,10 @@ export default defineComponent({
 .shogi-piece.w {
     color: black;
     transform: rotate(180deg);
+}
+
+.shogi-cell.selected {
+    background-color: rgba(255, 255, 0, 0.3);
+    box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.3);
 }
 </style>

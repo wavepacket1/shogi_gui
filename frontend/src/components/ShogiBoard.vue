@@ -12,6 +12,7 @@
 
         <ShogiBoardGrid 
             :board="boardStore.shogiData.board"
+            :selectedCell="boardStore.selectedCell"
             @cell-click="handleCellClick"
         />
 
@@ -62,17 +63,18 @@ export default defineComponent({
         const handleCellClick = async (x: number, y: number) => {
             try {
                 if (!boardStore.game?.id || !boardStore.board_id) {
-                    console.error('Game not initialized');
+                    console.error('Game not initialized:', {
+                        game: boardStore.game,
+                        board_id: boardStore.board_id
+                    });
                     await initializeGame();
                     return;
                 }
 
                 const clickedCell = { x, y };
-                const currentPiece = boardStore.shogiData.board[y][x];  // クリックされたマスの駒を確認
+                const currentPiece = boardStore.shogiData.board[y][x];
                 
-                // 駒が選択されていない場合
                 if (boardStore.selectedCell.x === null || boardStore.selectedCell.y === null) {
-                    // 自分の駒がある場合のみ選択可能
                     if (currentPiece && currentPiece.owner === boardStore.active_player) {
                         boardStore.SetCell(clickedCell);
                         console.log('Selected piece:', currentPiece);
@@ -80,18 +82,16 @@ export default defineComponent({
                     return;
                 }
 
-                // 同じマスをクリックした場合は選択解除のみ
                 if (boardStore.selectedCell.x === x && boardStore.selectedCell.y === y) {
                     boardStore.SetCell(null);
                     return;
                 }
 
-                // 移動先のバリデーション
                 await boardStore.movePiece(boardStore.game.id, boardStore.board_id, x, y);
 
             } catch (error) {
                 console.error('Error in handleCellClick:', error);
-                boardStore.SetCell(null);  // エラー時は選択状態をリセット
+                boardStore.SetCell(null);
             }
         };
 
