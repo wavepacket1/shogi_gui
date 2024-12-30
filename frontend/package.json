@@ -16,6 +16,7 @@
   },
   "devDependencies": {
     "@openapitools/openapi-generator-cli": "^2.15.3",
+    "@types/node": "^22.10.2",
     "@vitejs/plugin-vue": "^5.1.4",
     "@vue/tsconfig": "^0.5.0",
     "swagger-typescript-api": "^13.0.23",

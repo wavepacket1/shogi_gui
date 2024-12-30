@@ -33,7 +33,20 @@ class Api::V1::MovesController < ApplicationController
     new_sfen = Board.array_to_sfen(board_array, side, hand, move_number)
     @next_board = Board.create!(game_id: @game.id, sfen: new_sfen)
 
-    render jsom: { status: 'success', board: @next_board }, status: :ok
+    render json: {
+      status: true,
+      legal_flag: true,
+      board_id: @next_board.id,
+      sfen: @next_board.sfen
+    }, status: :ok
+  rescue => e
+    render json: {
+      status: false,
+      legal_flag: false,
+      board_id: @board.id,
+      sfen: @board.sfen,
+      message: e.message
+    }, status: :unprocessable_entity
   end
 
   private 
@@ -48,7 +61,7 @@ class Api::V1::MovesController < ApplicationController
 
   def set_game_and_board
     @game = Game.find(params[:game_id])
-    @board = @game.boards.find(params[:board_id])
+    @board = Board.find(params[:board_id])
   rescue ActiveRecord::RecordNotFound
     render json: { status: 'error', message: 'ゲームが見つかりません。' }, status: :not_found
   end
