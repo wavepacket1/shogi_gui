@@ -151,10 +151,6 @@ export default defineComponent({
     transform: scaleY(1.3);
 }
 
-.piece-shape.gote:hover {
-    /* 削除 */
-}
-
 .piece-shape.gote .piece-count {
     transform: rotate(180deg);
 }
