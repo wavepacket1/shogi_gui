@@ -118,11 +118,13 @@ export const useBoardStore = defineStore('board', {
                     throw new Error('SFEN data is missing');
                 }
 
+                this.board_id = response.data.board_id ?? null;
                 const parsed = parseSFEN(response.data.sfen);
                 this.shogiData.board = parsed.board;
                 this.shogiData.piecesInHand = parsed.piecesInHand;
                 this.active_player = parsed.playerToMove;
                 this.step_number = parsed.moveCount;
+                console.log(this.shogiData);
             
                 this.SetCell(null); // 選択状態をリセット
             }, '駒の移動に失敗しました');
