@@ -162,26 +162,11 @@ export const useBoardStore = defineStore('board', {
         },
 
         async _executeMove(game_id: number, board_id: number, usiMove: string) {
-            console.log('Move attempt:', {
-                game_id,
-                board_id,
-                usiMove,
-                currentState: {
-                    selectedCell: this.selectedCell,
-                    board: this.shogiData.board
-                }
-            });
-
             const response = await movesApi.apiV1GamesGameIdBoardsBoardIdMovePatch(
                 game_id,
                 board_id,
                 { move: usiMove }
             );
-
-            console.log('Move response:', {
-                sfen: response.data.sfen,
-                status: response.status
-            });
 
             if (!response.data.sfen) {
                 throw new Error('SFEN data is missing');
@@ -192,13 +177,7 @@ export const useBoardStore = defineStore('board', {
 
         async _updateGameStateFromResponse(response: any) {
             const parsed = parseSFEN(response.data.sfen);
-            console.log('Parsed SFEN:', {
-                board: parsed.board,
-                piecesInHand: parsed.piecesInHand,
-                playerToMove: parsed.playerToMove,
-                moveCount: parsed.moveCount
-            });
-
+    
             this.board_id = response.data.board_id ?? null;
             this.shogiData.board = parsed.board;
             this.shogiData.piecesInHand = parsed.piecesInHand;
@@ -208,17 +187,8 @@ export const useBoardStore = defineStore('board', {
 
         async dropPiece(game_id: number, board_id: number, piece: string, x: number, y: number) {
             await this.handleAsyncAction(async () => {
-                console.log('Dropping piece:', {
-                    piece,
-                    x,
-                    y,
-                    game_id,
-                    board_id
-                });
-
                 const pos = this._convertPosition(x, y);
                 const usiMove = `${piece}*${pos.x}${pos.y}`;
-                console.log('USI move:', usiMove);
 
                 const response = await movesApi.apiV1GamesGameIdBoardsBoardIdMovePatch(
                     game_id,
@@ -226,7 +196,6 @@ export const useBoardStore = defineStore('board', {
                     { move: usiMove }
                 );
 
-                console.log('Drop response:', response);
                 await this._updateGameStateFromResponse(response);
             }, '駒を打つことができませんでした');
         }
