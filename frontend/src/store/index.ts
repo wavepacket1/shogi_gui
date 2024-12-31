@@ -208,9 +208,25 @@ export const useBoardStore = defineStore('board', {
 
         async dropPiece(game_id: number, board_id: number, piece: string, x: number, y: number) {
             await this.handleAsyncAction(async () => {
+                console.log('Dropping piece:', {
+                    piece,
+                    x,
+                    y,
+                    game_id,
+                    board_id
+                });
+
                 const pos = this._convertPosition(x, y);
                 const usiMove = `${piece}*${pos.x}${pos.y}`;
-                const response = await this._executeMove(game_id, board_id, usiMove);
+                console.log('USI move:', usiMove);
+
+                const response = await movesApi.apiV1GamesGameIdBoardsBoardIdMovePatch(
+                    game_id,
+                    board_id,
+                    { move: usiMove }
+                );
+
+                console.log('Drop response:', response);
                 await this._updateGameStateFromResponse(response);
             }, '駒を打つことができませんでした');
         }

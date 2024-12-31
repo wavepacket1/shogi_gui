@@ -94,11 +94,15 @@ export default defineComponent({
         };
 
         const handlePieceClick = (piece: string) => {
+            console.log('Selected piece:', piece);
+            console.log('Current player:', boardStore.active_player);
+
             // 先手の場合は大文字の駒のみ、後手の場合は小文字の駒のみ選択可能
             const isUpperCase = piece === piece.toUpperCase();
             if ((boardStore.active_player === 'b' && !isUpperCase) || 
                 (boardStore.active_player === 'w' && isUpperCase)) {
-                return; // 相手の持ち駒は選択できない
+                console.log('Invalid piece selection');
+                return;
             }
             
             // 既に選択されている駒をクリックした場合は選択解除
@@ -109,13 +113,38 @@ export default defineComponent({
             }
 
             selectedHandPiece.value = piece;
-            boardStore.SetCell(null); // 盤面の選択を解除
+            boardStore.SetCell(null);
         };
 
         const handleCellClick = async (x: number, y: number) => {
             try {
                 if (!boardStore.game?.id || !boardStore.board_id) {
                     await initializeGame();
+                    return;
+                }
+
+                // 持ち駒を打つ場合
+                if (selectedHandPiece.value) {
+                    console.log('Attempting to drop piece:', {
+                        piece: selectedHandPiece.value,
+                        x,
+                        y,
+                        board: boardStore.shogiData.board[y][x]
+                    });
+
+                    if (boardStore.shogiData.board[y][x]) {
+                        console.log('Cannot drop on occupied square');
+                        return;
+                    }
+
+                    await boardStore.dropPiece(
+                        boardStore.game.id,
+                        boardStore.board_id,
+                        selectedHandPiece.value,
+                        x,
+                        y
+                    );
+                    selectedHandPiece.value = undefined;
                     return;
                 }
 
@@ -166,6 +195,9 @@ export default defineComponent({
             pendingMove.value = null;
         };
 
+        // 駒の順序を定義
+        const PIECE_ORDER = ['P', 'N', 'L', 'S', 'G', 'B', 'R'];
+
         onMounted(async () => {
             await initializeGame();
         });
@@ -175,22 +207,26 @@ export default defineComponent({
             piecesInHandB: computed(() => {
                 const pieces = boardStore.shogiData?.piecesInHand || {};
                 const result: { [key: string]: number } = {};
-                for (const [piece, count] of Object.entries(pieces)) {
-                    if (/[A-Z]/.test(piece)) { // Senteの持ち駒
+                // PIECE_ORDERに従って順番に処理
+                PIECE_ORDER.forEach(piece => {
+                    const count = pieces[piece];
+                    if (count) {
                         result[piece] = count;
                     }
-                }
+                });
                 return result;
             }),
             piecesInHandW: computed(() => {
                 const pieces = boardStore.shogiData?.piecesInHand || {};
                 const result: { [key: string]: number } = {};
-                for (const [piece, count] of Object.entries(pieces)) {
-                    if (/[a-z]/.test(piece)) { // Goteの持ち駒
-                        const upperPiece = piece.toUpperCase();
-                        result[upperPiece] = count;
+                // PIECE_ORDERに従って順番に処理（小文字で検索）
+                PIECE_ORDER.forEach(piece => {
+                    const lowerPiece = piece.toLowerCase();
+                    const count = pieces[lowerPiece];
+                    if (count) {
+                        result[lowerPiece] = count;
                     }
-                }
+                });
                 return result;
             }),
             isLoading,
