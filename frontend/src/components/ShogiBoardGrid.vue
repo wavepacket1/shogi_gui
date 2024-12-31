@@ -84,6 +84,7 @@ export default defineComponent({
 }
 
 .piece-shape {
+    cursor: pointer;
     width: 30px;
     height: 45px;
     display: flex;
@@ -176,5 +177,20 @@ export default defineComponent({
 .shogi-cell.selected {
     background-color: rgba(255, 216, 102, 0.5);
     box-shadow: inset 0 0 5px rgba(139, 115, 85, 0.5);
+}
+
+.cell {
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #ccc;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.cell:hover {
+    background-color: #f0f0f0;
 }
 </style>
