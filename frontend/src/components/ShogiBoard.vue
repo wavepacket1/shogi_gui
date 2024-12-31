@@ -64,10 +64,6 @@ export default defineComponent({
             try {
                 isLoading.value = true;
                 await boardStore.createGame();  // ゲームを作成
-                console.log('Game initialized:', {
-                    game_id: boardStore.game?.id,
-                    board_id: boardStore.board_id
-                });
             } catch (error) {
                 errorMessage.value = 'ゲームの初期化に失敗しました';
                 console.error('Error initializing game:', error);
@@ -94,9 +90,6 @@ export default defineComponent({
         };
 
         const handlePieceClick = (piece: string) => {
-            console.log('Selected piece:', piece);
-            console.log('Current player:', boardStore.active_player);
-
             // 先手の場合は大文字の駒のみ、後手の場合は小文字の駒のみ選択可能
             const isUpperCase = piece === piece.toUpperCase();
             if ((boardStore.active_player === 'b' && !isUpperCase) || 
@@ -125,13 +118,6 @@ export default defineComponent({
 
                 // 持ち駒を打つ場合
                 if (selectedHandPiece.value) {
-                    console.log('Attempting to drop piece:', {
-                        piece: selectedHandPiece.value,
-                        x,
-                        y,
-                        board: boardStore.shogiData.board[y][x]
-                    });
-
                     if (boardStore.shogiData.board[y][x]) {
                         console.log('Cannot drop on occupied square');
                         return;
