@@ -86,7 +86,37 @@ export default defineComponent({
             const cantPromotePieces = ['G', 'K'];
             if (cantPromotePieces.includes(piece.piece_type.toUpperCase())) return false;
 
-            return isInPromotionZone;
+            // その手が有効手かどうかをチェック
+            const isLegalMove = isValidMove(fromY, toY, piece);
+
+            return isInPromotionZone && isLegalMove;
+        };
+
+        // 有効手かどうかをチェックする関数
+        const isValidMove = (fromY: number, toY: number, piece: any): boolean => {
+            const pieceType = piece.piece_type.toUpperCase();
+            const owner = piece.owner;
+
+            // 各駒の移動可能範囲をチェック
+            switch (pieceType) {
+                case 'P': // 歩
+                    return owner === 'b' ? fromY - toY === 1 : toY - fromY === 1;
+                case 'L': // 香車
+                    return owner === 'b' ? toY < fromY : toY > fromY;
+                case 'N': // 桂馬
+                    if (owner === 'b') {
+                        return toY >= 2; // 2段目より手前には進めない
+                    } else {
+                        return toY <= 6; // 8段目より奥には進めない
+                    }
+                case 'S': // 銀
+                case 'G': // 金
+                case 'B': // 角
+                case 'R': // 飛車
+                    return true; // これらの駒は成り判定のみで十分
+                default:
+                    return false;
+            }
         };
 
         const handlePieceClick = (piece: string) => {

@@ -102,7 +102,185 @@ class Api::V1::MovesController < ApplicationController
   end
 
   def legal_move?(board_array, hand, side, move_info)
+    case move_info[:type]
+    when :move
+      # 移動元に駒があるか確認
+      from_piece = board_array[move_info[:from_row]][move_info[:from_col]]
+      return false unless from_piece
+
+      # 自分の駒かどうか確認
+      is_black_piece = from_piece.upcase == from_piece
+      return false if (side == 'b' && !is_black_piece) || (side == 'w' && is_black_piece)
+
+      # 移動先の駒が自分の駒でないことを確認
+      to_piece = board_array[move_info[:to_row]][move_info[:to_col]]
+      if to_piece
+        is_to_black_piece = to_piece.upcase == to_piece
+        return false if (side == 'b' && is_to_black_piece) || (side == 'w' && !is_to_black_piece)
+      end
+
+      # 駒の種類に応じた移動可能範囲の確認
+      piece_type = from_piece.gsub(/^\+/, '').upcase
+      can_move = case piece_type
+      when 'P'  # 歩
+        pawn_move?(move_info, side, from_piece)
+      when 'L'  # 香車
+        lance_move?(move_info, side, board_array)
+      when 'N'  # 桂馬
+        knight_move?(move_info, side)
+      when 'S'  # 銀
+        silver_move?(move_info, side, from_piece)
+      when 'G', '+P', '+L', '+N', '+S'  # 金、成り駒
+        gold_move?(move_info, side)
+      when 'B'  # 角
+        bishop_move?(move_info, board_array)
+      when 'R'  # 飛車
+        rook_move?(move_info, board_array)
+      when 'K'  # 玉
+        king_move?(move_info)
+      end
+
+      return can_move
+
+    when :drop
+      piece_type = move_info[:piece].upcase
+      to_row = move_info[:to_row]
+
+      # 移動先に駒がないことを確認
+      return false if board_array[move_info[:to_row]][move_info[:to_col]]
+
+      # 二歩のチェック
+      if piece_type == 'P'
+        column = board_array.map { |row| row[move_info[:to_col]] }
+        has_pawn = column.any? do |cell|
+          next false unless cell
+          cell_type = cell.gsub(/^\+/, '').upcase
+          cell_owner = cell.upcase == cell ? 'b' : 'w'
+          cell_type == 'P' && cell_owner == side
+        end
+        return false if has_pawn
+      end
+
+      # 最奥段への打ち駒制限
+      case piece_type
+      when 'P', 'L'
+        return false if (side == 'b' && to_row == 0) || (side == 'w' && to_row == 8)
+      when 'N'
+        return false if (side == 'b' && to_row <= 1) || (side == 'w' && to_row >= 7)
+      end
+
+      true
+    end
+  end
+
+  def pawn_move?(move_info, side, piece)
+    dx = move_info[:to_col] - move_info[:from_col]
+    dy = move_info[:to_row] - move_info[:from_row]
+    
+    if piece.start_with?('+')  # 成り駒は金と同じ動き
+      return gold_move?(move_info, side)
+    end
+    
+    # 歩は1マス前にのみ進める
+    dx == 0 && ((side == 'b' && dy == -1) || (side == 'w' && dy == 1))
+  end
+
+  def lance_move?(move_info, side, board_array)
+    dx = move_info[:to_col] - move_info[:from_col]
+    dy = move_info[:to_row] - move_info[:from_row]
+    
+    return false unless dx == 0
+    direction = side == 'b' ? -1 : 1
+    return false unless dy * direction > 0
+    
+    # 途中に駒がないか確認
+    from_row = move_info[:from_row]
+    to_row = move_info[:to_row]
+    col = move_info[:from_col]
+    
+    range = from_row < to_row ? (from_row + 1...to_row) : (to_row + 1...from_row)
+    range.none? { |row| board_array[row][col] }
+  end
+
+  def knight_move?(move_info, side)
+    dx = (move_info[:to_col] - move_info[:from_col]).abs
+    dy = move_info[:to_row] - move_info[:from_row]
+    
+    dx == 1 && ((side == 'b' && dy == -2) || (side == 'w' && dy == 2))
+  end
+
+  def silver_move?(move_info, side, piece)
+    dx = (move_info[:to_col] - move_info[:from_col]).abs
+    dy = move_info[:to_row] - move_info[:from_row]
+    
+    if piece.start_with?('+')  # 成り駒は金と同じ動き
+      return gold_move?(move_info, side)
+    end
+    
+    # 前方と斜め
+    (dx == 0 && ((side == 'b' && dy == -1) || (side == 'w' && dy == 1))) ||
+      (dx == 1 && (dy == 1 || dy == -1))
+  end
+
+  def gold_move?(move_info, side)
+    dx = (move_info[:to_col] - move_info[:from_col]).abs
+    dy = move_info[:to_row] - move_info[:from_row]
+    
+    if side == 'b'
+      (dx == 0 && dy == -1) ||  # 前
+      (dx == 1 && dy == -1) ||  # 斜め前
+      (dx == 1 && dy == 0) ||   # 横
+      (dx == 0 && dy == 1)      # 後ろ
+    else
+      (dx == 0 && dy == 1) ||   # 前
+      (dx == 1 && dy == 1) ||   # 斜め前
+      (dx == 1 && dy == 0) ||   # 横
+      (dx == 0 && dy == -1)     # 後ろ
+    end
+  end
+
+  def bishop_move?(move_info, board_array)
+    dx = (move_info[:to_col] - move_info[:from_col]).abs
+    dy = (move_info[:to_row] - move_info[:from_row]).abs
+    
+    return false unless dx == dy
+    
+    # 途中に駒がないか確認
+    x_direction = move_info[:to_col] > move_info[:from_col] ? 1 : -1
+    y_direction = move_info[:to_row] > move_info[:from_row] ? 1 : -1
+    
+    current_x = move_info[:from_col] + x_direction
+    current_y = move_info[:from_row] + y_direction
+    
+    while current_x != move_info[:to_col]
+      return false if board_array[current_y][current_x]
+      current_x += x_direction
+      current_y += y_direction
+    end
+    
     true
+  end
+
+  def rook_move?(move_info, board_array)
+    dx = move_info[:to_col] - move_info[:from_col]
+    dy = move_info[:to_row] - move_info[:from_row]
+    
+    return false unless dx == 0 || dy == 0
+    
+    if dx == 0
+      range = dy > 0 ? (move_info[:from_row] + 1...move_info[:to_row]) : (move_info[:to_row] + 1...move_info[:from_row])
+      range.none? { |row| board_array[row][move_info[:from_col]] }
+    else
+      range = dx > 0 ? (move_info[:from_col] + 1...move_info[:to_col]) : (move_info[:to_col] + 1...move_info[:from_col])
+      range.none? { |col| board_array[move_info[:from_row]][col] }
+    end
+  end
+
+  def king_move?(move_info)
+    dx = (move_info[:to_col] - move_info[:from_col]).abs
+    dy = (move_info[:to_row] - move_info[:from_row]).abs
+    
+    dx <= 1 && dy <= 1
   end
 
   def set_game_and_board

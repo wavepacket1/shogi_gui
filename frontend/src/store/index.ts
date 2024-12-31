@@ -28,6 +28,7 @@ export interface BoardState {
     isError: boolean;
     game: Game | null;
     selectedCell: {x: number | null, y: number | null};
+    validMovesCache: ValidMovesCache | null;
 }
 
 export interface selectedCell {
@@ -58,6 +59,13 @@ interface GameResponse {
     sfen?: string;
 }
 
+interface ValidMovesCache {
+    board_state: string;  // SFEN文字列
+    moves: {
+        [position: string]: string[];  // "7c" -> ["7d", "7e", ...]
+    };
+}
+
 export const useBoardStore = defineStore('board', {
     state: (): BoardState => ({
         shogiData: initializeShogiData(),
@@ -67,6 +75,7 @@ export const useBoardStore = defineStore('board', {
         isError: false,
         game: null,
         selectedCell: {x: null, y: null},
+        validMovesCache: null as ValidMovesCache | null,
     }),
     actions: {
         async handleAsyncAction(asyncAction: () => Promise<void>, errorMessage: string = 'エラーが発生しました') {
@@ -100,6 +109,7 @@ export const useBoardStore = defineStore('board', {
                 const response = await this._executeMove(game_id, board_id, usiMove);
                 await this._updateGameStateFromResponse(response);
                 this.SetCell(null);
+                this.clearValidMovesCache();
             }, '駒の移動に失敗しました');
         },
 
@@ -198,6 +208,58 @@ export const useBoardStore = defineStore('board', {
 
                 await this._updateGameStateFromResponse(response);
             }, '駒を打つことができませんでした');
+        },
+
+        clearValidMovesCache() {
+            this.validMovesCache = null;
+        },
+
+        updateValidMovesCache() {
+            this.validMovesCache = {
+                board_state: this.shogiData.sfen,
+                moves: {}
+            };
+        },
+
+        getValidMovesFromCache(position: string): string[] | null {
+            // 盤面が変わっていたらキャッシュをクリア
+            if (this.validMovesCache?.board_state !== this.shogiData.sfen) {
+                this.clearValidMovesCache();
+                return null;
+            }
+
+            return this.validMovesCache?.moves[position] ?? null;
+        },
+
+        async selectPiece(x: number, y: number) {
+            // ... 既存のコード ...
+
+            const position = `${9-x}${String.fromCharCode(97 + y)}`;
+            let validMoves = this.getValidMovesFromCache(position);
+
+            if (!validMoves) {
+                // キャッシュにない場合はAPIから取得
+                const response = await movesApi.apiV1GamesGameIdBoardsBoardIdValidMovesPatch(
+                    this.game.id,
+                    this.board_id,
+                    { position: position }
+                );
+
+                validMoves = response.data.possible_moves;
+
+                // キャッシュに保存
+                if (!this.validMovesCache) {
+                    this.updateValidMovesCache();
+                }
+                this.validMovesCache!.moves[position] = validMoves;
+            }
+
+            // 有効手をUIに反映
+            this.highlightValidMoves(validMoves);
+        },
+
+        highlightValidMoves(moves: string[] | null) {
+            // Implementation of highlightValidMoves method
         }
     }
 });
