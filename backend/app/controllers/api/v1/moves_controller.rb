@@ -133,7 +133,7 @@ class Api::V1::MovesController < ApplicationController
       when 'G', '+P', '+L', '+N', '+S'  # 金、成り駒
         gold_move?(move_info, side)
       when 'B'  # 角
-        bishop_move?(move_info, board_array)
+        from_piece.start_with?('+') ? promoted_bishop_move?(move_info, board_array) : bishop_move?(move_info, board_array)
       when 'R'  # 飛車
         rook_move?(move_info, board_array)
       when 'K'  # 玉
@@ -280,6 +280,16 @@ class Api::V1::MovesController < ApplicationController
     dx = (move_info[:to_col] - move_info[:from_col]).abs
     dy = (move_info[:to_row] - move_info[:from_row]).abs
     
+    dx <= 1 && dy <= 1
+  end
+
+  def promoted_bishop_move?(move_info, board_array)
+    # 角の動き
+    return true if bishop_move?(move_info, board_array)
+
+    # 玉の動き（隣接1マス）
+    dx = (move_info[:to_col] - move_info[:from_col]).abs
+    dy = (move_info[:to_row] - move_info[:from_row]).abs
     dx <= 1 && dy <= 1
   end
 

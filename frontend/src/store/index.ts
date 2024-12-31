@@ -1,12 +1,10 @@
 import { defineStore } from 'pinia';
-import { GamesApi, BoardsApi, MovesApi } from '@/services/api/api';
+import { Api } from '@/services/api/api';
 import { parseSFEN } from '@/utils/sfenParser';
-import { Configuration } from '@/services/api/configuration';
 
-const config = new Configuration({ basePath: 'http://localhost:3000' });
-const gamesApi = new GamesApi(config);
-const boardsApi = new BoardsApi(config);
-const movesApi = new MovesApi(config);
+const api = new Api({
+  baseUrl: 'http://localhost:3000'
+});
 
 export interface Game {
     id: number;
@@ -18,6 +16,7 @@ export interface Game {
 export interface ShogiData {
     board: (ShogiPiece | null)[][];
     piecesInHand: Record<string, number>;
+    sfen: string;
 }
 
 export interface BoardState {
@@ -62,7 +61,7 @@ interface GameResponse {
 interface ValidMovesCache {
     board_state: string;  // SFEN文字列
     moves: {
-        [position: string]: string[];  // "7c" -> ["7d", "7e", ...]
+        [position: string]: string[] | null;  // "7c" -> ["7d", "7e", ...] | null
     };
 }
 
@@ -115,7 +114,7 @@ export const useBoardStore = defineStore('board', {
 
         async createGame() {
             await this.handleAsyncAction(async () => {
-                const response = await gamesApi.apiV1GamesPost({ status: 'active' });
+                const response = await api.api.v1GamesCreate({ status: 'active' });
 
                 const data = response.data as GameResponse;
                 
@@ -141,13 +140,12 @@ export const useBoardStore = defineStore('board', {
 
         async fetchBoard() {
             await this.handleAsyncAction(async () => {
-                const response = await boardsApi.apiV1BoardsDefaultGet();
+                const response = await api.api.v1BoardsDefaultList();
                 const parsed = parseSFEN(response.data.sfen);
                 this.shogiData.board = parsed.board;
                 this.shogiData.piecesInHand = parsed.piecesInHand;
                 this.active_player = parsed.playerToMove;
                 this.step_number = parsed.moveCount;
-                console.log(this.step_number);
             }, 'ボードの取得に失敗しました');
         },
 
@@ -172,7 +170,7 @@ export const useBoardStore = defineStore('board', {
         },
 
         async _executeMove(game_id: number, board_id: number, usiMove: string) {
-            const response = await movesApi.apiV1GamesGameIdBoardsBoardIdMovePatch(
+            const response = await api.api.v1GamesBoardsMovePartialUpdate(
                 game_id,
                 board_id,
                 { move: usiMove }
@@ -200,7 +198,7 @@ export const useBoardStore = defineStore('board', {
                 const pos = this._convertPosition(x, y);
                 const usiMove = `${piece}*${pos.x}${pos.y}`;
 
-                const response = await movesApi.apiV1GamesGameIdBoardsBoardIdMovePatch(
+                const response = await api.api.v1GamesBoardsMovePartialUpdate(
                     game_id,
                     board_id,
                     { move: usiMove }
@@ -232,29 +230,27 @@ export const useBoardStore = defineStore('board', {
         },
 
         async selectPiece(x: number, y: number) {
-            // ... 既存のコード ...
-
             const position = `${9-x}${String.fromCharCode(97 + y)}`;
             let validMoves = this.getValidMovesFromCache(position);
 
             if (!validMoves) {
-                // キャッシュにない場合はAPIから取得
-                const response = await movesApi.apiV1GamesGameIdBoardsBoardIdValidMovesPatch(
+                if (!this.game?.id || !this.board_id) {
+                    throw new Error('Game or board not found');
+                }
+                const response = await api.api.v1GamesBoardsValidMovesPartialUpdate(
                     this.game.id,
                     this.board_id,
                     { position: position }
                 );
 
-                validMoves = response.data.possible_moves;
+                validMoves = response.data.possible_moves ?? null;
 
-                // キャッシュに保存
                 if (!this.validMovesCache) {
                     this.updateValidMovesCache();
                 }
                 this.validMovesCache!.moves[position] = validMoves;
             }
 
-            // 有効手をUIに反映
             this.highlightValidMoves(validMoves);
         },
 
@@ -267,4 +263,5 @@ export const useBoardStore = defineStore('board', {
 const initializeShogiData = (): ShogiData => ({
     board: Array.from({ length: 9 }, () => Array(9).fill(null)) as (ShogiPiece | null)[][],
     piecesInHand: {},
+    sfen: ''
 });
