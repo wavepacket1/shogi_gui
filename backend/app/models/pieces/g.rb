@@ -1,15 +1,22 @@
 module Pieces
-    class G < BasePiece
-        def initialize 
-            super([[0, 1], [1, 1], [-1, 1], [1, 0], [-1, 0], [0, -1]])
-        end
-
-        def validate(board,present_position,next_position)
-            validate_movement(board,present_position,next_position)
-        end
-
-        def can_move?(board,next_position)
-            can_move_validation(board,next_position)
+    class G
+        class << self
+            def move?(move_info, side)
+                dx = (move_info[:to_col] - move_info[:from_col]).abs
+                dy = move_info[:to_row] - move_info[:from_row]
+                
+                if side == 'b'
+                    (dx == 0 && dy == -1) ||  # 前
+                    (dx == 1 && dy == -1) ||  # 斜め前
+                    (dx == 1 && dy == 0) ||   # 横
+                    (dx == 0 && dy == 1)      # 後ろ
+                else
+                    (dx == 0 && dy == 1) ||   # 前
+                    (dx == 1 && dy == 1) ||   # 斜め前
+                    (dx == 1 && dy == 0) ||   # 横
+                    (dx == 0 && dy == -1)     # 後ろ
+                end
+            end
         end
     end
 end

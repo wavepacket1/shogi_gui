@@ -1,15 +1,12 @@
 module Pieces
-    class K < BasePiece
-        def initialize
-            super([[0, 1], [1, 0], [1, 1], [1, -1], [-1, -1], [-1, 0], [0, -1], [-1, 1]])
-        end
-    
-        def validate(board,present_position,next_position)
-            validate_movement(board,present_position,next_position)
-        end
-    
-        def can_move?(board,next_position)
-            can_move_validation(board,next_position)
+    class K 
+        class << self
+            def move?(move_info, side)
+                dx = (move_info[:to_col] - move_info[:from_col]).abs
+                dy = move_info[:to_row] - move_info[:from_row]
+            
+                dx == 1 && ((side == 'b' && dy == -2) || (side == 'w' && dy == 2))
+            end
         end
     end
 end
