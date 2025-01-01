@@ -1,7 +1,7 @@
 module Pieces
     class B 
         class << self
-            def move?(move_info, board_array)
+            def move?(move_info, board_array, _side)
                 dx = (move_info[:to_col] - move_info[:from_col]).abs
                 dy = (move_info[:to_row] - move_info[:from_row]).abs
                 
@@ -23,9 +23,9 @@ module Pieces
                 true
             end
 
-            def promoted_move?(move_info, board_array)
+            def promoted_move?(move_info, board_array, _side)
                 # 角の動き
-                return true if move?(move_info, board_array)
+                return true if move?(move_info, board_array, _side)
         
                 # 玉の動き（隣接1マス）
                 dx = (move_info[:to_col] - move_info[:from_col]).abs

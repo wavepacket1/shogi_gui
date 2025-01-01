@@ -133,6 +133,18 @@ class Board < ApplicationRecord
         }
     end
 
+    def self.create_next_board(parsed_data, move_info, board, game)
+        Validator.valid_move_or_drop?(
+            parsed_data[:board_array],
+            parsed_data[:hand],
+            parsed_data[:side],
+            parsed_data[:move_number],
+            move_info,
+            board,
+            game
+        )
+    end
+
     private 
 
     def self.convert_square_to_indices(sq)

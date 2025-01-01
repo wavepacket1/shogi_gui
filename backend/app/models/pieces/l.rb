@@ -1,7 +1,7 @@
 module Pieces
     class L
         class << self
-            def move?(move_info, side, board_array)
+            def move?(move_info, board_array, side)
                 dx = move_info[:to_col] - move_info[:from_col]
                 dy = move_info[:to_row] - move_info[:from_row]
                 
@@ -16,6 +16,10 @@ module Pieces
                 
                 range = from_row < to_row ? (from_row + 1...to_row) : (to_row + 1...from_row)
                 range.none? { |row| board_array[row][col] }
+            end
+
+            def promoted_move?(move_info, _board_array, side)
+                Pieces::G.move?(move_info, _board_array, side)
             end
         end
     end

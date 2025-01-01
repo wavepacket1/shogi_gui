@@ -1,4 +1,3 @@
-
 class Validator
     class << self
         def validate!(game, board, move_str)
@@ -6,7 +5,7 @@ class Validator
             move_info = Board.parse_move(move_str)
     
             validate_move!(parsed_data, move_info)
-            create_next_board(parsed_data, move_info, board, game)
+            Board.create_next_board(parsed_data, move_info, board, game)
         end
     
         def  valid_move_or_drop?(board_array, hand, side, move_number, move_info, board, game)
@@ -89,105 +88,86 @@ class Validator
             "+#{piece}"
         end
     
-        def legal_move?(board_array, hand, side, move_info)
+        def legal_move?(board_array, side, move_info)
             case move_info[:type]
-            when :move
-                # 移動元に駒があるか確認
-                from_piece = board_array[move_info[:from_row]][move_info[:from_col]]
-                return false unless from_piece
-        
-                # 自分の駒かどうか確認
-                is_black_piece = from_piece.upcase == from_piece
-                return false if (side == 'b' && !is_black_piece) || (side == 'w' && is_black_piece)
-            
-                # 移動先の駒が自分の駒でないことを確認
-                to_piece = board_array[move_info[:to_row]][move_info[:to_col]]
-                if to_piece
-                    is_to_black_piece = to_piece.upcase == to_piece
-                    return false if (side == 'b' && is_to_black_piece) || (side == 'w' && !is_to_black_piece)
-                end
-        
-                # 駒の種類に応じた移動可能範囲の確認
-                piece_type = from_piece.upcase
-                can_move = case piece_type
-                when 'P'  # 歩
-                    Pieces::P.move?(move_info, side, from_piece)
-                when 'L'  # 香車
-                    Pieces::L.move?(move_info, side, board_array)
-                when 'N'  # 桂馬
-                    Pieces::N.move?(move_info, side)
-                when 'S'  # 銀
-                    Pieces::S.move?(move_info, side, from_piece)
-                when 'G', '+P', '+L', '+N', '+S'  # 金、成り駒
-                    Pieces::G.move?(move_info, side)
-                when 'B'  # 角
-                    Pieces::B.move?(move_info, board_array)
-                when '+B'
-                    Pieces::B.promoted_move?(move_info, board_array)
-                when 'R'  # 飛車
-                    Pieces::R.move?(move_info, board_array)
-                when '+R'
-                    Pieces::R.promoted_move?(move_info, board_array)
-                when 'K'  # 玉
-                    Pieces::K.move?(move_info)
-                end
-        
-                return can_move
-        
-            when :drop
-                piece_type = move_info[:piece].upcase
-                to_row = move_info[:to_row]
-            
-                # 移動先に駒がないことを確認
-                return false if board_array[move_info[:to_row]][move_info[:to_col]]
-            
-                # 二歩のチェック
-                if piece_type == 'P' 
-                    column = board_array.map { |row| row[move_info[:to_col]] }
-                    has_pawn = column.any? do |cell|
-                        next false unless cell
-                        cell_type = cell.upcase
-                        cell_owner = cell.upcase == cell ? 'b' : 'w'
-                        cell_type == 'P' && cell_owner == side
-                    end
-                    return false if has_pawn
-                end
-            
-                # 最奥段への打ち駒制限
-                case piece_type
-                when 'P', 'L'
-                    return false if (side == 'b' && to_row == 0) || (side == 'w' && to_row == 8)
-                when 'N'
-                    return false if (side == 'b' && to_row <= 1) || (side == 'w' && to_row >= 7)
-                end
-            
-                true
+            when :move then legal_piece_move?(board_array, side, move_info)
+            when :drop then legal_drop?(board_array, side, move_info)
+            else false
             end
+        end
+
+        def legal_piece_move?(board_array, side, move_info)
+            # 移動元に駒があるか確認
+            from_piece = board_array[move_info[:from_row]][move_info[:from_col]]
+            return false unless from_piece
+    
+            # 自分の駒かどうか確認
+            is_black_piece = from_piece.upcase == from_piece
+            return false if (side == 'b' && !is_black_piece) || (side == 'w' && is_black_piece)
+        
+            # 移動先の駒が自分の駒でないことを確認
+            to_piece = board_array[move_info[:to_row]][move_info[:to_col]]
+            if to_piece
+                is_to_black_piece = to_piece.upcase == to_piece
+                return false if (side == 'b' && is_to_black_piece) || (side == 'w' && !is_to_black_piece)
+            end
+    
+            validate_piece_movement?(from_piece, board_array, side, move_info)
+        end
+
+        def legal_drop?(board_array, side, move_info)
+            piece_type = move_info[:piece].upcase
+            to_row = move_info[:to_row]
+        
+            # 移動先に駒がないことを確認
+            return false if board_array[move_info[:to_row]][move_info[:to_col]]
+        
+            # 二歩のチェック
+            if piece_type == 'P' 
+                column = board_array.map { |row| row[move_info[:to_col]] }
+                has_pawn = column.any? do |cell|
+                    next false unless cell
+                    cell_type = cell.upcase
+                    cell_owner = cell.upcase == cell ? 'b' : 'w'
+                    cell_type == 'P' && cell_owner == side
+                end
+                return false if has_pawn
+            end
+        
+            # 最奥段への打ち駒制限
+            case piece_type
+            when 'P', 'L'
+                return false if (side == 'b' && to_row == 0) || (side == 'w' && to_row == 8)
+            when 'N'
+                return false if (side == 'b' && to_row <= 1) || (side == 'w' && to_row >= 7)
+            end
+        
+            true
         end
     
         def validate_move!(parsed_data, move_info)
             unless legal_move?(
                 parsed_data[:board_array], 
-                parsed_data[:hand], 
                 parsed_data[:side], 
                 move_info
                 )
                 raise StandardError, '不正な手です。'
             end
         end
-    
+
         private 
-        
-        def create_next_board(parsed_data, move_info, board, game)
-        valid_move_or_drop?(
-            parsed_data[:board_array],
-            parsed_data[:hand],
-            parsed_data[:side],
-            parsed_data[:move_number],
-            move_info,
-            board,
-            game
-        )
+
+        def validate_piece_movement?(from_piece, board_array, side, move_info)
+            piece_type = from_piece.upcase
+            piece_class = get_piece_class(piece_type)
+
+            piece_type.start_with?('+') ? piece_class.promoted_move?(move_info, board_array, side) : piece_class.move?(move_info, board_array, side)
+        end
+
+        def get_piece_class(piece_type)
+            normalized_type = piece_type.gsub('+', '')
+
+            "Pieces::#{normalized_type}".constantize
         end
     end
 end
