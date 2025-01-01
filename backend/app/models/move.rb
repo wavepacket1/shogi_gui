@@ -8,6 +8,14 @@ class Move < ApplicationRecord
     end
 
     class << self
+        def process_move(game, board, move_str)
+            move_info = Board.parse_move(move_str)
+            parsed_data = Board.parse_board_data(board)
+
+            validate_move!(parsed_data, move_info)
+            create_next_board(parsed_data, move_info, board, game)
+        end
+
         def legal_move?(board_array, hand, side, move_info)
             case move_info[:type]
             when :move
@@ -100,6 +108,30 @@ class Move < ApplicationRecord
         end
 
         private 
+
+        def validate_move!(parsed_data, move_info)
+            unless legal_move?(
+                parsed_data[:board_array], 
+                parsed_data[:hand], 
+                parsed_data[:side], 
+                move_info
+                )
+                raise StandardError, '不正な手です。'
+            end
+        end
+        
+        def create_next_board(parsed_data, move_info, board, game)
+        valid_move_or_drop?(
+            parsed_data[:board_array],
+            parsed_data[:hand],
+            parsed_data[:side],
+            parsed_data[:move_number],
+            move_info,
+            board,
+            game
+        )
+        end
+
         def valid_move?(board_array, hand, side, move_info)
             from_piece = board_array[move_info[:from_row]][move_info[:from_col]]
             to_piece = board_array[move_info[:to_row]][move_info[:to_col]]

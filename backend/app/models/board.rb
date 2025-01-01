@@ -123,6 +123,16 @@ class Board < ApplicationRecord
         "#{board_part} #{side_str} #{hand_str} #{move_number_str}"
     end
 
+    def self.parse_board_data(board)
+        parsed_data = board.parse_sfen
+        {
+          board_array: parsed_data[:board_array],
+          side: parsed_data[:side],
+          hand: parsed_data[:hand] || {},
+          move_number: parsed_data[:move_number]
+        }
+    end
+
     private 
 
     def self.convert_square_to_indices(sq)
