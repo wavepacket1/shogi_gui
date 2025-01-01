@@ -1,11 +1,11 @@
 module Pieces
     class K 
         class << self
-            def move?(move_info, side)
+            def move?(move_info)
                 dx = (move_info[:to_col] - move_info[:from_col]).abs
-                dy = move_info[:to_row] - move_info[:from_row]
-            
-                dx == 1 && ((side == 'b' && dy == -2) || (side == 'w' && dy == 2))
+                dy = (move_info[:to_row] - move_info[:from_row]).abs
+                
+                dx <= 1 && dy <= 1
             end
         end
     end
