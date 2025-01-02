@@ -136,7 +136,7 @@ class Board < ApplicationRecord
     def self.create_next_board(parsed_data, move_info, board, game)
         board_array, hand, side, move_number = parsed_data.values_at(:board_array, :hand, :side, :move_number)
 
-        Validator.valid_move_or_drop?(board_array, hand, side, move_info)
+        Move.execute_move_or_drop(board_array, hand, side, move_info)
 
         next_side, next_move_number = update_game_state(side, move_number)
     
@@ -144,6 +144,7 @@ class Board < ApplicationRecord
     end
 
     private
+
     def self.create_board_record(board_array, hand, side, move_number, game)
         new_sfen = array_to_sfen(board_array, side, hand, move_number)
         create!(game_id: game.id, sfen: new_sfen)
