@@ -102,10 +102,10 @@ class Validator
         def validate_no_pawn_in_column?(board_array, col, side)
             column = board_array.map { |row| row[col] }
             column.any? do |cell|
-            next false unless cell
-            cell_type = cell.upcase
-            cell_owner = cell.upcase == cell ? 'b' : 'w'
-            cell_type == 'P' && cell_owner == side
+                next false unless cell
+                cell_type = cell.upcase
+                cell_owner = cell.upcase == cell ? 'b' : 'w'
+                cell_type == 'P' && cell_owner == side
             end
         end
         
