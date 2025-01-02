@@ -8,84 +8,48 @@ class Validator
             Board.create_next_board(parsed_data, move_info, board, game)
         end
     
-        def  valid_move_or_drop?(board_array, hand, side, move_number, move_info, board, game)
-            begin
-                case move_info[:type]
-                when :move
-                    valid_move?(board_array, hand, side, move_info)
-                when :drop
-                    valid_drop?(board_array, hand, side, move_info)
-                else 
-                    raise ArgumentError, "Invalid move type: #{move_info[:type]}"
-                end
-            
-                side = (side == 'b' ? 'w' : 'b')
-                move_number += 1
-            
-                new_sfen = Board.array_to_sfen(board_array, side, hand, move_number)
-                next_board = Board.create!(game_id: game.id, sfen: new_sfen)
+        def  valid_move_or_drop?(board_array, hand, side, move_info)
+            case move_info[:type]
+            when :move
+                valid_move?(board_array, hand, side, move_info)
+            when :drop
+                valid_drop?(board_array, hand, side, move_info)
+            else 
+                raise ArgumentError, "Invalid move type: #{move_info[:type]}"
             end
         end
     
         def valid_move?(board_array, hand, side, move_info)
             from_piece = board_array[move_info[:from_row]][move_info[:from_col]]
             to_piece = board_array[move_info[:to_row]][move_info[:to_col]]
+
+            # 駒の捕獲
+            capture_piece!(to_piece, hand, side) if to_piece
+
+            # 移動元の駒を消去
+            clear_source_square!(board_array, move_info)
             
-            # 移動先に相手の駒がある場合、手駒に加える
-            if to_piece
-                captured_piece = to_piece.gsub(/^\+/, '')  # 成り駒は基本形に戻す
-                # 先手が取った場合は大文字、後手が取った場合は小文字で持ち駒に追加
-                # 取った駒は必ず相手の駒なので、先手なら小文字を大文字に、後手なら大文字を小文字に変換
-                captured_piece = if side == 'b'
-                    captured_piece.upcase   # 先手が取った場合は大文字に
-                else
-                    captured_piece.downcase # 後手が取った場合は小文字に
-                end
-                
-                hand[captured_piece] ||= 0
-                hand[captured_piece] += 1
-            end
-        
-            # 移動元の駒を消す
-            board_array[move_info[:from_row]][move_info[:from_col]] = nil
-            
-            # 移動先に駒を置く（必要に応じて成り駒に）
-            piece = from_piece
-            piece = promote_piece(piece) if move_info[:promoted]
-            board_array[move_info[:to_row]][move_info[:to_col]] = piece
-            return true
+            # 移動先に駒を配置
+            place_piece!(board_array, from_piece, move_info)
+
+            true
         end
         
         def valid_drop?(board_array, hand, side, move_info)
-            piece = move_info[:piece]
-            # 打つ駒は手番側の持ち駒から選ぶ（先手は大文字、後手は小文字）
-            piece_key = if side == 'b'
-                piece.upcase   # 先手の場合は大文字の持ち駒を使用
-            else
-                piece.downcase # 後手の場合は小文字の持ち駒を使用
-            end
-            
-            # 持ち駒の存在と数の確認
-            unless hand[piece_key] && hand[piece_key] > 0
-                return render json: {
-                status: 'error',
-                message: "持ち駒（#{piece_key}）がありません"
-                }, status: :unprocessable_entity
-            end
-        
+            piece_key = determine_piece_key(move_info[:piece], side)
+
+            # 持ち駒を確認
+            validate_hand!(hand, piece_key)
+
             # 持ち駒を減らす
-            hand[piece_key] -= 1
-            if hand[piece_key] <= 0
-                hand.delete(piece_key)
-            end
-        
-            # 盤面に駒を置く（手番側の駒として）
-            board_array[move_info[:to_row]][move_info[:to_col]] = piece_key
-            return true
-        end
-    
-        def promote_piece(piece)
-            "+#{piece}"
+            decrease_hand_piece!(hand, piece_key)
+
+            # 盤面に駒を配置
+            place_piece_on_board!(board_array, move_info[:to_row], move_info[:to_col], piece_key)
+
+            true
+        rescue StandardError => e
+            render_error_response(e.message)
         end
     
         def legal_move?(board_array, side, move_info)
@@ -97,20 +61,11 @@ class Validator
         end
 
         def legal_piece_move?(board_array, side, move_info)
-            # 移動元に駒があるか確認
-            from_piece = board_array[move_info[:from_row]][move_info[:from_col]]
-            return false unless from_piece
-    
-            # 自分の駒かどうか確認
-            is_black_piece = from_piece.upcase == from_piece
-            return false if (side == 'b' && !is_black_piece) || (side == 'w' && is_black_piece)
-        
-            # 移動先の駒が自分の駒でないことを確認
-            to_piece = board_array[move_info[:to_row]][move_info[:to_col]]
-            if to_piece
-                is_to_black_piece = to_piece.upcase == to_piece
-                return false if (side == 'b' && is_to_black_piece) || (side == 'w' && !is_to_black_piece)
-            end
+            from_piece = fetch_piece(board_array, move_info[:from_row], move_info[:from_col])
+            return false unless valid_from_piece?(from_piece, side)
+
+            to_piece = fetch_piece(board_array, move_info[:to_row], move_info[:to_col])
+            return false unless valid_to_piece?(to_piece, side)
     
             validate_piece_movement?(from_piece, board_array, side, move_info)
         end
@@ -118,30 +73,12 @@ class Validator
         def legal_drop?(board_array, side, move_info)
             piece_type = move_info[:piece].upcase
             to_row = move_info[:to_row]
-        
-            # 移動先に駒がないことを確認
-            return false if board_array[move_info[:to_row]][move_info[:to_col]]
-        
-            # 二歩のチェック
-            if piece_type == 'P' 
-                column = board_array.map { |row| row[move_info[:to_col]] }
-                has_pawn = column.any? do |cell|
-                    next false unless cell
-                    cell_type = cell.upcase
-                    cell_owner = cell.upcase == cell ? 'b' : 'w'
-                    cell_type == 'P' && cell_owner == side
-                end
-                return false if has_pawn
-            end
-        
-            # 最奥段への打ち駒制限
-            case piece_type
-            when 'P', 'L'
-                return false if (side == 'b' && to_row == 0) || (side == 'w' && to_row == 8)
-            when 'N'
-                return false if (side == 'b' && to_row <= 1) || (side == 'w' && to_row >= 7)
-            end
-        
+            to_col = move_info[:to_col]
+
+            return false unless drop_target_empty?(board_array, to_row, to_col)
+            return false if piece_type == 'P' && validate_no_pawn_in_column?(board_array, to_col, side)
+            return false if drop_restriction_violation?(piece_type, to_row, side)
+
             true
         end
     
@@ -156,6 +93,97 @@ class Validator
         end
 
         private 
+        # 移動先に駒がないことを確認
+        def drop_target_empty?(board_array, row, col)
+            board_array[row][col].nil?
+        end
+        
+        # 二歩のチェック
+        def validate_no_pawn_in_column?(board_array, col, side)
+            column = board_array.map { |row| row[col] }
+            column.any? do |cell|
+            next false unless cell
+            cell_type = cell.upcase
+            cell_owner = cell.upcase == cell ? 'b' : 'w'
+            cell_type == 'P' && cell_owner == side
+            end
+        end
+        
+        # 最奥段への打ち駒制限
+        def drop_restriction_violation?(piece_type, to_row, side)
+            case piece_type
+            when 'P', 'L'
+            (side == 'b' && to_row == 0) || (side == 'w' && to_row == 8)
+            when 'N'
+            (side == 'b' && to_row <= 1) || (side == 'w' && to_row >= 7)
+            else
+            false
+            end
+        end
+
+        def fetch_piece(board_array, row, col)
+            board_array[row][col]
+        end
+        
+        def valid_from_piece?(from_piece, side)
+            return false if from_piece.nil?
+
+            is_black_piece = from_piece.upcase == from_piece
+            side == 'b' ? is_black_piece : !is_black_piece
+        end
+        
+        def valid_to_piece?(to_piece, side)
+            return true if to_piece.nil?
+
+            is_to_black_piece = to_piece.upcase == to_piece
+            side == 'b' ? !is_to_black_piece : is_to_black_piece
+        end
+
+        def determine_piece_key(piece, side)
+            side == 'b' ? piece.upcase : piece.downcase
+        end
+
+        def promote_piece(piece)
+            "+#{piece}"
+        end
+
+        def validate_hand!(hand, piece_key)
+            unless hand[piece_key]&.positive?
+                raise StandardError, "持ち駒（#{piece_key}）がありません"
+            end
+        end
+
+        def decrease_hand_piece!(hand, piece_key)
+            hand[piece_key] -= 1
+            hand.delete(piece_key) if hand[piece_key].zero?
+        end
+
+        def place_piece_on_board!(board_array, row, col, piece_key)
+            board_array[row][col] = piece_key
+        end
+        
+        def render_error_response(message)
+            render json: {
+                status: 'error',
+                message: message
+            }, status: :unprocessable_entity
+        end
+
+        def capture_piece!(to_piece, hand, side)
+            captured_piece = to_piece.gsub(/^\+/, '') # 成り駒を基本形に戻す
+            captured_piece = side == 'b' ? captured_piece.upcase : captured_piece.downcase # 駒を手駒として変換
+            hand[captured_piece] ||= 0
+            hand[captured_piece] += 1
+        end
+
+        def clear_source_square!(board_array, move_info)
+            board_array[move_info[:from_row]][move_info[:from_col]] = nil
+        end
+    
+        def place_piece!(board_array, from_piece, move_info)
+            piece = move_info[:promoted] ? promote_piece(from_piece) : from_piece
+            board_array[move_info[:to_row]][move_info[:to_col]] = piece
+        end
 
         def validate_piece_movement?(from_piece, board_array, side, move_info)
             piece_type = from_piece.upcase
