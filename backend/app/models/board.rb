@@ -2,24 +2,13 @@ class Board < ApplicationRecord
     has_many :pieces, dependent: :destroy
     belongs_to :game
 
-    def parse_board_data
-        parsed_data = parse_sfen
-
-        {
-            board_array: parsed_data[:board_array],
-            side: parsed_data[:side],
-            hand: parsed_data[:hand] || {},
-            move_number: parsed_data[:move_number]
-        }
-    end
-
     def parse_sfen
         board_part, side, hand_part, move_number = sfen.split(" ")
         {
-            board_array: parse_board(board_part),
-            side:,
-            hand: parse_hand(hand_part),
-            move_number: move_number.to_i
+          board_array: parse_board(board_part),
+          side: ,
+          hand: parse_hand(hand_part),
+          move_number: move_number.to_i
         }
     end
 
