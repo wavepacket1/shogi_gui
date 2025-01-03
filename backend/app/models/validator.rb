@@ -9,7 +9,18 @@ class Validator
             
             # 王手放置のチェック
             simulated_board = simulate_move(board_array, move_info)
-            !in_check?(simulated_board, side)
+            return false if in_check?(simulated_board, side)
+
+            # 打ち歩詰めのチェック
+            return false if pawn_drop_mate?(board_array, side, move_info)
+
+            # 連続王手の判定
+            return false if perpetual_check?(simulated_board, side, move_history, move_info)
+    
+            # 千日手の判定
+            return false if repetition_draw?(simulated_board, move_history, move_info)
+            
+            true
         end
 
         def legal_move?(board_array, side, move_info)
@@ -38,6 +49,88 @@ class Validator
         end
 
         private 
+
+        def perpetual_check?(board_array, side, move_history, current_move)
+            # 直近の4手をチェック（連続王手は3手で判定可能）
+            recent_moves = move_history.last(4)
+            return false if recent_moves.length < 4
+      
+            # 現在の手が王手かどうかチェック
+            opponent_side = side == 'b' ? 'w' : 'b'
+            return false unless in_check?(board_array, opponent_side)
+      
+            # 直近の自分の手がすべて王手だったかチェック
+            consecutive_checks = 1
+            recent_moves.reverse.each_with_index do |move, i|
+              next if i.odd? # 相手の手はスキップ
+              
+              if move[:check]
+                consecutive_checks += 1
+              else
+                break
+              end
+            end
+      
+            consecutive_checks >= 4
+          
+            
+            def repetition_draw?(board_array, move_history, current_move)
+                # 盤面のハッシュを生成
+                current_position = generate_position_hash(board_array)
+                
+                # 同一局面の出現回数をカウント
+                position_count = move_history.count { |move| move[:position_hash] == current_position }
+                
+                # 4回目の同一局面で千日手
+                position_count >= 3
+              end
+          
+              def generate_position_hash(board_array)
+                # 盤面を文字列化してハッシュ化
+                board_array.map(&:join).join
+              end
+
+              def entering_king_rule?(board_array, side)
+                king_pos = find_king(board_array, side)
+                return false unless king_pos
+          
+                # 相手陣の範囲を定義
+                enemy_territory = side == 'b' ? (0..2) : (6..8)
+                
+                # 王が相手陣に入っているか確認
+                return false unless enemy_territory.include?(king_pos[0])
+          
+                # 点数計算（27点法の例）
+                points = calculate_entering_king_points(board_array, side, enemy_territory)
+                
+                # 27点以上で入玉とみなす
+                points >= 27
+              end
+        
+              def calculate_entering_king_points(board_array, side, enemy_territory)
+                points = 0
+                
+                board_array.each_with_index do |row, i|
+                  row.each_with_index do |piece, j|
+                    next if piece.nil?
+                    next if piece_owner(piece) != side
+                    
+                    # 相手陣内の駒のみカウント
+                    next unless enemy_territory.include?(i)
+                    
+                    points += case piece.upcase
+                    when 'P' then 1
+                    when 'L', 'N', 'S' then 5
+                    when 'G', 'B', 'R' then 10
+                    else 0
+                    end
+                  end
+                end
+                
+                points
+              end
+
+        
 
         def simulate_move(board_array, move_info)
             new_board = board_array.deep_dup
@@ -133,5 +226,41 @@ class Validator
                 false
             end
         end
+
+        # 盤面の状態を保存するための構造体
+    class Position
+        attr_reader :board_array, :hands, :side_to_move
+  
+        def initialize(board_array, hands, side_to_move)
+          @board_array = board_array
+          @hands = hands
+          @side_to_move = side_to_move
+        end
+  
+        def ==(other)
+          board_array == other.board_array &&
+          hands == other.hands &&
+          side_to_move == other.side_to_move
+        end
+  
+        def hash
+          [board_array, hands, side_to_move].hash
+        end
+      end
+
+      def record_position(board_array, hands, side, move_history)
+        current_position = Position.new(
+          Marshal.load(Marshal.dump(board_array)),
+          Marshal.load(Marshal.dump(hands)),
+          side
+        )
+  
+        move_history << {
+          position: current_position,
+          check: in_check?(board_array, side == 'b' ? 'w' : 'b')
+        }
+      end
     end
 end
+
+    
