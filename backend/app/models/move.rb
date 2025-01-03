@@ -4,7 +4,7 @@ class Move < ApplicationRecord
 
     class << self
         def process_move(game, board, move_str)
-            ActiveRecord::Base.transaction do 
+            ActiveRecord::Base.transaction do
                 parsed_data = board.parse_sfen
                 move_info = Board.parse_move(move_str)
 

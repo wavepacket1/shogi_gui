@@ -68,16 +68,24 @@ class Parser::SfenParser
         end
 
         def parse_row(row)
-            row.chars.each_with_object([]).with_index do |(char, row_arr), i|
+            row_arr = []
+            i = 0
+
+            while i < row.size
+                char = row[i]
                 if char.match?(/\d/)
                     row_arr.concat([nil] * char.to_i)
                 elsif char == "+"
                     validate_plus(row, i)
                     row_arr << "+#{row[i + 1]}"
+                    i += 1 # 次の文字をスキップ
                 else
                     row_arr << char
                 end
+                i += 1
             end
+
+            row_arr
         end
 
             

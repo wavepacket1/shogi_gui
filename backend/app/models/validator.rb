@@ -5,11 +5,11 @@ class Validator
             board_array = parsed_data[:board_array]
             side = parsed_data[:side]
 
-            case move_info[:type]
-            when :move then legal_move?(board_array, side, move_info)
-            when :drop then legal_drop?(board_array, side, move_info)
-            else false
-            end
+            return false unless basic_legal_move?(board_array, side, move_info)
+            
+            # 王手放置のチェック
+            simulated_board = simulate_move(board_array, move_info)
+            !in_check?(simulated_board, side)
         end
 
         def legal_move?(board_array, side, move_info)
@@ -39,6 +39,78 @@ class Validator
 
         private 
 
+        def simulate_move(board_array, move_info)
+            new_board = board_array.deep_dup
+            
+            case move_info[:type]
+            when :move
+                new_board[move_info[:to_row]][move_info[:to_col]] = 
+                    move_info[:promoted] ? 
+                    "+#{new_board[move_info[:from_row]][move_info[:from_col]]}" : 
+                    new_board[move_info[:from_row]][move_info[:from_col]]
+                new_board[move_info[:from_row]][move_info[:from_col]] = nil
+            when :drop
+                piece = move_info[:piece]
+                new_board[move_info[:to_row]][move_info[:to_col]] = piece
+            end
+            
+            new_board
+        end
+
+        def in_check?(board_array, side)
+            king_pos = find_king(board_array, side)
+            return true unless king_pos # 王がない場合は王手とみなす
+    
+            opponent_side = side == 'b' ? 'w' : 'b'
+            
+            board_array.each_with_index do |row, from_row|
+                row.each_with_index do |piece, from_col|
+                    next if piece.nil?
+                    next if piece_owner(piece) != opponent_side
+        
+                    move_info = {
+                        type: :move,
+                        from_row: from_row,
+                        from_col: from_col,
+                        to_row: king_pos[0],
+                        to_col: king_pos[1]
+                    }
+        
+                    piece_type = piece.gsub(/^\+/, '').upcase
+                    piece_class = Piece.get_piece_class(piece_type)
+                    
+                    if piece.start_with?('+')
+                        return true if piece_class.promoted_move?(move_info, board_array, opponent_side)
+                    else
+                        return true if piece_class.move?(move_info, board_array, opponent_side)
+                    end
+                end
+            end
+            false
+        end
+
+        def basic_legal_move?(board_array, side, move_info)
+            case move_info[:type]
+            when :move then legal_move?(board_array, side, move_info)
+            when :drop then legal_drop?(board_array, side, move_info)
+            else false
+            end
+        end
+
+        def find_king(board_array, side)
+            king_symbol = side == 'b' ? 'K' : 'k'
+            board_array.each_with_index do |row, i|
+                row.each_with_index do |piece, j|
+                    return [i, j] if piece == king_symbol
+                end
+            end
+            nil
+        end
+    
+        def piece_owner(piece)
+            piece.upcase == piece ? 'b' : 'w'
+        end
+    
         # 二歩のチェック
         def validate_no_pawn_in_column?(board_array, col, side)
             column = board_array.map { |row| row[col] }
