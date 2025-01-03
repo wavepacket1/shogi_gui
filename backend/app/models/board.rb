@@ -5,10 +5,10 @@ class Board < ApplicationRecord
     def parse_sfen
         board_part, side, hand_part, move_number = sfen.split(" ")
         {
-          board_array: parse_board(board_part),
-          side: ,
-          hand: parse_hand(hand_part),
-          move_number: move_number.to_i
+            board_array: parse_board(board_part),
+            side: ,
+            hand: parse_hand(hand_part),
+            move_number: move_number.to_i
         }
     end
 
