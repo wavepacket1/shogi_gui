@@ -61,6 +61,65 @@ class Validator
             opponent_moves.empty?
         end
 
+
+        def is_checkmate?(board_array, side)
+            return false unless in_check?(board_array, side)
+
+            all_moves = []
+
+            board_array.each_with_index do |row, i|
+                row.each_with_index do |piece, j|
+                    next if piece.nil? || piece_owner(piece) != side
+
+                    (-8..8).each do |dx|
+                        (-8..8).each do |dy|
+                            next if dx == 0 && dy == 0
+                            to_row = i + dx
+                            to_col = j + dy
+                            next unless to_row.between?(0, 8) && to_col.between?(0, 8)
+
+                            move_info = {
+                                type: :move, 
+                                from_row: i,
+                                from_col: j,
+                                to_row: to_row, 
+                                to_col: to_col
+                            }
+
+                            if basic_legal_move?(board_array, side, move_info)
+                                #移動後も王手が続いているかチェック
+                                simulated_board = simulate_move(board_array, move_info)
+                                return false unless in_check?(simulated_board, side)
+                            end
+                        end
+                    end
+                end
+            end
+
+            hands[side].each do |piece, count|
+                next if count == 0
+
+                (0..8).each do |i|
+                    (0..8).each do |j|
+                        next unless board_array[i][j].nil?
+
+                        move_info = {
+                            type: :drop,
+                            piece: piece,
+                            to_row: i,
+                            to_col: j
+                        }
+
+                        if basic_legal_drop?(board_array, side, move_info)
+                            #打った後も王手が続いているかチェック
+                            simulated_board = simulate_move(board_array, move_info)
+                            return false unless in_check?(simulated_board, side)
+                        end
+                    end
+                end
+            end
+        end
+
         private 
 
         def generate_all_legal_moves(board_array, side)
