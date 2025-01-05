@@ -1,7 +1,7 @@
 class Validator
     class << self
         # 合法手かどうかを判定する
-        def legal?(parsed_data, move_info)
+        def legal?(parsed_data, move_info, game)
             board_array = parsed_data[:board_array]
             side = parsed_data[:side]
 
@@ -14,11 +14,13 @@ class Validator
             # 打ち歩詰めのチェック
             return false if pawn_drop_mate?(board_array, side, move_info)
 
-            # # 連続王手の判定
-            # return false if perpetual_check?(simulated_board, side, move_history, move_info)
+            board_history = Board.where(game_id: game.id).order(created_at: :desc).all
+
+            # 連続王手の判定
+            return false if perpetual_check?(simulated_board, side, board_history, move_info)
     
-            # # 千日手の判定
-            # return false if repetition_draw?(simulated_board, move_history, move_info)
+            # 千日手の判定
+            return false if repetition_draw?(simulated_board, board_history, move_info)
             
             true
         end
@@ -120,6 +122,49 @@ class Validator
             end
         end
 
+        #　現在の局面で自陣の王が王手かどうかを判定する
+        def in_check?(board_array, side)
+            king_pos = find_king(board_array, side)
+            return true unless king_pos # 王がない場合は王手とみなす
+    
+            opponent_side = side == 'b' ? 'w' : 'b'
+            
+            board_array.each_with_index do |row, from_row|
+                row.each_with_index do |piece, from_col|
+                    next if piece.nil?
+                    next if piece_owner(piece) != opponent_side
+        
+                    move_info = {
+                        type: :move,
+                        from_row: from_row,
+                        from_col: from_col,
+                        to_row: king_pos[0],
+                        to_col: king_pos[1]
+                    }
+        
+                    piece_type = piece.gsub(/^\+/, '').upcase
+                    piece_class = Piece.get_piece_class(piece_type)
+                    
+                    if piece.start_with?('+')
+                        return true if piece_class.promoted_move?(move_info, board_array, opponent_side)
+                    else
+                        return true if piece_class.move?(move_info, board_array, opponent_side)
+                    end
+                end
+            end
+            false
+        end
+
+        # 次の手で敵陣の王が王手になるかどうかを判定する
+        def will_check?(board_array, side, move_info)
+            opponent_king_pos = find_king(board_array, side == 'b' ? 'w' : 'b')
+            return false unless opponent_king_pos
+
+            piece_class = Piece.get_piece_class(move_info[:piece_type])
+        
+            piece_class.move?(move_info.merge(to_row: opponent_king_pos[0], to_col: opponent_king_pos[1]), board_array, side)
+        end
+
         private 
 
         def generate_all_legal_moves(board_array, side)
@@ -154,35 +199,42 @@ class Validator
             end
         end
 
-        def perpetual_check?(board_array, side, move_history, current_move)
-            # 直近の4手をチェック（連続王手は3手で判定可能）
-            recent_moves = move_history.last(4)
-            return false if recent_moves.length < 4
-    
-            # 現在の手が王手かどうかチェック
-            return false unless in_check?(board_array, side)
-    
-            # 直近の自分の手がすべて王手だったかチェック
-            consecutive_checks = 1
-            recent_moves.reverse.each_with_index do |move, i|
-                next if i.odd? # 相手の手はスキップ
-                
-                if move[:check]
-                    consecutive_checks += 1
-                else
-                    break
+        def perpetual_check?(board_array, side, board_history, current_move)
+            recent_boards = board_history.first(8)
+            opponent_side = side == 'b' ? 'w' : 'b'
+            
+            # 現在の手が王手でなければ連続王手の千日手ではない
+            return false unless in_check?(board_array, opponent_side)
+
+            same_position_count = 1  # 現在の局面を1回とカウント
+            check_sequence = true
+            
+            # 履歴をさかのぼって確認
+            recent_boards.reverse_each do |board|
+                parsed_data = board.parse_sfen
+                byebug
+
+                # 自分の手番の時のみ王手のチェックを行う
+                if parsed_data[:side] == side
+                    return false unless in_check?(parsed_data[:board_array], opponent_side)
                 end
+            
+                # 盤面が完全に一致しているかチェック
+                same_position_count += 1 if parsed_data[:board_array] == board_array
+                
+                # 同一局面が4回出現し、かつすべての手が王手だった場合
+                return true if same_position_count >= 4 && check_sequence
             end
-    
-            consecutive_checks >= 4
+            
+            false
         end
             
-        def repetition_draw?(board_array, move_history, current_move)
+        def repetition_draw?(board_array, board_history, current_move)
             # 盤面のハッシュを生成
             current_position = generate_position_hash(board_array)
             
             # 同一局面の出現回数をカウント
-            position_count = move_history.count { |move| move[:position_hash] == current_position }
+            position_count = board_history.count { |move| move[:position_hash] == current_position }
             
             # 4回目の同一局面で千日手
             position_count >= 3
@@ -251,38 +303,6 @@ class Validator
             new_board
         end
 
-        def in_check?(board_array, side)
-            king_pos = find_king(board_array, side)
-            return true unless king_pos # 王がない場合は王手とみなす
-    
-            opponent_side = side == 'b' ? 'w' : 'b'
-            
-            board_array.each_with_index do |row, from_row|
-                row.each_with_index do |piece, from_col|
-                    next if piece.nil?
-                    next if piece_owner(piece) != opponent_side
-        
-                    move_info = {
-                        type: :move,
-                        from_row: from_row,
-                        from_col: from_col,
-                        to_row: king_pos[0],
-                        to_col: king_pos[1]
-                    }
-        
-                    piece_type = piece.gsub(/^\+/, '').upcase
-                    piece_class = Piece.get_piece_class(piece_type)
-                    
-                    if piece.start_with?('+')
-                        return true if piece_class.promoted_move?(move_info, board_array, opponent_side)
-                    else
-                        return true if piece_class.move?(move_info, board_array, opponent_side)
-                    end
-                end
-            end
-            false
-        end
-
         def basic_legal_move?(board_array, side, move_info)
             case move_info[:type]
             when :move then legal_move?(board_array, side, move_info)
@@ -326,40 +346,6 @@ class Validator
             else
                 false
             end
-        end
-
-        def record_position(board_array, hands, side, move_history)
-            current_position = Position.new(
-                Marshal.load(Marshal.dump(board_array)),
-                Marshal.load(Marshal.dump(hands)),
-                side
-            )
-    
-            move_history << {
-                position: current_position,
-                check: in_check?(board_array, side == 'b' ? 'w' : 'b')
-            }
-        end
-    end
-
-    # 盤面の状態を保存するための構造体
-    class Position
-        attr_reader :board_array, :hands, :side_to_move
-
-        def initialize(board_array, hands, side_to_move)
-            @board_array = board_array
-            @hands = hands
-            @side_to_move = side_to_move
-        end
-
-        def ==(other)
-            board_array == other.board_array &&
-            hands == other.hands &&
-            side_to_move == other.side_to_move
-        end
-
-        def hash
-            [board_array, hands, side_to_move].hash
         end
     end
 end

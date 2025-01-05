@@ -8,7 +8,7 @@ class Move < ApplicationRecord
                 parsed_data = board.parse_sfen
                 move_info = Board.parse_move(move_str)
 
-                Board.create_next_board(parsed_data, move_info, board, game) if Validator.legal?(parsed_data, move_info)
+                Board.create_next_board(parsed_data, move_info, board, game) if Validator.legal?(parsed_data, move_info, game)
             end
         rescue StandardError => e
             Rails.logger.error("Move processing failed: #{e.message}")
