@@ -212,7 +212,6 @@ class Validator
             # 履歴をさかのぼって確認
             recent_boards.reverse_each do |board|
                 parsed_data = board.parse_sfen
-                byebug
 
                 # 自分の手番の時のみ王手のチェックを行う
                 if parsed_data[:side] == side
