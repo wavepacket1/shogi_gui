@@ -222,6 +222,10 @@
                       "type": "boolean",
                       "example": true
                     },
+                    "is_checkmate": {
+                      "type": "boolean",
+                      "example": false
+                    },
                     "board_id": {
                       "type": "integer",
                       "example": 123
@@ -247,6 +251,10 @@
                       "example": false
                     },
                     "legal_flag": {
+                      "type": "boolean",
+                      "example": false
+                    },
+                    "is_checkmate": {
                       "type": "boolean",
                       "example": false
                     },

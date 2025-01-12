@@ -343,6 +343,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
           status?: boolean;
           /** @example true */
           legal_flag?: boolean;
+          /** @example false */
+          is_checkmate?: boolean;
           /** @example 123 */
           board_id?: number;
           /** @example "lnsgkgsnl/1r5b1/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL b - 0" */
@@ -353,6 +355,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
           status?: boolean;
           /** @example false */
           legal_flag?: boolean;
+          /** @example false */
+          is_checkmate?: boolean;
           /** @example 123 */
           board_id?: number;
           /** @example "lnsgkgsnl/1r5b1/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL b - 0" */

@@ -17,6 +17,7 @@ class Api::V1::MovesController < ApplicationController
     render json: {
       status: true,
       legal_flag: true,
+      is_checkmate: Validator.is_checkmate?(next_board.sfen),
       board_id: next_board.id,
       sfen: next_board.sfen
     }, status: :ok

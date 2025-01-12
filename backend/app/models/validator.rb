@@ -64,62 +64,17 @@ class Validator
         end
 
 
-        def is_checkmate?(board_array, side)
+        def is_checkmate?(sfen)
+            board_array = Parser::SfenParser.parse(sfen)[:board_array]
+            hands = Parser::SfenParser.parse(sfen)[:hand]
+            side = Parser::SfenParser.parse(sfen)[:side]
             return false unless in_check?(board_array, side)
 
-            all_moves = []
-
-            board_array.each_with_index do |row, i|
-                row.each_with_index do |piece, j|
-                    next if piece.nil? || piece_owner(piece) != side
-
-                    (-8..8).each do |dx|
-                        (-8..8).each do |dy|
-                            next if dx == 0 && dy == 0
-                            to_row = i + dx
-                            to_col = j + dy
-                            next unless to_row.between?(0, 8) && to_col.between?(0, 8)
-
-                            move_info = {
-                                type: :move, 
-                                from_row: i,
-                                from_col: j,
-                                to_row: to_row, 
-                                to_col: to_col
-                            }
-
-                            if basic_legal_move?(board_array, side, move_info)
-                                #移動後も王手が続いているかチェック
-                                simulated_board = simulate_move(board_array, move_info)
-                                return false unless in_check?(simulated_board, side)
-                            end
-                        end
-                    end
-                end
-            end
-
-            hands[side].each do |piece, count|
-                next if count == 0
-
-                (0..8).each do |i|
-                    (0..8).each do |j|
-                        next unless board_array[i][j].nil?
-
-                        move_info = {
-                            type: :drop,
-                            piece: piece,
-                            to_row: i,
-                            to_col: j
-                        }
-
-                        if basic_legal_drop?(board_array, side, move_info)
-                            #打った後も王手が続いているかチェック
-                            simulated_board = simulate_move(board_array, move_info)
-                            return false unless in_check?(simulated_board, side)
-                        end
-                    end
-                end
-            end
+            # 王手を回避する手があるかチェック
+            return false unless check_moves(board_array, side)
+            # 持ち駒を使って王手を回避する手があるかチェック
+            return false unless check_hands(board_array, side, hands)
+            return true
         end
 
         #　現在の局面で自陣の王が王手かどうかを判定する
@@ -162,7 +117,76 @@ class Validator
 
             piece_class = Piece.get_piece_class(move_info[:piece_type])
         
-            piece_class.move?(move_info.merge(to_row: opponent_king_pos[0], to_col: opponent_king_pos[1]), board_array, side)
+            if move_info[:piece_type].start_with?('+')
+                piece_class.promoted_move?(move_info.merge(to_row: opponent_king_pos[0], to_col: opponent_king_pos[1]), board_array, side)
+            else
+                piece_class.move?(move_info.merge(to_row: opponent_king_pos[0], to_col: opponent_king_pos[1]), board_array, side)
+            end
+        end
+
+        def check_moves(board_array, side)
+            board_array.each_with_index do |row, i|
+                row.each_with_index do |piece, j|
+                    next if piece.nil? || piece_owner(piece) != side
+
+                    (-8..8).each do |dx|
+                        (-8..8).each do |dy|
+                            next if dx == 0 && dy == 0
+                            to_row = i + dx
+                            to_col = j + dy
+                            next unless to_row.between?(0, 8) && to_col.between?(0, 8)
+
+                            move_info = {
+                                type: :move, 
+                                from_row: i,
+                                from_col: j,
+                                to_row: to_row, 
+                                to_col: to_col
+                            }
+
+                            if basic_legal_move?(board_array, side, move_info)
+                                #移動後も王手が続いているかチェック
+                                simulated_board = simulate_move(board_array, move_info)
+                                return false unless in_check?(simulated_board, side)
+                            end
+                        end
+                    end
+                end
+            end
+            return true
+        end
+
+        def check_hands(board_array, side, hands)
+            # 手番に応じて持ち駒をフィルタリング
+            relevant_hands = if side == 'w'
+                                hands.select { |piece, _| piece =~ /[a-z]/ }
+                            else
+                                hands.select { |piece, _| piece =~ /[A-Z]/ }
+                            end
+
+            relevant_hands.each do |piece, count|
+                next if count == 0
+
+                (0..8).each do |i|
+                    (0..8).each do |j|
+                        next unless board_array[i][j].nil?
+
+                        move_info = {
+                            type: :drop,
+                            piece: piece,
+                            to_row: i,
+                            to_col: j
+                        }
+
+                        if basic_legal_drop?(board_array, side, move_info)
+                            #打った後も王手が続いているかチェック
+                            simulated_board = simulate_move(board_array, move_info)
+                            return false unless in_check?(simulated_board, side)
+                        end
+                    end
+                end
+            end
+            return true
         end
 
         private 
@@ -348,5 +372,3 @@ class Validator
         end
     end
 end
-
-    

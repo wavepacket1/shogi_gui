@@ -19,6 +19,10 @@ class Parser::SfenParser
             "#{board_part} #{side_str} #{hand_str} #{move_number_str}"
         end
 
+        def parse_board(board_part)
+            board_part.split("/").map { |row| parse_row(row) }
+        end
+
         private
 
         def generate_board_part(board_array)
@@ -54,10 +58,6 @@ class Parser::SfenParser
             end
             row_str << empty_count.to_s if empty_count > 0
             row_str
-        end
-
-        def parse_board(board_part)
-            board_part.split("/").map { |row| parse_row(row) }
         end
 
         def parse_hand(hand_part)
