@@ -63,7 +63,6 @@ class Validator
             opponent_moves.empty?
         end
 
-
         def is_checkmate?(sfen)
             board_array = Parser::SfenParser.parse(sfen)[:board_array]
             hands = Parser::SfenParser.parse(sfen)[:hand]

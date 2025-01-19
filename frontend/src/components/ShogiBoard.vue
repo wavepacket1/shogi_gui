@@ -2,6 +2,7 @@
     <div class="game-info">
         <div>手数 {{ getStepNumber }}</div>
         <div>手番 {{ getOwner }}</div>
+        <div>{{ checkmate }}</div>
     </div>
 
     <div class="shogi-container">
@@ -59,6 +60,13 @@ export default defineComponent({
         const getStepNumber = computed(() => boardStore.step_number);
 
         const getOwner = computed(() => (boardStore.active_player === 'b' ? '先手' : '後手'));
+
+        const checkmate = computed(() => {
+            if (boardStore.is_checkmate) {
+                return boardStore.active_player === 'b' ? '後手勝ち' : '先手勝ち';
+            }
+            return '';
+        });
 
         const initializeGame = async () => {
             try {
@@ -250,6 +258,7 @@ export default defineComponent({
             getStepNumber,
             handleCellClick,
             getOwner,
+            checkmate,
             initializeGame,
             showPromotionModal,
             handlePromotion,

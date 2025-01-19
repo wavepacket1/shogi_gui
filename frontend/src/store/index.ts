@@ -3,7 +3,7 @@ import { Api } from '@/services/api/api';
 import { parseSFEN } from '@/utils/sfenParser';
 
 const api = new Api({
-  baseUrl: 'http://localhost:3000'
+    baseUrl: 'http://localhost:3000'
 });
 
 export interface Game {
@@ -25,6 +25,7 @@ export interface BoardState {
     active_player: 'b' | 'w' | null;
     board_id: number | null;
     isError: boolean;
+    is_checkmate: boolean;
     game: Game | null;
     selectedCell: {x: number | null, y: number | null};
     validMovesCache: ValidMovesCache | null;
@@ -72,6 +73,7 @@ export const useBoardStore = defineStore('board', {
         active_player: null,
         board_id: null,
         isError: false,
+        is_checkmate: false,
         game: null,
         selectedCell: {x: null, y: null},
         validMovesCache: null as ValidMovesCache | null,
@@ -128,6 +130,8 @@ export const useBoardStore = defineStore('board', {
                     board_id: data.board_id
                 });
 
+                this.is_checkmate = false;
+
                 await this.fetchBoard();
             }, 'ゲームの作成に失敗しました');
         },
@@ -142,6 +146,7 @@ export const useBoardStore = defineStore('board', {
             await this.handleAsyncAction(async () => {
                 const response = await api.api.v1BoardsDefaultList();
                 const parsed = parseSFEN(response.data.sfen);
+
                 this.shogiData.board = parsed.board;
                 this.shogiData.piecesInHand = parsed.piecesInHand;
                 this.active_player = parsed.playerToMove;
@@ -191,6 +196,8 @@ export const useBoardStore = defineStore('board', {
             this.shogiData.piecesInHand = parsed.piecesInHand;
             this.active_player = parsed.playerToMove;
             this.step_number = parsed.moveCount;
+
+            this.is_checkmate = response.data.is_checkmate;
         },
 
         async dropPiece(game_id: number, board_id: number, piece: string, x: number, y: number) {
