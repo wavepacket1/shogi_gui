@@ -177,7 +177,7 @@ class Validator
                             to_col: j
                         }
 
-                        if basic_legal_drop?(board_array, side, move_info)
+                        if basic_legal_move?(board_array, side, move_info)
                             #打った後も王手が続いているかチェック
                             simulated_board = simulate_move(board_array, move_info)
                             return false unless in_check?(simulated_board, side)
