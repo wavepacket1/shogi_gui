@@ -1,3 +1,8 @@
+export enum Player {
+    Black = 'b',
+    White = 'w'
+}
+
 export interface Game {
     id: number;
     name?: string;
@@ -13,8 +18,8 @@ export interface ShogiData {
 
 export interface BoardState {
     shogiData: ShogiData;
-    step_number: number;
-    active_player: 'b' | 'w' | null;
+    stepNumber: number;
+    activePlayer: Player | null;
     board_id: number | null;
     isError: boolean;
     is_checkmate: boolean;
@@ -31,7 +36,7 @@ export interface selectedCell {
 export interface ShogiPiece {
     piece_type: string;
     promoted: boolean;
-    owner: 'b' | 'w';
+    owner: Player;
     id: number;
     position_x: number;
     position_y: number;
@@ -40,7 +45,7 @@ export interface ShogiPiece {
 export interface ParsedSFEN {
     board: (ShogiPiece | null)[][];
     piecesInHand: Record<string, number>;
-    playerToMove: 'b' | 'w';
+    playerToMove: Player;
     moveCount: number;
 }
 

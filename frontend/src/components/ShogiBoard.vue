@@ -57,13 +57,13 @@ export default defineComponent({
         const pendingMove = ref<{x: number, y: number} | null>(null);
         const selectedHandPiece = ref<string | undefined>(undefined);
 
-        const getStepNumber = computed(() => boardStore.step_number);
+        const getStepNumber = computed(() => boardStore.stepNumber);
 
-        const getOwner = computed(() => (boardStore.active_player === 'b' ? '先手' : '後手'));
+        const getOwner = computed(() => (boardStore.activePlayer === 'b' ? '先手' : '後手'));
 
         const checkmate = computed(() => {
             if (boardStore.is_checkmate) {
-                return boardStore.active_player === 'b' ? '後手勝ち' : '先手勝ち';
+                return boardStore.activePlayer === 'b' ? '後手勝ち' : '先手勝ち';
             }
             return '';
         });
@@ -130,8 +130,8 @@ export default defineComponent({
         const handlePieceClick = (piece: string) => {
             // 先手の場合は大文字の駒のみ、後手の場合は小文字の駒のみ選択可能
             const isUpperCase = piece === piece.toUpperCase();
-            if ((boardStore.active_player === 'b' && !isUpperCase) || 
-                (boardStore.active_player === 'w' && isUpperCase)) {
+            if ((boardStore.activePlayer === 'b' && !isUpperCase) || 
+                (boardStore.activePlayer === 'w' && isUpperCase)) {
                 console.log('Invalid piece selection');
                 return;
             }
@@ -176,7 +176,7 @@ export default defineComponent({
                 const currentPiece = boardStore.shogiData.board[y][x];
                 
                 if (boardStore.selectedCell.x === null || boardStore.selectedCell.y === null) {
-                    if (currentPiece && currentPiece.owner === boardStore.active_player) {
+                    if (currentPiece && currentPiece.owner === boardStore.activePlayer) {
                         boardStore.SetCell(clickedCell);
                     }
                     return;

@@ -10,8 +10,8 @@ const api = new Api({
 export const useBoardStore = defineStore('board', {
     state: (): Types.BoardState => ({
         shogiData: initializeShogiData(),
-        step_number: 0,
-        active_player: null,
+        stepNumber: 0,
+        activePlayer: null,
         board_id: null,
         isError: false,
         is_checkmate: false,
@@ -90,8 +90,8 @@ export const useBoardStore = defineStore('board', {
 
                 this.shogiData.board = parsed.board;
                 this.shogiData.piecesInHand = parsed.piecesInHand;
-                this.active_player = parsed.playerToMove;
-                this.step_number = parsed.moveCount;
+                this.activePlayer = parsed.playerToMove;
+                this.stepNumber = parsed.moveCount;
             }, 'ボードの取得に失敗しました');
         },
 
@@ -135,8 +135,8 @@ export const useBoardStore = defineStore('board', {
             this.board_id = response.data.board_id ?? null;
             this.shogiData.board = parsed.board;
             this.shogiData.piecesInHand = parsed.piecesInHand;
-            this.active_player = parsed.playerToMove;
-            this.step_number = parsed.moveCount;
+            this.activePlayer = parsed.playerToMove;
+            this.stepNumber = parsed.moveCount;
 
             this.is_checkmate = response.data.is_checkmate;
         },
