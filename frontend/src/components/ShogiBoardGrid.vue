@@ -22,13 +22,13 @@
 import { defineComponent } from 'vue';
 import type { PropType } from 'vue';
 import { pieceMapper } from '@/utils/pieceMapper';
-import type { ShogiPiece } from '@/store';
+import * as types from '@/store/types';
 
 export default defineComponent({
     name: 'ShogiBoardGrid',
     props: {
         board: {
-            type: Array as PropType<(ShogiPiece | null)[][]>,
+            type: Array as PropType<(types.ShogiPiece | null)[][]>,
             required: true,
         },
         selectedCell: {
@@ -37,7 +37,7 @@ export default defineComponent({
         }
     },
     setup(props) {
-        const getJapanesePiece = (piece: ShogiPiece): string => {
+        const getJapanesePiece = (piece: types.ShogiPiece): string => {
             if (!piece) return '';
             const key = piece.promoted ? `+${piece.piece_type}` : piece.piece_type;
             return pieceMapper[key] || '';
