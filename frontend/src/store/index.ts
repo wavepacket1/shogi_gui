@@ -1,73 +1,14 @@
 import { defineStore } from 'pinia';
 import { Api } from '@/services/api/api';
 import { parseSFEN } from '@/utils/sfenParser';
+import  *  as Types from '@/store/types';
 
 const api = new Api({
     baseUrl: 'http://localhost:3000'
 });
 
-export interface Game {
-    id: number;
-    name?: string;
-    status: string;
-    board_id: number;
-}
-
-export interface ShogiData {
-    board: (ShogiPiece | null)[][];
-    piecesInHand: Record<string, number>;
-    sfen: string;
-}
-
-export interface BoardState {
-    shogiData: ShogiData;
-    step_number: number;
-    active_player: 'b' | 'w' | null;
-    board_id: number | null;
-    isError: boolean;
-    is_checkmate: boolean;
-    game: Game | null;
-    selectedCell: {x: number | null, y: number | null};
-    validMovesCache: ValidMovesCache | null;
-}
-
-export interface selectedCell {
-	x: number | null;
-	y: number | null;
-}
-
-export interface ShogiPiece {
-    piece_type: string;
-    promoted: boolean;
-    owner: 'b' | 'w';
-    id: number;
-    position_x: number;
-    position_y: number;
-}
-
-export interface ParsedSFEN {
-    board: (ShogiPiece | null)[][];
-    piecesInHand: Record<string, number>;
-    playerToMove: 'b' | 'w';
-    moveCount: number;
-}
-
-interface GameResponse {
-    game_id?: number;
-    status?: string;
-    board_id?: number;
-    sfen?: string;
-}
-
-interface ValidMovesCache {
-    board_state: string;  // SFEN文字列
-    moves: {
-        [position: string]: string[] | null;  // "7c" -> ["7d", "7e", ...] | null
-    };
-}
-
 export const useBoardStore = defineStore('board', {
-    state: (): BoardState => ({
+    state: (): Types.BoardState => ({
         shogiData: initializeShogiData(),
         step_number: 0,
         active_player: null,
@@ -76,7 +17,7 @@ export const useBoardStore = defineStore('board', {
         is_checkmate: false,
         game: null,
         selectedCell: {x: null, y: null},
-        validMovesCache: null as ValidMovesCache | null,
+        validMovesCache: null as Types.ValidMovesCache | null,
     }),
     actions: {
         async handleAsyncAction(asyncAction: () => Promise<void>, errorMessage: string = 'エラーが発生しました') {
@@ -118,7 +59,7 @@ export const useBoardStore = defineStore('board', {
             await this.handleAsyncAction(async () => {
                 const response = await api.api.v1GamesCreate({ status: 'active' });
 
-                const data = response.data as GameResponse;
+                const data = response.data as Types.GameResponse;
                 
                 if (!data.game_id || !data.status || !data.board_id) {
                     throw new Error('Invalid game data: Missing required fields');
@@ -137,7 +78,7 @@ export const useBoardStore = defineStore('board', {
         },
 
         // ヘルパーメソッド
-        updateGameState(gameData: Pick<Game, 'id' | 'status' | 'board_id'>) {
+        updateGameState(gameData: Pick<Types.Game, 'id' | 'status' | 'board_id'>) {
             this.game = gameData;
             this.board_id = gameData.board_id;
         },
@@ -267,8 +208,8 @@ export const useBoardStore = defineStore('board', {
     }
 });
 
-const initializeShogiData = (): ShogiData => ({
-    board: Array.from({ length: 9 }, () => Array(9).fill(null)) as (ShogiPiece | null)[][],
+const initializeShogiData = (): Types.ShogiData => ({
+    board: Array.from({ length: 9 }, () => Array(9).fill(null)) as (Types.ShogiPiece | null)[][],
     piecesInHand: {},
     sfen: ''
 });
