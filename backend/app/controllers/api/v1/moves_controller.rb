@@ -14,11 +14,15 @@ class Api::V1::MovesController < ApplicationController
   private
 
   def render_success(next_board, game)
+    next_board_array = Parser::SfenParser.parse(next_board.sfen)[:board_array]
+    next_side = Parser::SfenParser.parse(next_board.sfen)[:side]
+
     render json: {
       status: true,
       legal_flag: true,
       is_checkmate: Validator.is_checkmate?(next_board.sfen),
-      repetition_flag: Validator.repetition?(next_board.sfen, game),
+      is_repetition: Validator.repetition?(next_board.sfen, game),
+      is_repetition_check: Validator.repetition_check?(next_board_array, next_side, game),
       board_id: next_board.id,
       sfen: next_board.sfen
     }, status: :ok

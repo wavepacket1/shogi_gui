@@ -65,6 +65,9 @@ export default defineComponent({
             if (boardStore.is_checkmate) {
                 return boardStore.activePlayer === 'b' ? '後手勝ち' : '先手勝ち';
             }
+            if(boardStore.is_repetition_check){
+                return boardStore.activePlayer === 'b' ? '連続王手の千日手で先手勝ち' : '連続王手の千日手で後手勝ち';
+            }
             if (boardStore.is_repetition) {
                 return '千日手';
             }

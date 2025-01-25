@@ -24,7 +24,8 @@ RSpec.describe 'API::V1::Moves', type: :request do
                         status: { type: :boolean, example: true },
                         legal_flag: { type: :boolean, example: true },
                         is_checkmate: { type: :boolean, example: false },
-                        repetition_flag: { type: :boolean, example: false },
+                        is_repetition: { type: :boolean, example: false },
+                        is_repetition_check: { type: :boolean, example: false },
                         board_id: { type: :integer, example: 123 },
                         sfen: { type: :string, example: 'lnsgkgsnl/1r5b1/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL b - 0' },
                     }
@@ -42,7 +43,8 @@ RSpec.describe 'API::V1::Moves', type: :request do
                         status: { type: :boolean, example: false },
                         legal_flag: { type: :boolean, example: false }, 
                         is_checkmate: { type: :boolean, example: false },
-                        repetition_flag: { type: :boolean, example: false },
+                        is_repetition: { type: :boolean, example: false },
+                        is_repetition_check: { type: :boolean, example: false },
                         board_id: { type: :integer, example: 123 },
                         sfen: { type: :string, example: 'lnsgkgsnl/1r5b1/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL b - 0' },
                         message: { type: :string, example: 'Invalid move: 8h2b+' }

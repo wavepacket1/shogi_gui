@@ -226,7 +226,11 @@
                       "type": "boolean",
                       "example": false
                     },
-                    "repetition_flag": {
+                    "is_repetition": {
+                      "type": "boolean",
+                      "example": false
+                    },
+                    "is_repetition_check": {
                       "type": "boolean",
                       "example": false
                     },
@@ -262,7 +266,11 @@
                       "type": "boolean",
                       "example": false
                     },
-                    "repetition_flag": {
+                    "is_repetition": {
+                      "type": "boolean",
+                      "example": false
+                    },
+                    "is_repetition_check": {
                       "type": "boolean",
                       "example": false
                     },

@@ -9,16 +9,11 @@ class Validator
             
             # 王手放置のチェック
             simulated_board = simulate_move(board_array, move_info)
-            return false if in_check?(simulated_board, side)
+            return false if in_check_for_own_side?(simulated_board, side)
 
             # 打ち歩詰めのチェック
             return false if pawn_drop_mate?(board_array, side, move_info)
 
-            board_history = Board.where(game_id: game.id).order(created_at: :desc).all
-
-            # 連続王手の判定
-            return false if perpetual_check?(simulated_board, side, board_history, move_info)
-    
             true
         end
 
@@ -54,7 +49,7 @@ class Validator
             simulated_board = simulate_move(board_array, move_info)
             opponent_side = side == 'b' ? 'w' : 'b'
 
-            return false unless in_check?(simulated_board, side)
+            return false unless in_check_for_own_side?(simulated_board, side)
 
             opponent_moves = generate_all_legal_moves(simulated_board, opponent_side)
             opponent_moves.empty?
@@ -64,7 +59,7 @@ class Validator
             board_array = Parser::SfenParser.parse(sfen)[:board_array]
             hands = Parser::SfenParser.parse(sfen)[:hand]
             side = Parser::SfenParser.parse(sfen)[:side]
-            return false unless in_check?(board_array, side)
+            return false unless in_check_for_own_side?(board_array, side)
 
             # 王手を回避する手があるかチェック
             return false unless check_moves(board_array, side)
@@ -73,8 +68,9 @@ class Validator
             return true
         end
 
-        #　現在の局面で自陣の王が王手かどうかを判定する
-        def in_check?(board_array, side)
+        # 現在の局面で自陣の王が王手かどうかを判定する。
+        # 自陣の駒によって敵陣の王に王手がかかっているかどうかを判定するには、sideを敵側にすればよい。
+        def in_check_for_own_side?(board_array, side)
             king_pos = find_king(board_array, side)
             return true unless king_pos # 王がない場合は王手とみなす
     
@@ -106,20 +102,6 @@ class Validator
             false
         end
 
-        # 次の手で敵陣の王が王手になるかどうかを判定する
-        def will_check?(board_array, side, move_info)
-            opponent_king_pos = find_king(board_array, side == 'b' ? 'w' : 'b')
-            return false unless opponent_king_pos
-
-            piece_class = Piece.get_piece_class(move_info[:piece_type])
-        
-            if move_info[:piece_type].start_with?('+')
-                piece_class.promoted_move?(move_info.merge(to_row: opponent_king_pos[0], to_col: opponent_king_pos[1]), board_array, side)
-            else
-                piece_class.move?(move_info.merge(to_row: opponent_king_pos[0], to_col: opponent_king_pos[1]), board_array, side)
-            end
-        end
-
         def check_moves(board_array, side)
             board_array.each_with_index do |row, i|
                 row.each_with_index do |piece, j|
@@ -143,7 +125,7 @@ class Validator
                             if basic_legal_move?(board_array, side, move_info)
                                 #移動後も王手が続いているかチェック
                                 simulated_board = simulate_move(board_array, move_info)
-                                return false unless in_check?(simulated_board, side)
+                                return false unless in_check_for_own_side?(simulated_board, side)
                             end
                         end
                     end
@@ -177,7 +159,7 @@ class Validator
                         if basic_legal_move?(board_array, side, move_info)
                             #打った後も王手が続いているかチェック
                             simulated_board = simulate_move(board_array, move_info)
-                            return false unless in_check?(simulated_board, side)
+                            return false unless in_check_for_own_side?(simulated_board, side)
                         end
                     end
                 end
@@ -193,6 +175,34 @@ class Validator
 
             # 4回目の同一局面で千日手
             position_count >= 4 ? true : false
+        end
+
+        # 連続王手の千日手判定
+        def repetition_check?(board_array, side, game)
+            board_history = Board.where(game_id: game.id).order(created_at: :desc).all
+            recent_boards = board_history.first(13)
+            
+            # 現在の手が王手でなければ連続王手の千日手ではない
+            return false unless in_check_for_own_side?(board_array, side)
+
+            same_position_count = 0  
+            # 履歴をさかのぼって確認
+            recent_boards.reverse_each do |board|
+                parsed_data = Parser::SfenParser.parse(board.sfen)  
+
+                # 相手の手番の時に相手の玉に王手がかかっているかどうか判定する
+                if parsed_data[:side] == side
+                    return false unless in_check_for_own_side?(parsed_data[:board_array], side)
+                end
+            
+                # 盤面が完全に一致しているかチェック
+                same_position_count += 1 if parsed_data[:board_array] == board_array
+                
+                # 同一局面が4回出現し、かつすべての手が王手だった場合
+                return true if same_position_count >= 4
+            end
+
+            false
         end
 
         private 
@@ -227,35 +237,6 @@ class Validator
                     end
                 end
             end
-        end
-
-        def perpetual_check?(board_array, side, board_history, current_move)
-            recent_boards = board_history.first(8)
-            opponent_side = side == 'b' ? 'w' : 'b'
-            
-            # 現在の手が王手でなければ連続王手の千日手ではない
-            return false unless in_check?(board_array, opponent_side)
-
-            same_position_count = 1  # 現在の局面を1回とカウント
-            check_sequence = true
-            
-            # 履歴をさかのぼって確認
-            recent_boards.reverse_each do |board|
-                parsed_data = Parser::SfenParser.parse(board.sfen)  
-
-                # 自分の手番の時のみ王手のチェックを行う
-                if parsed_data[:side] == side
-                    return false unless in_check?(parsed_data[:board_array], opponent_side)
-                end
-            
-                # 盤面が完全に一致しているかチェック
-                same_position_count += 1 if parsed_data[:board_array] == board_array
-                
-                # 同一局面が4回出現し、かつすべての手が王手だった場合
-                return true if same_position_count >= 4 && check_sequence
-            end
-            
-            false
         end
         
         def entering_king_rule?(board_array, side)

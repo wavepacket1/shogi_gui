@@ -16,6 +16,7 @@ export const useBoardStore = defineStore('board', {
         isError: false,
         is_checkmate: false,
         is_repetition: false,
+        is_repetition_check: false,
         game: null,
         selectedCell: {x: null, y: null},
         validMovesCache: null as Types.ValidMovesCache | null,
@@ -64,6 +65,7 @@ export const useBoardStore = defineStore('board', {
 
                 this.is_checkmate = false;
                 this.is_repetition = false;
+                this.is_repetition_check = false;
 
                 await this.fetchBoard();
             }, 'ゲームの作成に失敗しました');
@@ -138,6 +140,7 @@ export const useBoardStore = defineStore('board', {
         },
 
         async _updateGameStateFromResponse(response: any) {
+            console.log(response.data)
             const parsed = parseSFEN(response.data.sfen);
             this.shogiData.board = parsed.board;
             this.shogiData.piecesInHand = parsed.piecesInHand;
@@ -146,7 +149,8 @@ export const useBoardStore = defineStore('board', {
 
             this.board_id = response.data.board_id ?? null;
             this.is_checkmate = response.data.is_checkmate;
-            this.is_repetition = response.data.repetition_flag;
+            this.is_repetition = response.data.is_repetition;
+            this.is_repetition_check = response.data.is_repetition_check;
         },
 
         _validatePieceSelection() {
