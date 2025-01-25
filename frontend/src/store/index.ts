@@ -34,16 +34,6 @@ export const useBoardStore = defineStore('board', {
             }
         },
 
-        SetCell(clickedCell: {x: number, y: number} | null) {
-            if (clickedCell) {
-                this.selectedCell.x = clickedCell.x;
-                this.selectedCell.y = clickedCell.y;
-            } else {
-                this.selectedCell.x = null;
-                this.selectedCell.y = null;
-            }
-        },
-    
         async movePiece(game_id: number, board_id: number, X: number, Y: number, promote: boolean = false) {
             await this.handleAsyncAction(async () => {
                 this._validatePieceSelection();
@@ -77,12 +67,6 @@ export const useBoardStore = defineStore('board', {
             }, 'ゲームの作成に失敗しました');
         },
 
-        // ヘルパーメソッド
-        updateGameState(gameData: Pick<Types.Game, 'id' | 'status' | 'board_id'>) {
-            this.game = gameData;
-            this.board_id = gameData.board_id;
-        },
-
         async fetchBoard() {
             await this.handleAsyncAction(async () => {
                 const response = await api.api.v1BoardsDefaultList();
@@ -93,52 +77,6 @@ export const useBoardStore = defineStore('board', {
                 this.activePlayer = parsed.playerToMove;
                 this.stepNumber = parsed.moveCount;
             }, 'ボードの取得に失敗しました');
-        },
-
-        // ヘルパーメソッド
-        _validatePieceSelection() {
-            if (this.selectedCell.x === null || this.selectedCell.y === null) {
-                throw new Error('No piece selected');
-            }
-        },
-
-        _convertPosition(x: number, y: number) {
-            return {
-                x: 9 - x,
-                y: String.fromCharCode(97 + y)
-            };
-        },
-
-        _createUSIMove(toX: number, toY: number, promote: boolean): string {
-            const from = this._convertPosition(this.selectedCell.x!, this.selectedCell.y!);
-            const to = this._convertPosition(toX, toY);
-            return `${from.x}${from.y}${to.x}${to.y}${promote ? '+' : ''}`;
-        },
-
-        async _executeMove(game_id: number, board_id: number, usiMove: string) {
-            const response = await api.api.v1GamesBoardsMovePartialUpdate(
-                game_id,
-                board_id,
-                { move: usiMove }
-            );
-
-            if (!response.data.sfen) {
-                throw new Error('SFEN data is missing');
-            }
-
-            return response;
-        },
-
-        async _updateGameStateFromResponse(response: any) {
-            const parsed = parseSFEN(response.data.sfen);
-    
-            this.board_id = response.data.board_id ?? null;
-            this.shogiData.board = parsed.board;
-            this.shogiData.piecesInHand = parsed.piecesInHand;
-            this.activePlayer = parsed.playerToMove;
-            this.stepNumber = parsed.moveCount;
-
-            this.is_checkmate = response.data.is_checkmate;
         },
 
         async dropPiece(game_id: number, board_id: number, piece: string, x: number, y: number) {
@@ -154,6 +92,21 @@ export const useBoardStore = defineStore('board', {
 
                 await this._updateGameStateFromResponse(response);
             }, '駒を打つことができませんでした');
+        },
+
+        SetCell(clickedCell: {x: number, y: number} | null) {
+            if (clickedCell) {
+                this.selectedCell.x = clickedCell.x;
+                this.selectedCell.y = clickedCell.y;
+            } else {
+                this.selectedCell.x = null;
+                this.selectedCell.y = null;
+            }
+        },
+
+        updateGameState(gameData: Pick<Types.Game, 'id' | 'status' | 'board_id'>) {
+            this.game = gameData;
+            this.board_id = gameData.board_id;
         },
 
         clearValidMovesCache() {
@@ -198,13 +151,52 @@ export const useBoardStore = defineStore('board', {
                 }
                 this.validMovesCache!.moves[position] = validMoves;
             }
+        },
+         // ヘルパーメソッド
+        async _executeMove(game_id: number, board_id: number, usiMove: string) {
+            const response = await api.api.v1GamesBoardsMovePartialUpdate(
+                game_id,
+                board_id,
+                { move: usiMove }
+            );
 
-            this.highlightValidMoves(validMoves);
+            if (!response.data.sfen) {
+                throw new Error('SFEN data is missing');
+            }
+
+            return response;
         },
 
-        highlightValidMoves(moves: string[] | null) {
-            // Implementation of highlightValidMoves method
-        }
+        async _updateGameStateFromResponse(response: any) {
+            const parsed = parseSFEN(response.data.sfen);
+    
+            this.board_id = response.data.board_id ?? null;
+            this.shogiData.board = parsed.board;
+            this.shogiData.piecesInHand = parsed.piecesInHand;
+            this.activePlayer = parsed.playerToMove;
+            this.stepNumber = parsed.moveCount;
+
+            this.is_checkmate = response.data.is_checkmate;
+        },
+
+        _validatePieceSelection() {
+            if (this.selectedCell.x === null || this.selectedCell.y === null) {
+                throw new Error('No piece selected');
+            }
+        },
+
+        _convertPosition(x: number, y: number) {
+            return {
+                x: 9 - x,
+                y: String.fromCharCode(97 + y)
+            };
+        },
+
+        _createUSIMove(toX: number, toY: number, promote: boolean): string {
+            const from = this._convertPosition(this.selectedCell.x!, this.selectedCell.y!);
+            const to = this._convertPosition(toX, toY);
+            return `${from.x}${from.y}${to.x}${to.y}${promote ? '+' : ''}`;
+        },
     }
 });
 
