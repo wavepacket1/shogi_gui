@@ -345,6 +345,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
           legal_flag?: boolean;
           /** @example false */
           is_checkmate?: boolean;
+          /** @example false */
+          repetition_flag?: boolean;
           /** @example 123 */
           board_id?: number;
           /** @example "lnsgkgsnl/1r5b1/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL b - 0" */
@@ -357,6 +359,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
           legal_flag?: boolean;
           /** @example false */
           is_checkmate?: boolean;
+          /** @example false */
+          repetition_flag?: boolean;
           /** @example 123 */
           board_id?: number;
           /** @example "lnsgkgsnl/1r5b1/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL b - 0" */
@@ -366,55 +370,6 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
         }
       >({
         path: `/api/v1/games/${gameId}/boards/${boardId}/move`,
-        method: "PATCH",
-        body: data,
-        type: ContentType.Json,
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * @description 指定された指し手が有効かどうかを確認します
-     *
-     * @tags Moves
-     * @name V1GamesBoardsValidMovesPartialUpdate
-     * @summary Validate moves
-     * @request PATCH:/api/v1/games/{game_id}/boards/{board_id}/valid_moves
-     */
-    v1GamesBoardsValidMovesPartialUpdate: (
-      gameId: number,
-      boardId: number,
-      data: {
-        /** @example "7g" */
-        position: string;
-      },
-      params: RequestParams = {},
-    ) =>
-      this.request<
-        {
-          /** @example true */
-          status?: boolean;
-          /** @example true */
-          legal_flag?: boolean;
-          /** @example "有効な手です" */
-          message?: string;
-          /** @example ["7f","7e"] */
-          possible_moves?: string[];
-        },
-        | {
-            /** @example "error" */
-            status?: string;
-            /** @example "ゲームが見つかりません。" */
-            message?: string;
-          }
-        | {
-            /** @example false */
-            status?: boolean;
-            /** @example "不正なパラメータです" */
-            message?: string;
-          }
-      >({
-        path: `/api/v1/games/${gameId}/boards/${boardId}/valid_moves`,
         method: "PATCH",
         body: data,
         type: ContentType.Json,

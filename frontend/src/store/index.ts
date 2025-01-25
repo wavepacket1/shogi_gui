@@ -15,6 +15,7 @@ export const useBoardStore = defineStore('board', {
         board_id: null,
         isError: false,
         is_checkmate: false,
+        is_repetition: false,
         game: null,
         selectedCell: {x: null, y: null},
         validMovesCache: null as Types.ValidMovesCache | null,
@@ -62,6 +63,7 @@ export const useBoardStore = defineStore('board', {
                 });
 
                 this.is_checkmate = false;
+                this.is_repetition = false;
 
                 await this.fetchBoard();
             }, 'ゲームの作成に失敗しました');
@@ -120,38 +122,6 @@ export const useBoardStore = defineStore('board', {
             };
         },
 
-        getValidMovesFromCache(position: string): string[] | null {
-            // 盤面が変わっていたらキャッシュをクリア
-            if (this.validMovesCache?.board_state !== this.shogiData.sfen) {
-                this.clearValidMovesCache();
-                return null;
-            }
-
-            return this.validMovesCache?.moves[position] ?? null;
-        },
-
-        async selectPiece(x: number, y: number) {
-            const position = `${9-x}${String.fromCharCode(97 + y)}`;
-            let validMoves = this.getValidMovesFromCache(position);
-
-            if (!validMoves) {
-                if (!this.game?.id || !this.board_id) {
-                    throw new Error('Game or board not found');
-                }
-                const response = await api.api.v1GamesBoardsValidMovesPartialUpdate(
-                    this.game.id,
-                    this.board_id,
-                    { position: position }
-                );
-
-                validMoves = response.data.possible_moves ?? null;
-
-                if (!this.validMovesCache) {
-                    this.updateValidMovesCache();
-                }
-                this.validMovesCache!.moves[position] = validMoves;
-            }
-        },
          // ヘルパーメソッド
         async _executeMove(game_id: number, board_id: number, usiMove: string) {
             const response = await api.api.v1GamesBoardsMovePartialUpdate(
@@ -169,14 +139,14 @@ export const useBoardStore = defineStore('board', {
 
         async _updateGameStateFromResponse(response: any) {
             const parsed = parseSFEN(response.data.sfen);
-    
-            this.board_id = response.data.board_id ?? null;
             this.shogiData.board = parsed.board;
             this.shogiData.piecesInHand = parsed.piecesInHand;
             this.activePlayer = parsed.playerToMove;
             this.stepNumber = parsed.moveCount;
 
+            this.board_id = response.data.board_id ?? null;
             this.is_checkmate = response.data.is_checkmate;
+            this.is_repetition = response.data.repetition_flag;
         },
 
         _validatePieceSelection() {

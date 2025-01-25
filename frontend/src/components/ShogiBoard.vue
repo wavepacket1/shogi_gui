@@ -2,7 +2,7 @@
     <div class="game-info">
         <div>手数 {{ getStepNumber }}</div>
         <div>手番 {{ getOwner }}</div>
-        <div>{{ checkmate }}</div>
+        <div>{{ getGameState }}</div>
     </div>
 
     <div class="shogi-container">
@@ -61,9 +61,12 @@ export default defineComponent({
 
         const getOwner = computed(() => (boardStore.activePlayer === 'b' ? '先手' : '後手'));
 
-        const checkmate = computed(() => {
+        const getGameState = computed(() => {
             if (boardStore.is_checkmate) {
                 return boardStore.activePlayer === 'b' ? '後手勝ち' : '先手勝ち';
+            }
+            if (boardStore.is_repetition) {
+                return '千日手';
             }
             return '';
         });
@@ -258,7 +261,7 @@ export default defineComponent({
             getStepNumber,
             handleCellClick,
             getOwner,
-            checkmate,
+            getGameState,
             initializeGame,
             showPromotionModal,
             handlePromotion,

@@ -19,9 +19,6 @@ class Validator
             # 連続王手の判定
             return false if perpetual_check?(simulated_board, side, board_history, move_info)
     
-            # 千日手の判定
-            return false if repetition_draw?(simulated_board, board_history, move_info)
-            
             true
         end
 
@@ -188,6 +185,16 @@ class Validator
             return true
         end
 
+        # 千日手の判定
+        def repetition?(sfen, game)
+            board_history = Board.where(game_id: game.id).order(created_at: :desc).all
+            # 同一局面の出現回数をカウント
+            position_count = board_history.count { |move| Parser::SfenParser.parse(move.sfen)[:board_array] == Parser::SfenParser.parse(sfen)[:board_array] }
+
+            # 4回目の同一局面で千日手
+            position_count >= 4 ? true : false
+        end
+
         private 
 
         def generate_all_legal_moves(board_array, side)
@@ -249,14 +256,6 @@ class Validator
             end
             
             false
-        end
-            
-        def repetition_draw?(board_array, board_history, current_move)
-            # 同一局面の出現回数をカウント
-            position_count = board_history.count { |move| Parser::SfenParser.parse(move.sfen)[:board_array] == board_array }
-
-            # 4回目の同一局面で千日手
-            position_count >= 4
         end
         
         def entering_king_rule?(board_array, side)

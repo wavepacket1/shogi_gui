@@ -23,6 +23,7 @@ export interface BoardState {
     board_id: number | null;
     isError: boolean;
     is_checkmate: boolean;
+    is_repetition : boolean;
     game: Game | null;
     selectedCell: {x: number | null, y: number | null};
     validMovesCache: ValidMovesCache | null;

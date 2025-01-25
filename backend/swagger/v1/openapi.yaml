@@ -226,6 +226,10 @@
                       "type": "boolean",
                       "example": false
                     },
+                    "repetition_flag": {
+                      "type": "boolean",
+                      "example": false
+                    },
                     "board_id": {
                       "type": "integer",
                       "example": 123
@@ -255,6 +259,10 @@
                       "example": false
                     },
                     "is_checkmate": {
+                      "type": "boolean",
+                      "example": false
+                    },
+                    "repetition_flag": {
                       "type": "boolean",
                       "example": false
                     },
@@ -290,129 +298,6 @@
                 },
                 "required": [
                   "move"
-                ]
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/games/{game_id}/boards/{board_id}/valid_moves": {
-      "patch": {
-        "summary": "Validate moves",
-        "tags": [
-          "Moves"
-        ],
-        "description": "指定された指し手が有効かどうかを確認します",
-        "parameters": [
-          {
-            "name": "game_id",
-            "in": "path",
-            "required": true,
-            "description": "ゲームID",
-            "schema": {
-              "type": "integer"
-            }
-          },
-          {
-            "name": "board_id",
-            "in": "path",
-            "required": true,
-            "description": "ボードID",
-            "schema": {
-              "type": "integer"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "指し手の有効性確認結果",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "status": {
-                      "type": "boolean",
-                      "example": true
-                    },
-                    "legal_flag": {
-                      "type": "boolean",
-                      "example": true
-                    },
-                    "message": {
-                      "type": "string",
-                      "example": "有効な手です"
-                    },
-                    "possible_moves": {
-                      "type": "array",
-                      "items": {
-                        "type": "string"
-                      },
-                      "example": [
-                        "7f",
-                        "7e"
-                      ]
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "不正なパラメータ",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "status": {
-                      "type": "boolean",
-                      "example": false
-                    },
-                    "message": {
-                      "type": "string",
-                      "example": "不正なパラメータです"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "ゲームまたはボードが見つかりません",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "status": {
-                      "type": "string",
-                      "example": "error"
-                    },
-                    "message": {
-                      "type": "string",
-                      "example": "ゲームが見つかりません。"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "position": {
-                    "type": "string",
-                    "example": "7g"
-                  }
-                },
-                "required": [
-                  "position"
                 ]
               }
             }

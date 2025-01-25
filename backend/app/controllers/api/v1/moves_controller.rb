@@ -6,18 +6,19 @@ class Api::V1::MovesController < ApplicationController
     @board = Board.find(params[:board_id])
 
     next_board = Move.process_move(@game, @board, params[:move])
-    render_success(next_board)
+    render_success(next_board, @game)
   rescue StandardError => e
     render_error(e)
   end
 
   private
 
-  def render_success(next_board)
+  def render_success(next_board, game)
     render json: {
       status: true,
       legal_flag: true,
       is_checkmate: Validator.is_checkmate?(next_board.sfen),
+      repetition_flag: Validator.repetition?(next_board.sfen, game),
       board_id: next_board.id,
       sfen: next_board.sfen
     }, status: :ok
