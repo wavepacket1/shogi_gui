@@ -234,7 +234,7 @@ class Validator
             
             # 履歴をさかのぼって確認
             recent_boards.reverse_each do |board|
-                parsed_data = board.parse_sfen
+                parsed_data = Parser::SfenParser.parse(board.sfen)  
 
                 # 自分の手番の時のみ王手のチェックを行う
                 if parsed_data[:side] == side
@@ -252,21 +252,13 @@ class Validator
         end
             
         def repetition_draw?(board_array, board_history, current_move)
-            # 盤面のハッシュを生成
-            current_position = generate_position_hash(board_array)
-            
             # 同一局面の出現回数をカウント
-            position_count = board_history.count { |move| move[:position_hash] == current_position }
-            
+            position_count = board_history.count { |move| Parser::SfenParser.parse(move.sfen)[:board_array] == board_array }
+
             # 4回目の同一局面で千日手
-            position_count >= 3
+            position_count >= 4
         end
         
-        def generate_position_hash(board_array)
-            # 盤面を文字列化してハッシュ化
-            board_array.map(&:join).join
-        end
-
         def entering_king_rule?(board_array, side)
             king_pos = find_king(board_array, side)
             return false unless king_pos

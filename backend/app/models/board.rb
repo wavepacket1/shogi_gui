@@ -2,10 +2,6 @@ class Board < ApplicationRecord
     has_many :pieces, dependent: :destroy
     belongs_to :game
 
-    def parse_sfen
-        Parser::SfenParser.parse(sfen)  
-    end
-
     class << self 
         def convert_move_to_indices(board_array, move)
             step_map = ('a'..'i').to_a.zip(0..8).to_h

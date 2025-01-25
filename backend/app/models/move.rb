@@ -5,7 +5,7 @@ class Move < ApplicationRecord
     class << self
         def process_move(game, board, move_str)
             ActiveRecord::Base.transaction do
-                parsed_data = board.parse_sfen
+                parsed_data = Parser::SfenParser.parse(board.sfen)  
                 move_info = Board.parse_move(move_str)
 
                 Board.create_next_board(parsed_data, move_info, board, game) if Validator.legal?(parsed_data, move_info, game)
