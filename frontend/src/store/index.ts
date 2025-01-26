@@ -140,7 +140,6 @@ export const useBoardStore = defineStore('board', {
         },
 
         async _updateGameStateFromResponse(response: any) {
-            console.log(response.data)
             const parsed = parseSFEN(response.data.sfen);
             this.shogiData.board = parsed.board;
             this.shogiData.piecesInHand = parsed.piecesInHand;

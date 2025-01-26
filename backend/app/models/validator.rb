@@ -14,6 +14,8 @@ class Validator
             # 打ち歩詰めのチェック
             return false if pawn_drop_mate?(board_array, side, move_info)
 
+            return false if repetition_check?(simulated_board, side, game)
+
             true
         end
 
