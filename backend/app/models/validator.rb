@@ -2,18 +2,14 @@ class Validator
     class << self
         # 合法手かどうかを判定する
         def legal?(parsed_data, move_info, game)
-            board_array = parsed_data[:board_array]
-            side = parsed_data[:side]
+            board_array, side = parsed_data.values_at(:board_array, :side)
 
             return false unless basic_legal_move?(board_array, side, move_info)
-            
-            # 王手放置のチェック
+
             simulated_board = simulate_move(board_array, move_info)
+            
             return false if in_check_for_own_side?(simulated_board, side)
-
-            # 打ち歩詰めのチェック
             return false if pawn_drop_mate?(board_array, side, move_info)
-
             return false if repetition_check?(simulated_board, side, game)
 
             true
