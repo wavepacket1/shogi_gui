@@ -49,12 +49,7 @@ class Validator
             simulated_board = simulate_move(board_array, hands, side, move_info)
             opponent_side = side == 'b' ? 'w' : 'b'
             # 詰んでいるかどうかを判定する
-            
-
-            return false unless in_check_for_own_side?(simulated_board, side)
-
-            opponent_moves = generate_all_legal_moves(simulated_board, opponent_side)
-            opponent_moves.empty?
+            is_checkmate?(simulated_board, hands, opponent_side)
         end
 
         # 詰み判定
