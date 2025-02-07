@@ -22,7 +22,6 @@ RSpec.describe 'API::V1::Moves', type: :request do
                 schema type: :object,
                     properties: {
                         status: { type: :boolean, example: true },
-                        legal_flag: { type: :boolean, example: true },
                         is_checkmate: { type: :boolean, example: false },
                         is_repetition: { type: :boolean, example: false },
                         is_repetition_check: { type: :boolean, example: false },
@@ -41,7 +40,6 @@ RSpec.describe 'API::V1::Moves', type: :request do
                 schema type: :object,
                     properties: {
                         status: { type: :boolean, example: false },
-                        legal_flag: { type: :boolean, example: false }, 
                         is_checkmate: { type: :boolean, example: false },
                         is_repetition: { type: :boolean, example: false },
                         is_repetition_check: { type: :boolean, example: false },

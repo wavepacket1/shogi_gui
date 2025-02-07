@@ -24,7 +24,6 @@ class Api::V1::MovesController < ApplicationController
 
     render json: {
       status: true,
-      legal_flag: true,
       is_checkmate: Validator.is_checkmate?(next_board.sfen),
       is_repetition: Validator.repetition?(next_board.sfen, game),
       is_repetition_check: Validator.repetition_check?(next_board_array, next_side, game),

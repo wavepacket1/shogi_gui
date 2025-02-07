@@ -341,8 +341,6 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
         {
           /** @example true */
           status?: boolean;
-          /** @example true */
-          legal_flag?: boolean;
           /** @example false */
           is_checkmate?: boolean;
           /** @example false */
@@ -357,8 +355,6 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
         {
           /** @example false */
           status?: boolean;
-          /** @example false */
-          legal_flag?: boolean;
           /** @example false */
           is_checkmate?: boolean;
           /** @example false */
