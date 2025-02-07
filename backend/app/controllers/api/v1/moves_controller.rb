@@ -4,8 +4,13 @@ class Api::V1::MovesController < ApplicationController
   def move
     @game = Game.find(params[:game_id])
     @board = Board.find(params[:board_id])
+    parsed_data = Parser::SfenParser.parse(@board.sfen)  
+    move_info = Board.parse_move(params[:move])
 
-    next_board = Move.process_move(@game, @board, params[:move])
+    # 合法手でない場合はDBに保存しない
+    return unless Validator.legal?(parsed_data, move_info, @game)
+
+    next_board = Move.process_move(@game, @board, parsed_data, move_info)
     render_success(next_board, @game)
   rescue StandardError => e
     render_error(e)

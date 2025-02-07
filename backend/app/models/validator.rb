@@ -40,8 +40,8 @@ class Validator
             true
         end
 
+        # 打ち歩詰めのチェック
         def pawn_drop_mate?(board_array, side, move_info)
-            # 打ち歩詰めのチェック
             return false unless move_info[:type] == :drop && move_info[:piece].upcase == 'P'
 
             simulated_board = simulate_move(board_array, move_info)

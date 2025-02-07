@@ -3,12 +3,9 @@ class Move < ApplicationRecord
     belongs_to :piece, optional: true
 
     class << self
-        def process_move(game, board, move_str)
+        def process_move(game, board, parsed_data, move_info)
             ActiveRecord::Base.transaction do
-                parsed_data = Parser::SfenParser.parse(board.sfen)  
-                move_info = Board.parse_move(move_str)
-
-                Board.create_next_board(parsed_data, move_info, board, game) if Validator.legal?(parsed_data, move_info, game)
+                Board.create_next_board(parsed_data, move_info, board, game) 
             end
         rescue StandardError => e
             Rails.logger.error("Move processing failed: #{e.message}")
