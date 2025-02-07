@@ -15,6 +15,7 @@ class Validator
             true
         end
 
+        # 盤面の駒の移動が合法手かどうかを判定する
         def legal_move?(board_array, side, move_info)
             from_piece = Piece.fetch_piece(board_array, move_info[:from_row], move_info[:from_col])
             return false unless Piece.valid_from_piece?(from_piece, side)
@@ -28,6 +29,7 @@ class Validator
             piece_type.start_with?('+') ? piece_class.promoted_move?(move_info, board_array, side) : piece_class.move?(move_info, board_array, side)
         end
 
+        # 駒を打った時に合法手かどうかを判定する
         def legal_drop?(board_array, side, move_info)
             piece_type = move_info[:piece].upcase
             to_row = move_info[:to_row]
@@ -53,6 +55,7 @@ class Validator
             opponent_moves.empty?
         end
 
+        # 詰み判定
         def is_checkmate?(sfen)
             board_array = Parser::SfenParser.parse(sfen)[:board_array]
             hands = Parser::SfenParser.parse(sfen)[:hand]
@@ -100,6 +103,7 @@ class Validator
             false
         end
 
+        # 盤面の駒を動かして王手を解除できるかのチェック
         def check_moves(board_array, side)
             board_array.each_with_index do |row, i|
                 row.each_with_index do |piece, j|
@@ -132,6 +136,7 @@ class Validator
             return true
         end
 
+        # 駒を打って王手を解除できるかのチェック
         def check_hands(board_array, side, hands)
             # 手番に応じて持ち駒をフィルタリング
             relevant_hands = if side == 'w'
