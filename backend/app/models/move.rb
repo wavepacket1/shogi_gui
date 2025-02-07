@@ -23,8 +23,6 @@ class Move < ApplicationRecord
             end
         end
 
-        private 
-
         def execute_move(board_array, hand, side, move_info)
             from_piece = board_array[move_info[:from_row]][move_info[:from_col]]
             to_piece = board_array[move_info[:to_row]][move_info[:to_col]]

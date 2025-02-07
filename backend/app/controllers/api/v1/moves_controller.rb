@@ -20,11 +20,12 @@ class Api::V1::MovesController < ApplicationController
 
   def render_success(next_board, game)
     next_board_array = Parser::SfenParser.parse(next_board.sfen)[:board_array]
+    next_board_hands = Parser::SfenParser.parse(next_board.sfen)[:hand]
     next_side = Parser::SfenParser.parse(next_board.sfen)[:side]
 
     render json: {
       status: true,
-      is_checkmate: Validator.is_checkmate?(next_board.sfen),
+      is_checkmate: Validator.is_checkmate?(next_board_array, next_board_hands, next_side),
       is_repetition: Validator.repetition?(next_board.sfen, game),
       is_repetition_check: Validator.repetition_check?(next_board_array, next_side, game),
       board_id: next_board.id,

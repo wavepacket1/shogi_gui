@@ -2,14 +2,14 @@ class Validator
     class << self
         # 合法手かどうかを判定する
         def legal?(parsed_data, move_info, game)
-            board_array, side = parsed_data.values_at(:board_array, :side)
+            board_array, hands, side = parsed_data.values_at(:board_array, :hand, :side)
 
             return false unless basic_legal_move?(board_array, side, move_info)
 
-            simulated_board = simulate_move(board_array, move_info)
+            simulated_board = simulate_move(board_array, hands, side, move_info)
             
             return false if in_check_for_own_side?(simulated_board, side)
-            return false if pawn_drop_mate?(board_array, side, move_info)
+            return false if pawn_drop_mate?(board_array, hands, side, move_info)
             return false if repetition_check?(simulated_board, side, game)
 
             true
@@ -43,11 +43,13 @@ class Validator
         end
 
         # 打ち歩詰めのチェック
-        def pawn_drop_mate?(board_array, side, move_info)
+        def pawn_drop_mate?(board_array, hands, side, move_info)
             return false unless move_info[:type] == :drop && move_info[:piece].upcase == 'P'
 
-            simulated_board = simulate_move(board_array, move_info)
+            simulated_board = simulate_move(board_array, hands, side, move_info)
             opponent_side = side == 'b' ? 'w' : 'b'
+            # 詰んでいるかどうかを判定する
+            
 
             return false unless in_check_for_own_side?(simulated_board, side)
 
@@ -56,14 +58,11 @@ class Validator
         end
 
         # 詰み判定
-        def is_checkmate?(sfen)
-            board_array = Parser::SfenParser.parse(sfen)[:board_array]
-            hands = Parser::SfenParser.parse(sfen)[:hand]
-            side = Parser::SfenParser.parse(sfen)[:side]
+        def is_checkmate?(board_array, hands, side)
             return false unless in_check_for_own_side?(board_array, side)
 
             # 王手を回避する手があるかチェック
-            return false unless check_moves(board_array, side)
+            return false unless check_moves(board_array, side, hands)
             # 持ち駒を使って王手を回避する手があるかチェック
             return false unless check_hands(board_array, side, hands)
             return true
@@ -104,7 +103,7 @@ class Validator
         end
 
         # 盤面の駒を動かして王手を解除できるかのチェック
-        def check_moves(board_array, side)
+        def check_moves(board_array, side, hands)
             board_array.each_with_index do |row, i|
                 row.each_with_index do |piece, j|
                     next if piece.nil? || piece_owner(piece) != side
@@ -126,7 +125,7 @@ class Validator
 
                             if basic_legal_move?(board_array, side, move_info)
                                 #移動後も王手が続いているかチェック
-                                simulated_board = simulate_move(board_array, move_info)
+                                simulated_board = simulate_move(board_array, hands, side, move_info)
                                 return false unless in_check_for_own_side?(simulated_board, side)
                             end
                         end
@@ -161,7 +160,7 @@ class Validator
 
                         if basic_legal_move?(board_array, side, move_info)
                             #打った後も王手が続いているかチェック
-                            simulated_board = simulate_move(board_array, move_info)
+                            simulated_board = simulate_move(board_array, hands, side, move_info)
                             return false unless in_check_for_own_side?(simulated_board, side)
                         end
                     end
@@ -282,20 +281,12 @@ class Validator
             points
         end
 
-        def simulate_move(board_array, move_info)
+        def simulate_move(board_array, hands, side, move_info)
             new_board = Marshal.load(Marshal.dump(board_array))
+            new_hands = Marshal.load(Marshal.dump(hands))
+            new_side = Marshal.load(Marshal.dump(side))
             
-            case move_info[:type]
-            when :move
-                new_board[move_info[:to_row]][move_info[:to_col]] = 
-                    move_info[:promoted] ? 
-                    "+#{new_board[move_info[:from_row]][move_info[:from_col]]}" : 
-                    new_board[move_info[:from_row]][move_info[:from_col]]
-                new_board[move_info[:from_row]][move_info[:from_col]] = nil
-            when :drop
-                piece = move_info[:piece]
-                new_board[move_info[:to_row]][move_info[:to_col]] = piece
-            end
+            Move.execute_move_or_drop(new_board, new_hands, new_side, move_info)
             
             new_board
         end
