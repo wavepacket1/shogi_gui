@@ -180,6 +180,88 @@
         }
       }
     },
+    "/api/v1/games/{game_id}/boards/{board_id}/nyugyoku_declaration": {
+      "post": {
+        "summary": "入玉宣言を行う",
+        "tags": [
+          "Games"
+        ],
+        "parameters": [
+          {
+            "name": "game_id",
+            "in": "path",
+            "description": "Game ID",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "board_id",
+            "in": "path",
+            "description": "Board ID",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "nyugyoku declared",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "success",
+                        "failed"
+                      ]
+                    },
+                    "game_id": {
+                      "type": "integer"
+                    },
+                    "board_id": {
+                      "type": "integer"
+                    }
+                  },
+                  "required": [
+                    "game_id",
+                    "status",
+                    "board_id"
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "game not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "message"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/games/{game_id}/boards/{board_id}/move": {
       "patch": {
         "summary": "駒の移動API",

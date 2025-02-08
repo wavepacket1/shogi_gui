@@ -31,6 +31,29 @@ module Api
         render json: { status: 'error', message: 'ゲームが見つかりません。' }, status: :not_found
       end
 
+      def nyugyoku_declaration
+        @game = Game.find(params[:game_id])
+        @board = Board.find(params[:board_id])
+
+        if @game.nyugyoku_declaration(@board)
+          render json: {
+            status: 'success',
+            game_id: @game.id,
+            board_id: @board.id
+          }, status: :ok
+        else
+          render json: {
+            status: 'failed',
+            message: '入玉宣言に失敗しました。'
+          }, status: :unprocessable_entity
+        end
+      rescue ActiveRecord::RecordNotFound
+        render json: {
+          status: 'error',
+          message: 'ゲームまたは盤面が見つかりません。'
+        }, status: :not_found
+      end
+
       private
 
       def game_params

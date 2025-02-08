@@ -11,6 +11,7 @@ Rails.application.routes.draw do
       end
       resources :games, only: [:create, :show] 
 
+      post '/games/:game_id/boards/:board_id/nyugyoku_declaration', to: 'games#nyugyoku_declaration'
       patch '/games/:game_id/boards/:board_id/move', to: 'moves#move'
     end
   end
