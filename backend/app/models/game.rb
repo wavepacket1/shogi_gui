@@ -4,5 +4,6 @@ class Game < ApplicationRecord
 
   def nyugyoku_declaration(board)
     ## 入玉宣言の処理を実装する
+    Validator.nyugyoku_27?(board.sfen)
   end
 end

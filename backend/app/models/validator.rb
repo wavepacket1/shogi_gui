@@ -202,7 +202,114 @@ class Validator
             false
         end
 
+        # 入玉判定
+        def nyugyoku_27?(sfen)
+            parsed_data = Parser::SfenParser.parse(sfen)
+            board_array = parsed_data[:board_array]
+            side = parsed_data[:side]
+            hands = parsed_data[:hand]
+
+            # 宣言側の王が敵陣3段目以内に入っているかどうかを判定
+            return false unless king_in_enemy_territory?(board_array, side)
+            # 宣言側の王以外の駒が敵陣3段目以内に10枚以上あるかどうかを判定
+            return false unless has_enough_non_king_pieces_in_enemy_territory?(board_array, side)
+            # 宣言側に王手がかかっていないかどうかを判定
+            return false if in_check_for_own_side?(board_array, side)
+            # 宣言側の持ち駒と敵陣3段目以内にいる駒の点数の合計が、先手の場合は28点以上、後手の場合は27点以上かどうかを判定
+            valid_declaration_value?(board_array, hands, side)
+        end
+        
         private 
+
+        def has_enough_non_king_pieces_in_enemy_territory?(board_array, side)
+            king = side == 'b' ? 'K' : 'k'
+            territory = enemy_territory(side)
+            total_count = board_array.each_with_index.sum do |row, row_index|
+                next 0 unless territory.include?(row_index)
+                row.count { |cell| cell && belongs_to_side?(cell, side) && cell != king }
+            end
+            total_count >= 10
+        end
+
+        def king_in_enemy_territory?(board_array, side)
+            king_pos = find_king(board_array, side)
+            return false unless king_pos
+            
+            # 王が相手陣に入っているか確認
+            return false unless enemy_territory(side).include?(king_pos[0])
+        
+            true
+        end
+
+        def enemy_territory(side)
+            side == 'b' ? (0..2) : (6..8)
+        end
+
+        def valid_declaration_value?(board_array, hands, side)
+            # 持ち駒の点数合計
+            hand_points = calculate_hand_points_in_enemy_territory(hands, side)
+
+            # 盤上の駒の点数合計
+            board_points = calculate_board_points_in_enemy_territory(board_array, side, points_mapping)
+
+            total_points = hand_points + board_points
+
+            threshold = side == 'b' ? 28 : 27
+
+            total_points >= threshold
+        end
+
+        def calculate_hand_points_in_enemy_territory(hands, side)
+            hands.sum do |piece, count|
+                if side == 'b'
+                    piece == piece.upcase ? points_mapping[piece] * count : 0
+                else
+                    piece == piece.downcase ? points_mapping[piece] * count : 0
+                end
+            end
+        end
+
+        def calculate_board_points_in_enemy_territory(board_array, side, points_mapping)
+            enemy_rows = enemy_territory(side)
+            board_array.each_with_index.sum do |row, row_index|
+                next 0 unless enemy_rows.include?(row_index)
+                row.sum do |cell|
+                    next 0 if cell.nil?
+                    if (side == 'b' && cell == cell.upcase) || (side == 'w' && cell == cell.downcase)
+                    points_mapping[cell] || 0
+                    else
+                    0
+                    end
+                end
+            end
+        end
+
+        def point_mapping 
+            {
+                'P' => 1, 
+                'L' => 1, 
+                'N' => 1, 
+                'S' => 1, 
+                'G' => 1,
+                'B' => 5,
+                'R' => 5,
+                'p' => 1,
+                'l' => 1,
+                'n' => 1,
+                's' => 1,
+                'g' => 1,
+                'b' => 5, 
+                'r' => 5,
+            }
+        end
+
+        def belongs_to_side?(cell, side)
+            if side == 'b'
+                piece == piece.upcase
+            else 
+                piece == piece.downcase
+            end
+        end
 
         def generate_all_legal_moves(board_array, side)
             moves = [ ]
@@ -235,46 +342,6 @@ class Validator
                 end
             end
         end
-        
-        def entering_king_rule?(board_array, side)
-            king_pos = find_king(board_array, side)
-            return false unless king_pos
-        
-            # 相手陣の範囲を定義
-            enemy_territory = side == 'b' ? (0..2) : (6..8)
-            
-            # 王が相手陣に入っているか確認
-            return false unless enemy_territory.include?(king_pos[0])
-        
-            # 点数計算（27点法の例）
-            points = calculate_entering_king_points(board_array, side, enemy_territory)
-            
-            # 27点以上で入玉とみなす
-            points >= 27
-        end
-
-        def calculate_entering_king_points(board_array, side, enemy_territory)
-            points = 0
-            
-            board_array.each_with_index do |row, i|
-                row.each_with_index do |piece, j|
-                    next if piece.nil?
-                    next if piece_owner(piece) != side
-                    
-                    # 相手陣内の駒のみカウント
-                    next unless enemy_territory.include?(i)
-                    
-                    points += case piece.upcase
-                    when 'P' then 1
-                    when 'L', 'N', 'S' then 5
-                    when 'G', 'B', 'R' then 10
-                    else 0
-                    end
-                end
-            end
-            
-            points
-        end
 
         def simulate_move(board_array, hands, side, move_info)
             new_board = Marshal.load(Marshal.dump(board_array))
@@ -294,6 +361,7 @@ class Validator
             end
         end
 
+        # 王の位置を特定するメソッド
         def find_king(board_array, side)
             king_symbol = side == 'b' ? 'K' : 'k'
             board_array.each_with_index do |row, i|
