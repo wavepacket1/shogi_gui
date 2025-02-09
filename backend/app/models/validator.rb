@@ -218,7 +218,7 @@ class Validator
             # 宣言側の持ち駒と敵陣3段目以内にいる駒の点数の合計が、先手の場合は28点以上、後手の場合は27点以上かどうかを判定
             valid_declaration_value?(board_array, hands, side)
         end
-        
+
         private 
 
         def has_enough_non_king_pieces_in_enemy_territory?(board_array, side)
@@ -250,7 +250,7 @@ class Validator
             hand_points = calculate_hand_points_in_enemy_territory(hands, side)
 
             # 盤上の駒の点数合計
-            board_points = calculate_board_points_in_enemy_territory(board_array, side, points_mapping)
+            board_points = calculate_board_points_in_enemy_territory(board_array, side, point_mapping)
 
             total_points = hand_points + board_points
 
@@ -262,21 +262,21 @@ class Validator
         def calculate_hand_points_in_enemy_territory(hands, side)
             hands.sum do |piece, count|
                 if side == 'b'
-                    piece == piece.upcase ? points_mapping[piece] * count : 0
+                    piece == piece.upcase ? point_mapping[piece] * count : 0
                 else
-                    piece == piece.downcase ? points_mapping[piece] * count : 0
+                    piece == piece.downcase ? point_mapping[piece] * count : 0
                 end
             end
         end
 
-        def calculate_board_points_in_enemy_territory(board_array, side, points_mapping)
+        def calculate_board_points_in_enemy_territory(board_array, side, point_mapping)
             enemy_rows = enemy_territory(side)
             board_array.each_with_index.sum do |row, row_index|
                 next 0 unless enemy_rows.include?(row_index)
                 row.sum do |cell|
                     next 0 if cell.nil?
                     if (side == 'b' && cell == cell.upcase) || (side == 'w' && cell == cell.downcase)
-                    points_mapping[cell] || 0
+                    point_mapping[cell] || 0
                     else
                     0
                     end
@@ -305,9 +305,9 @@ class Validator
 
         def belongs_to_side?(cell, side)
             if side == 'b'
-                piece == piece.upcase
+                cell == cell.upcase
             else 
-                piece == piece.downcase
+                cell == cell.downcase
             end
         end
 
