@@ -1,5 +1,7 @@
 <template>
     <div class="game-info">
+        <h1>将棋GUI</h1>
+        <button @click="startGame">対局開始</button> 
         <button @click="entering_king_declaration">入玉宣言</button>
         <div>手数 {{ getStepNumber }}</div>
         <div>手番 {{ getOwner }}</div>
@@ -247,6 +249,11 @@ export default defineComponent({
             }
         };
 
+        const startGame = async () => {
+            await boardStore.createGame();
+        };
+
+
         // 駒の順序を定義
         const PIECE_ORDER = ['P', 'N', 'L', 'S', 'G', 'B', 'R'];
 
@@ -292,7 +299,8 @@ export default defineComponent({
             handlePromotion,
             handlePieceClick,
             selectedHandPiece,
-            entering_king_declaration
+            entering_king_declaration,
+            startGame,
         };
     },
 });
