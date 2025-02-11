@@ -36,5 +36,6 @@ backend/config/credentials.yml.enc
 
 backend/tmp
 backend/log
+backend/.byebug_history
 
 frontend/node_modules
