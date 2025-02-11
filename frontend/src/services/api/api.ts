@@ -11,7 +11,7 @@
 
 export interface Game {
   game_id: number;
-  status: "active" | "completed";
+  status: "active" | "finished" | "pause";
   board_id: number;
 }
 
@@ -295,14 +295,14 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      */
     v1GamesCreate: (
       data: {
-        status: "active" | "completed";
+        status: "active" | "finished" | "pause";
       },
       params: RequestParams = {},
     ) =>
       this.request<
         {
           game_id: number;
-          status: "active" | "completed";
+          status: "active" | "finished" | "pause";
           board_id: number;
         },
         {

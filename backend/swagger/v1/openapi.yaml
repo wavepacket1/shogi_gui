@@ -125,7 +125,8 @@
                       "type": "string",
                       "enum": [
                         "active",
-                        "completed"
+                        "finished",
+                        "pause"
                       ]
                     },
                     "board_id": {
@@ -167,7 +168,8 @@
                     "type": "string",
                     "enum": [
                       "active",
-                      "completed"
+                      "finished",
+                      "pause"
                     ]
                   }
                 },
@@ -406,7 +408,8 @@
             "type": "string",
             "enum": [
               "active",
-              "completed"
+              "finished",
+              "pause"
             ]
           },
           "board_id": {

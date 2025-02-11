@@ -25,7 +25,7 @@ RSpec.configure do |config|
             type: :object,
             properties: {
               game_id: { type: :integer },
-              status: { type: :string, enum: ['active', 'completed'] },
+              status: { type: :string, enum: ['active', 'finished', 'pause'] },
               board_id: { type: :integer }
             },
             required: ['game_id', 'status', 'board_id']

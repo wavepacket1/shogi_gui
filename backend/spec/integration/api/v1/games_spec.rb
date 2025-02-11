@@ -10,7 +10,7 @@ describe 'Games API' do
       parameter name: :game, in: :body, schema: {
         type: :object,
         properties: {
-          status: { type: :string, enum: ['active', 'completed'] }
+          status: { type: :string, enum: ['active', 'finished', 'pause'] }
         },
         required: ['status']
       }
@@ -19,7 +19,7 @@ describe 'Games API' do
         schema type: :object,
           properties: {
             game_id: { type: :integer },
-            status: { type: :string, enum: ['active', 'completed'] },
+            status: { type: :string, enum: ['active', 'finished', 'pause'] },
             board_id: { type: :integer }
           },
           required: ['game_id', 'status', 'board_id']
