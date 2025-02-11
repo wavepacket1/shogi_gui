@@ -72,14 +72,11 @@ export const useBoardStore = defineStore('board', {
 
 
         async enteringKingDeclaration(game_id: number, board_id: number) {
-            console.log(game_id, board_id);
             await this.handleAsyncAction(async () => {
                 const response = await api.api.v1GamesBoardsNyugyokuDeclarationCreate(
                     game_id,
                     board_id
                 );
-
-                console.log(`response: ${response}`);
 
                 if (response.data.status === 'success') {
                     this.is_check_entering_king = true;
