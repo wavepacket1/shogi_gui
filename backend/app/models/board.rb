@@ -39,6 +39,11 @@ class Board < ApplicationRecord
         
             create_board_record(board_array, hand, next_side, next_move_number, game)
         end
+
+        def default_sfen
+            "lnsgkgsnl/1r5b1/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL b - 0"
+        end
+
     
         private
     

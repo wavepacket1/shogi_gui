@@ -320,6 +320,32 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Games
+     * @name V1GamesBoardsNyugyokuDeclarationCreate
+     * @summary 入玉宣言を行う
+     * @request POST:/api/v1/games/{game_id}/boards/{board_id}/nyugyoku_declaration
+     */
+    v1GamesBoardsNyugyokuDeclarationCreate: (gameId: number, boardId: number, params: RequestParams = {}) =>
+      this.request<
+        {
+          status: "success" | "failed";
+          game_id: number;
+          board_id: number;
+        },
+        {
+          status: string;
+          message: string;
+        }
+      >({
+        path: `/api/v1/games/${gameId}/boards/${boardId}/nyugyoku_declaration`,
+        method: "POST",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
      * @tags Moves
      * @name V1GamesBoardsMovePartialUpdate
      * @summary 駒の移動API

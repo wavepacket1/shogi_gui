@@ -1,5 +1,6 @@
 <template>
     <div class="game-info">
+        <button @click="entering_king_declaration">入玉宣言</button>
         <div>手数 {{ getStepNumber }}</div>
         <div>手番 {{ getOwner }}</div>
         <div>{{ getGameState }}</div>
@@ -70,6 +71,12 @@ export default defineComponent({
             }
             if (boardStore.is_repetition) {
                 return '千日手';
+            }
+            if (boardStore.is_check_entering_king === true) {
+                return boardStore.activePlayer === 'b' ? '先手入玉宣言勝ち' : '後手入玉宣言勝ち';
+            }
+            else if (boardStore.is_check_entering_king === false) {
+                return boardStore.activePlayer === 'b' ? '入玉失敗で後手勝ち' : '入玉失敗で先手勝ち';
             }
             return '';
         });
@@ -225,6 +232,21 @@ export default defineComponent({
             pendingMove.value = null;
         };
 
+        const entering_king_declaration = async () => {
+            if(!boardStore.game || boardStore.board_id === null) {
+                console.error('boardStore.game または boardStore.board_idがnullです');
+                return;
+            }
+            try {
+                await boardStore.enteringKingDeclaration(
+                    boardStore.game!.id, 
+                    boardStore.board_id!,
+                );
+            } catch (error) {
+                console.error('Error in entering_king_declaration:', error);
+            }
+        };
+
         // 駒の順序を定義
         const PIECE_ORDER = ['P', 'N', 'L', 'S', 'G', 'B', 'R'];
 
@@ -270,6 +292,7 @@ export default defineComponent({
             handlePromotion,
             handlePieceClick,
             selectedHandPiece,
+            entering_king_declaration
         };
     },
 });

@@ -17,6 +17,7 @@ export const useBoardStore = defineStore('board', {
         is_checkmate: false,
         is_repetition: false,
         is_repetition_check: false,
+        is_check_entering_king: null,
         game: null,
         selectedCell: {x: null, y: null},
         validMovesCache: null as Types.ValidMovesCache | null,
@@ -63,12 +64,30 @@ export const useBoardStore = defineStore('board', {
                     board_id: data.board_id
                 });
 
-                this.is_checkmate = false;
-                this.is_repetition = false;
-                this.is_repetition_check = false;
+                this.resetGameFlag();
 
                 await this.fetchBoard();
             }, 'ゲームの作成に失敗しました');
+        },
+
+
+        async enteringKingDeclaration(game_id: number, board_id: number) {
+            console.log(game_id, board_id);
+            await this.handleAsyncAction(async () => {
+                const response = await api.api.v1GamesBoardsNyugyokuDeclarationCreate(
+                    game_id,
+                    board_id
+                );
+
+                console.log(`response: ${response}`);
+
+                if (response.data.status === 'success') {
+                    this.is_check_entering_king = true;
+                }
+                else {
+                    this.is_check_entering_king = false;
+                }
+            }, '入玉宣言のAPIの取得に失敗しました');
         },
 
         async fetchBoard() {
@@ -96,6 +115,13 @@ export const useBoardStore = defineStore('board', {
 
                 await this._updateGameStateFromResponse(response);
             }, '駒を打つことができませんでした');
+        },
+
+        resetGameFlag() {
+            this.is_checkmate = false;
+            this.is_repetition = false;
+            this.is_repetition_check = false;
+            this.is_check_entering_king = null;
         },
 
         SetCell(clickedCell: {x: number, y: number} | null) {

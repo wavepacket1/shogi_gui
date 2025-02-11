@@ -25,6 +25,7 @@ export interface BoardState {
     is_checkmate: boolean;
     is_repetition: boolean;
     is_repetition_check: boolean;
+    is_check_entering_king: boolean | null;
     game: Game | null;
     selectedCell: {x: number | null, y: number | null};
     validMovesCache: ValidMovesCache | null;

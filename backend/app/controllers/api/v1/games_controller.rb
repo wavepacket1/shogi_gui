@@ -9,7 +9,7 @@ module Api
         @game.errors.add(:status, "can't be blank") if game_params[:status].blank?
         
         if @game.errors.empty? && @game.save
-          @board = @game.create_board!
+          @board = @game.create_board!(sfen: Board.default_sfen)
           render json: {
             game_id: @game.id,
             status: @game.status,
@@ -45,7 +45,7 @@ module Api
           render json: {
             status: 'failed',
             message: '入玉宣言に失敗しました。'
-          }, status: :unprocessable_entity
+          }, status: :ok
         end
       rescue ActiveRecord::RecordNotFound
         render json: {
