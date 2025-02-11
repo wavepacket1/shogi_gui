@@ -1,6 +1,5 @@
 <template>
     <div class="game-info">
-        <h1>将棋GUI</h1>
         <button @click="startGame">対局開始</button> 
         <button @click="entering_king_declaration">入玉宣言</button>
         <div>手数 {{ getStepNumber }}</div>
