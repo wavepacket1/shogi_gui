@@ -1,6 +1,6 @@
 <template>
   <div id="app">
-    <MenuBar />
+    <!-- <MenuBar /> -->
     <ShogiBoard />
   </div>
 </template>
@@ -23,5 +23,7 @@ export default defineComponent({
 #app {
   text-align: center;
   margin-top: 50px;
+  user-select: none;        
+  -webkit-user-select: none;
 }
 </style>
