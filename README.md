@@ -10,7 +10,7 @@
 - backend
   - rails apiモード     
 
-## クラスの依存関係
+## クラスの継承関係
 ![バックエンドのクラス図](backend/doc/class_diagram.png)
 
 ### 図の説明
@@ -18,3 +18,21 @@
 - 点線矢印（- ->）：Concernsの関係
 - 四角形：クラス
 - 六角形：Concerns
+
+## ER図
+![データベース設計](backend\erd.pdf)
+　
+#### ER図
+- カラスの足：has_many関係
+- 線と丸：belongs_to関係
+- 実線：必須の関連
+- 点線：オプションの関連
+
+### 図の生成方法
+```bash
+# クラス図の生成
+docker compose exec backend bundle exec rake diagram:generate
+
+# ER図の生成
+docker compose exec backend bundle exec rake erd:generate
+```

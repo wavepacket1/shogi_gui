@@ -58,6 +58,7 @@ group :development do
     gem 'rswag-ui'
     gem 'yard'
     gem 'graphviz'
+    gem 'rails-erd'
 end
 
 group :test do
