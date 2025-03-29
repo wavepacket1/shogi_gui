@@ -1,0 +1,47 @@
+@startuml
+!define table(x) class x << (T,#FFAAAA) >>
+!define primary_key(x) <u>x</u>
+!define foreign_key(x) #x#
+
+table(games) {
+  primary_key(id): bigint
+  status: string
+  created_at: datetime
+  updated_at: datetime
+}
+
+table(boards) {
+  primary_key(id): bigint
+  foreign_key(game_id): bigint
+  sfen: string
+  created_at: datetime
+  updated_at: datetime
+}
+
+table(board_histories) {
+  primary_key(id): bigint
+  foreign_key(game_id): bigint
+  sfen: string
+  move_number: integer
+  branch: string
+  created_at: datetime
+  updated_at: datetime
+}
+
+table(pieces) {
+  primary_key(id): bigint
+  foreign_key(board_id): bigint
+  position_x: integer
+  position_y: integer
+  piece_type: string
+  owner: string
+  promoted: boolean
+  created_at: datetime
+  updated_at: datetime
+}
+
+games "1" -- "1" boards
+games "1" -- "*" board_histories
+boards "1" -- "*" pieces
+
+@enduml 

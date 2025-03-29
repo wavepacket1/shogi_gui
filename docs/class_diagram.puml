@@ -1,0 +1,59 @@
+@startuml
+class Game {
+  +status: string
+  +nyugyoku_declaration(board)
+  +board
+  +board_histories
+}
+
+class Board {
+  +sfen: string
+  +create_next_board(parsed_data, move_info, board, game)
+  +parse_move(move)
+  +default_sfen()
+  +pieces
+}
+
+class BoardHistory {
+  +sfen: string
+  +move_number: integer
+  +get_move_info()
+  +to_kifu_notation()
+}
+
+class Piece {
+  +position_x: integer
+  +position_y: integer
+  +piece_type: string
+  +owner: string
+  +promoted: boolean
+}
+
+class Move {
+  +process_move(game, board, parsed_data, move_info)
+  +execute_move_or_drop(board_array, hand, side, move_info)
+}
+
+class Validator {
+  +legal?(parsed_data, move_info, game)
+  +legal_move?(board_array, side, move_info)
+  +legal_drop?(board_array, side, move_info)
+}
+
+Game "1" --> "1" Board : has_one
+Game "1" --> "*" BoardHistory : has_many
+Board "1" --> "*" Piece : has_many
+
+note right of Move
+  Moveクラスは
+  サービスオブジェクトとして
+  使用される
+end note
+
+note right of Validator
+  Validatorクラスは
+  サービスオブジェクトとして
+  使用される
+end note
+
+@enduml 
