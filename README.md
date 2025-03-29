@@ -20,7 +20,7 @@
 - 六角形：Concerns
 
 ## ER図
-![データベース設計](backend/erd.pdf)
+![データベース設計](backend/doc/erd.png)
 　
 #### ER図
 - カラスの足：has_many関係
