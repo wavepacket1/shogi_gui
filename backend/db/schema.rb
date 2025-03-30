@@ -10,9 +10,20 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2024_12_01_134029) do
+ActiveRecord::Schema[7.0].define(version: 2025_03_30_030828) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
+
+  create_table "board_histories", force: :cascade do |t|
+    t.bigint "game_id", null: false
+    t.string "sfen", null: false
+    t.integer "move_number", null: false
+    t.string "branch", default: "main"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["game_id", "move_number", "branch"], name: "index_board_histories_on_game_id_and_move_number_and_branch", unique: true
+    t.index ["game_id"], name: "index_board_histories_on_game_id"
+  end
 
   create_table "boards", force: :cascade do |t|
     t.string "sfen", default: "lnsgkgsnl/1r5b1/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL b - 0"
@@ -40,6 +51,7 @@ ActiveRecord::Schema[7.0].define(version: 2024_12_01_134029) do
     t.index ["board_id"], name: "index_pieces_on_board_id"
   end
 
+  add_foreign_key "board_histories", "games"
   add_foreign_key "boards", "games"
   add_foreign_key "pieces", "boards"
 end

@@ -1,4 +1,4 @@
-FROM node:18
+FROM node:16
 
 # 作業ディレクトリの設定
 WORKDIR /app
@@ -15,5 +15,5 @@ COPY . .
 # ポートの公開
 EXPOSE 5173
 
-# デフォルトのコマンド
-CMD ["npm", "run", "dev"]
+# 起動コマンドを明示的に指定
+CMD ["/bin/sh", "./start.sh"]
