@@ -28,7 +28,7 @@
 <template>
   <div class="move-history-panel">
     <div class="panel-header">
-      <h3>指し手履歴</h3>
+      <h3>棋譜</h3>
       <div class="branch-selector" v-if="branches.length > 1">
         <label for="branch-select">分岐:</label>
         <select id="branch-select" v-model="currentBranch" @change="onBranchChange">
@@ -123,12 +123,12 @@
 
 ## APIクライアント
 
-フロントエンドでは以下のAPIエンドポイントを使用して指し手履歴を操作します：
+フロントエンドでは以下のAPIエンドポイントを使用して棋譜を操作します：
 
 ```typescript
 // api.ts（OpenAPI自動生成）の拡張部分
 /**
- * 指し手履歴を取得する
+ * 棋譜を取得する
  *
  * @tags BoardHistories
  * @name V1GamesBoardHistoriesList
@@ -374,7 +374,7 @@ end
 +-------------------------------------------+
 |                                           |
 | +-------+                       +------+  |
-| |       |                       |指し手履歴| |
+| |       |                       |棋譜| |
 | |後手の持ち駒|                     +------+  |
 | |       |                       |1. 7六歩  | |
 | +-------+                       |2. 3四歩  | |

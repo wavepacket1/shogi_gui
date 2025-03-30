@@ -1,7 +1,7 @@
 <template>
   <div class="move-history-panel">
     <div class="panel-header">
-      <h3>指し手履歴</h3>
+      <h3>棋譜</h3>
       <div class="branch-selector" v-if="branches.length > 1">
         <label for="branch-select">分岐:</label>
         <select id="branch-select" v-model="currentBranch" @change="onBranchChange">
@@ -17,7 +17,7 @@
         :class="['move-item', { 'active': currentMoveIndex === index }]"
         @click="navigateToMove(index)"
       >
-        <span class="move-number">{{ index + 1 }}.</span>
+        <span class="move-number">{{ index }}.</span>
         <span class="move-notation">{{ formatMove(history) }}</span>
       </div>
     </div>
@@ -119,15 +119,6 @@ export default defineComponent({
       if (history.move_sfen) {
         // ここではシンプルに表示するだけ。より良いフォーマットは今後実装可能
         return `手: ${history.move_sfen}`;
-      }
-      
-      // 3. 旧フォーマット (後方互換性)
-      if (history.last_move_to) {
-        const playerMark = history.last_move_player === 'b' ? '▲' : '△';
-        const piece = history.last_move_piece || '';
-        const promoted = history.last_move_promoted ? '成' : '';
-        
-        return `${playerMark}${history.last_move_to} ${piece}${promoted}`;
       }
       
       // フォールバック

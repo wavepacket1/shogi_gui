@@ -32,7 +32,7 @@
             />
         </div>
         
-        <!-- 指し手履歴パネルを追加 -->
+        <!-- 棋譜パネルを追加 -->
         <div v-if="boardStore.game" class="move-history-container">
             <MoveHistoryPanel :game-id="boardStore.game.id" />
         </div>

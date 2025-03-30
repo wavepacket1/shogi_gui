@@ -31,7 +31,9 @@ class Api::V1::MovesController < ApplicationController
       end
     else
       # 通常の手順（分岐なし）
-      next_move_number = parsed_data[:move_number] + 1
+      # パーサーから返される手数ではなく、最後の履歴の手数+1を使用
+      last_history = @game.board_histories.where(branch: branch).order(move_number: :desc).first
+      next_move_number = last_history ? last_history.move_number + 1 : 1
     end
     
     # 局面の履歴を保存（move_sfenを追加）
