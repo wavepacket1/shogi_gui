@@ -29,6 +29,10 @@ export interface BoardState {
     game: Game | null;
     selectedCell: {x: number | null, y: number | null};
     validMovesCache: ValidMovesCache | null;
+    boardHistories: BoardHistory[];
+    currentBranch: string;
+    branches: string[];
+    currentMoveIndex: number;
 }
 
 export interface selectedCell {
@@ -64,4 +68,32 @@ export interface ValidMovesCache {
     moves: {
         [position: string]: string[] | null;  // "7c" -> ["7d", "7e", ...] | null
     };
+}
+
+export interface BoardHistory {
+    id: number;
+    game_id: number;
+    move_number: number;
+    branch: string;
+    board_state: string;
+    pieces_in_hand: { [key: string]: number };
+    last_move_from: string | null;
+    last_move_to: string | null;
+    last_move_piece: string | null;
+    last_move_player: string | null;
+    last_move_promoted: boolean;
+    notation: string;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface BranchesResponse {
+    branches: string[];
+}
+
+export interface NavigateResponse {
+    game_id: number;
+    board_id: number;
+    move_number: number;
+    sfen: string;
 }

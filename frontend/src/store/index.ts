@@ -21,6 +21,10 @@ export const useBoardStore = defineStore('board', {
         game: null,
         selectedCell: {x: null, y: null},
         validMovesCache: null as Types.ValidMovesCache | null,
+        boardHistories: [],
+        currentBranch: 'main',
+        branches: ['main'],
+        currentMoveIndex: -1
     }),
     actions: {
         async handleAsyncAction(asyncAction: () => Promise<void>, errorMessage: string = 'エラーが発生しました') {
@@ -173,6 +177,26 @@ export const useBoardStore = defineStore('board', {
             this.is_checkmate = response.data.is_checkmate;
             this.is_repetition = response.data.is_repetition;
             this.is_repetition_check = response.data.is_repetition_check;
+            
+            // 駒を動かした後に履歴も更新（現在の手数を保持するように設定）
+            if (this.game?.id) {
+                try {
+                    // 現在表示している手数に合わせて履歴のハイライトを保持
+                    await this.fetchBoardHistories(this.game.id, this.currentBranch, false);
+                    
+                    // 最新の手数に自動更新し、stepNumberに対応するインデックスを設定
+                    if (this.boardHistories.length > 0) {
+                        this.currentMoveIndex = this.boardHistories.findIndex(h => h.move_number === this.stepNumber);
+                        if (this.currentMoveIndex === -1) {
+                            // 見つからない場合は最新の手を選択
+                            const maxMoveNumber = Math.max(...this.boardHistories.map(h => h.move_number));
+                            this.currentMoveIndex = this.boardHistories.findIndex(h => h.move_number === maxMoveNumber);
+                        }
+                    }
+                } catch (error) {
+                    console.error('履歴の更新に失敗しました:', error);
+                }
+            }
         },
 
         _validatePieceSelection() {
@@ -192,6 +216,115 @@ export const useBoardStore = defineStore('board', {
             const from = this._convertPosition(this.selectedCell.x!, this.selectedCell.y!);
             const to = this._convertPosition(toX, toY);
             return `${from.x}${from.y}${to.x}${to.y}${promote ? '+' : ''}`;
+        },
+
+        async fetchBoardHistories(gameId: number, branch?: string, preserveCurrentIndex: boolean = false) {
+            if (!gameId) {
+                console.error('Game ID is required');
+                return { data: [] };
+            }
+
+            return await this.handleAsyncAction(async () => {
+                const targetBranch = branch || this.currentBranch;
+                const response = await api.api.v1GamesBoardHistoriesList(gameId, { branch: targetBranch });
+                this.boardHistories = response.data as unknown as Types.BoardHistory[];
+                
+                // 現在の手数インデックスを保持するか決定
+                if (!preserveCurrentIndex && this.boardHistories.length > 0) {
+                    // 自動更新の場合は最新の手をハイライト
+                    const maxMoveNumber = Math.max(...this.boardHistories.map(h => h.move_number));
+                    this.currentMoveIndex = this.boardHistories.findIndex(h => h.move_number === maxMoveNumber);
+                } else if (this.stepNumber !== undefined && this.boardHistories.length > 0) {
+                    // 現在の手数に合わせたインデックスを設定
+                    this.currentMoveIndex = this.boardHistories.findIndex(h => h.move_number === this.stepNumber);
+                    if (this.currentMoveIndex === -1) {
+                        // 見つからない場合は最初の手を選択
+                        this.currentMoveIndex = 0;
+                    }
+                }
+                
+                return response;
+            }, '盤面履歴の取得に失敗しました');
+        },
+
+        async fetchBranches(gameId: number) {
+            if (!gameId) {
+                console.error('Game ID is required');
+                return { data: { branches: ['main'] } };
+            }
+
+            return await this.handleAsyncAction(async () => {
+                const response = await api.api.v1GamesBoardHistoriesBranchesList(gameId);
+                this.branches = (response.data as unknown as Types.BranchesResponse).branches;
+                return response;
+            }, '分岐一覧の取得に失敗しました');
+        },
+
+        async navigateToMove(params: { gameId: number, moveNumber: number }) {
+            const { gameId, moveNumber } = params;
+            if (!gameId || moveNumber === undefined) {
+                console.error('Game ID and move number are required');
+                return;
+            }
+
+            return await this.handleAsyncAction(async () => {
+                // 履歴配列の中から対応する手数のオブジェクトを探す
+                const historyItem = this.boardHistories.find(h => h.move_number === moveNumber);
+                if (!historyItem) {
+                    console.error(`Move number ${moveNumber} not found in history`);
+                    return;
+                }
+                
+                // まず、選択したインデックスを更新
+                this.currentMoveIndex = this.boardHistories.findIndex(h => h.move_number === moveNumber);
+                
+                // APIを呼び出して局面に移動
+                const response = await api.api.v1GamesNavigateToCreate(
+                    gameId,
+                    moveNumber,
+                    { branch: this.currentBranch }
+                );
+                
+                // 盤面情報を更新
+                const parsed = parseSFEN(response.data.sfen);
+                this.shogiData.board = parsed.board;
+                this.shogiData.piecesInHand = parsed.piecesInHand;
+                this.activePlayer = parsed.playerToMove;
+                this.stepNumber = parsed.moveCount || moveNumber; // APIから返されるか、選択した手数を使用
+                this.board_id = response.data.board_id;
+                
+                return response;
+            }, '特定の手数への移動に失敗しました');
+        },
+
+        async switchBranch(params: { gameId: number, branchName: string }) {
+            const { gameId, branchName } = params;
+            if (!gameId || !branchName) {
+                console.error('Game ID and branch name are required');
+                return;
+            }
+
+            return await this.handleAsyncAction(async () => {
+                const response = await api.api.v1GamesSwitchBranchCreate(gameId, branchName);
+                const responseData = response.data as unknown as { 
+                    sfen: string; 
+                    board_id: number;
+                    game_id: number;
+                    branch: string;
+                };
+
+                const parsed = parseSFEN(responseData.sfen);
+                this.shogiData.board = parsed.board;
+                this.shogiData.piecesInHand = parsed.piecesInHand;
+                this.activePlayer = parsed.playerToMove;
+                this.stepNumber = parsed.moveCount;
+                this.board_id = responseData.board_id;
+                
+                this.currentBranch = branchName;
+                await this.fetchBoardHistories(gameId, branchName);
+                
+                return response;
+            }, '分岐切り替えに失敗しました');
         },
     }
 });

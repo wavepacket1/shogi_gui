@@ -1,5 +1,6 @@
 /* eslint-disable */
 /* tslint:disable */
+// @ts-nocheck
 /*
  * ---------------------------------------------------------------
  * ## THIS FILE WAS GENERATED VIA SWAGGER-TYPESCRIPT-API        ##
@@ -238,6 +239,141 @@ export class HttpClient<SecurityDataType = unknown> {
  */
 export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDataType> {
   api = {
+    /**
+     * No description
+     *
+     * @tags BoardHistories
+     * @name V1GamesBoardHistoriesList
+     * @summary 局面履歴の取得
+     * @request GET:/api/v1/games/{game_id}/board_histories
+     */
+    v1GamesBoardHistoriesList: (
+      gameId: number,
+      query?: {
+        /** 分岐名（デフォルト: main） */
+        branch?: string;
+      },
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        {
+          id?: number;
+          game_id?: number;
+          sfen?: string;
+          move_number?: number;
+          branch?: string;
+          board_state?: string;
+          pieces_in_hand?: object;
+          last_move_from?: string | null;
+          last_move_to?: string | null;
+          last_move_piece?: string | null;
+          last_move_player?: string | null;
+          last_move_promoted?: boolean;
+          /** 棋譜表記（例：「▲7六歩」「△8四銀」）日本語形式で表示された棋譜 */
+          notation?: string | null;
+          /** @format date-time */
+          created_at?: string;
+          /** @format date-time */
+          updated_at?: string;
+        }[],
+        {
+          error?: string;
+          status?: number;
+        }
+      >({
+        path: `/api/v1/games/${gameId}/board_histories`,
+        method: "GET",
+        query: query,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags BoardHistories
+     * @name V1GamesBoardHistoriesBranchesList
+     * @summary 分岐リストの取得
+     * @request GET:/api/v1/games/{game_id}/board_histories/branches
+     */
+    v1GamesBoardHistoriesBranchesList: (gameId: number, params: RequestParams = {}) =>
+      this.request<
+        {
+          branches?: string[];
+        },
+        {
+          error?: string;
+          status?: number;
+        }
+      >({
+        path: `/api/v1/games/${gameId}/board_histories/branches`,
+        method: "GET",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags BoardHistories
+     * @name V1GamesNavigateToCreate
+     * @summary 指定した手数の局面に移動
+     * @request POST:/api/v1/games/{game_id}/navigate_to/{move_number}
+     */
+    v1GamesNavigateToCreate: (
+      gameId: number,
+      moveNumber: number,
+      query?: {
+        /** 分岐名（デフォルト: main） */
+        branch?: string;
+      },
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        {
+          game_id?: number;
+          board_id?: number;
+          move_number?: number;
+          sfen?: string;
+        },
+        {
+          error?: string;
+          status?: number;
+        }
+      >({
+        path: `/api/v1/games/${gameId}/navigate_to/${moveNumber}`,
+        method: "POST",
+        query: query,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags BoardHistories
+     * @name V1GamesSwitchBranchCreate
+     * @summary 分岐切り替え
+     * @request POST:/api/v1/games/{game_id}/switch_branch/{branch_name}
+     */
+    v1GamesSwitchBranchCreate: (gameId: number, branchName: string, params: RequestParams = {}) =>
+      this.request<
+        {
+          game_id?: number;
+          branch?: string;
+          current_move_number?: number;
+        },
+        {
+          error?: string;
+          status?: number;
+        }
+      >({
+        path: `/api/v1/games/${gameId}/switch_branch/${branchName}`,
+        method: "POST",
+        format: "json",
+        ...params,
+      }),
+
     /**
      * No description
      *
