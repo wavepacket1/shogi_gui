@@ -57,35 +57,15 @@
                       "branch": {
                         "type": "string"
                       },
-                      "board_state": {
-                        "type": "string"
-                      },
-                      "pieces_in_hand": {
-                        "type": "object"
-                      },
-                      "last_move_from": {
+                      "move_sfen": {
                         "type": "string",
-                        "nullable": true
-                      },
-                      "last_move_to": {
-                        "type": "string",
-                        "nullable": true
-                      },
-                      "last_move_piece": {
-                        "type": "string",
-                        "nullable": true
-                      },
-                      "last_move_player": {
-                        "type": "string",
-                        "nullable": true
-                      },
-                      "last_move_promoted": {
-                        "type": "boolean"
+                        "nullable": true,
+                        "description": "前局面からの指し手情報（SFEN形式）。例：7g7f, P*3d, 8h2b+"
                       },
                       "notation": {
                         "type": "string",
                         "nullable": true,
-                        "description": "棋譜表記（例：「▲7六歩」「△8四銀」）日本語形式で表示された棋譜"
+                        "description": "棋譜表記（例：「▲7六歩」「△8四銀」）。日本語形式で表示された棋譜。"
                       },
                       "created_at": {
                         "type": "string",
@@ -233,6 +213,16 @@
                     },
                     "sfen": {
                       "type": "string"
+                    },
+                    "move_sfen": {
+                      "type": "string",
+                      "nullable": true,
+                      "description": "前局面からの指し手情報（SFEN形式）"
+                    },
+                    "notation": {
+                      "type": "string",
+                      "nullable": true,
+                      "description": "棋譜表記（日本語形式）"
                     }
                   }
                 }
@@ -302,6 +292,16 @@
                     },
                     "current_move_number": {
                       "type": "integer"
+                    },
+                    "move_sfen": {
+                      "type": "string",
+                      "nullable": true,
+                      "description": "前局面からの指し手情報（SFEN形式）"
+                    },
+                    "notation": {
+                      "type": "string",
+                      "nullable": true,
+                      "description": "棋譜表記（日本語形式）"
                     }
                   }
                 }
@@ -611,6 +611,24 @@
             "schema": {
               "type": "integer"
             }
+          },
+          {
+            "name": "move_number",
+            "in": "query",
+            "required": false,
+            "description": "現在の手数（分岐作成用）",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "branch",
+            "in": "query",
+            "required": false,
+            "description": "現在の分岐名（分岐作成用）",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -644,6 +662,24 @@
                     "sfen": {
                       "type": "string",
                       "example": "lnsgkgsnl/1r5b1/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL b - 0"
+                    },
+                    "move_number": {
+                      "type": "integer",
+                      "example": 1
+                    },
+                    "branch": {
+                      "type": "string",
+                      "example": "main"
+                    },
+                    "move_sfen": {
+                      "type": "string",
+                      "example": "7g7f",
+                      "description": "前局面からの指し手情報（SFEN形式）"
+                    },
+                    "notation": {
+                      "type": "string",
+                      "example": "▲7六歩",
+                      "description": "棋譜表記（日本語形式）"
                     }
                   }
                 }
@@ -661,17 +697,9 @@
                       "type": "boolean",
                       "example": false
                     },
-                    "is_checkmate": {
-                      "type": "boolean",
-                      "example": false
-                    },
-                    "is_repetition": {
-                      "type": "boolean",
-                      "example": false
-                    },
-                    "is_repetition_check": {
-                      "type": "boolean",
-                      "example": false
+                    "message": {
+                      "type": "string",
+                      "example": "Invalid move: 8h2b+"
                     },
                     "board_id": {
                       "type": "integer",
@@ -680,10 +708,6 @@
                     "sfen": {
                       "type": "string",
                       "example": "lnsgkgsnl/1r5b1/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL b - 0"
-                    },
-                    "message": {
-                      "type": "string",
-                      "example": "Invalid move: 8h2b+"
                     }
                   }
                 }

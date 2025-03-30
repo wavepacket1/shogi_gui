@@ -19,17 +19,15 @@ RSpec.describe 'API::V1::BoardHistories', type: :request do
               sfen: { type: :string },
               move_number: { type: :integer },
               branch: { type: :string },
-              board_state: { type: :string },
-              pieces_in_hand: { type: :object },
-              last_move_from: { type: :string, nullable: true },
-              last_move_to: { type: :string, nullable: true },
-              last_move_piece: { type: :string, nullable: true },
-              last_move_player: { type: :string, nullable: true },
-              last_move_promoted: { type: :boolean },
+              move_sfen: { 
+                type: :string, 
+                nullable: true, 
+                description: '前局面からの指し手情報（SFEN形式）。例：7g7f, P*3d, 8h2b+'
+              },
               notation: { 
                 type: :string, 
                 nullable: true, 
-                description: '棋譜表記（例：「▲7六歩」「△8四銀」）日本語形式で表示された棋譜'
+                description: '棋譜表記（例：「▲7六歩」「△8四銀」）。日本語形式で表示された棋譜。'
               },
               created_at: { type: :string, format: 'date-time' },
               updated_at: { type: :string, format: 'date-time' }
@@ -102,7 +100,17 @@ RSpec.describe 'API::V1::BoardHistories', type: :request do
             game_id: { type: :integer },
             board_id: { type: :integer },
             move_number: { type: :integer },
-            sfen: { type: :string }
+            sfen: { type: :string },
+            move_sfen: { 
+              type: :string, 
+              nullable: true, 
+              description: '前局面からの指し手情報（SFEN形式）' 
+            },
+            notation: { 
+              type: :string, 
+              nullable: true, 
+              description: '棋譜表記（日本語形式）' 
+            }
           }
         
         let(:game) { Game.create(status: 'active') }
@@ -151,7 +159,17 @@ RSpec.describe 'API::V1::BoardHistories', type: :request do
           properties: {
             game_id: { type: :integer },
             branch: { type: :string },
-            current_move_number: { type: :integer }
+            current_move_number: { type: :integer },
+            move_sfen: { 
+              type: :string, 
+              nullable: true, 
+              description: '前局面からの指し手情報（SFEN形式）' 
+            },
+            notation: { 
+              type: :string, 
+              nullable: true, 
+              description: '棋譜表記（日本語形式）' 
+            }
           }
         
         let(:game) { Game.create(status: 'active') }

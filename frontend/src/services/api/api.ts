@@ -262,14 +262,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
           sfen?: string;
           move_number?: number;
           branch?: string;
-          board_state?: string;
-          pieces_in_hand?: object;
-          last_move_from?: string | null;
-          last_move_to?: string | null;
-          last_move_piece?: string | null;
-          last_move_player?: string | null;
-          last_move_promoted?: boolean;
-          /** 棋譜表記（例：「▲7六歩」「△8四銀」）日本語形式で表示された棋譜 */
+          /** 前局面からの指し手情報（SFEN形式）。例：7g7f, P*3d, 8h2b+ */
+          move_sfen?: string | null;
+          /** 棋譜表記（例：「▲7六歩」「△8四銀」）。日本語形式で表示された棋譜。 */
           notation?: string | null;
           /** @format date-time */
           created_at?: string;
@@ -335,6 +330,10 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
           board_id?: number;
           move_number?: number;
           sfen?: string;
+          /** 前局面からの指し手情報（SFEN形式） */
+          move_sfen?: string | null;
+          /** 棋譜表記（日本語形式） */
+          notation?: string | null;
         },
         {
           error?: string;
@@ -362,6 +361,10 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
           game_id?: number;
           branch?: string;
           current_move_number?: number;
+          /** 前局面からの指し手情報（SFEN形式） */
+          move_sfen?: string | null;
+          /** 棋譜表記（日本語形式） */
+          notation?: string | null;
         },
         {
           error?: string;
@@ -497,6 +500,12 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
          */
         move: string;
       },
+      query?: {
+        /** 現在の手数（分岐作成用） */
+        move_number?: number;
+        /** 現在の分岐名（分岐作成用） */
+        branch?: string;
+      },
       params: RequestParams = {},
     ) =>
       this.request<
@@ -513,26 +522,35 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
           board_id?: number;
           /** @example "lnsgkgsnl/1r5b1/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL b - 0" */
           sfen?: string;
+          /** @example 1 */
+          move_number?: number;
+          /** @example "main" */
+          branch?: string;
+          /**
+           * 前局面からの指し手情報（SFEN形式）
+           * @example "7g7f"
+           */
+          move_sfen?: string;
+          /**
+           * 棋譜表記（日本語形式）
+           * @example "▲7六歩"
+           */
+          notation?: string;
         },
         {
           /** @example false */
           status?: boolean;
-          /** @example false */
-          is_checkmate?: boolean;
-          /** @example false */
-          is_repetition?: boolean;
-          /** @example false */
-          is_repetition_check?: boolean;
+          /** @example "Invalid move: 8h2b+" */
+          message?: string;
           /** @example 123 */
           board_id?: number;
           /** @example "lnsgkgsnl/1r5b1/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL b - 0" */
           sfen?: string;
-          /** @example "Invalid move: 8h2b+" */
-          message?: string;
         }
       >({
         path: `/api/v1/games/${gameId}/boards/${boardId}/move`,
         method: "PATCH",
+        query: query,
         body: data,
         type: ContentType.Json,
         format: "json",

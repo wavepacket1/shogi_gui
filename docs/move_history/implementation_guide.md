@@ -93,11 +93,25 @@ class BoardHistory < ApplicationRecord
 
   # 棋譜形式で手を表示
   def to_kifu_notation
-    move_info = get_move_info
-    return nil unless move_info
+    return "開始局面" if move_number == 0
 
-    player_symbol = move_info[:player_type] == 'b' ? '▲' : '△'
-    "#{player_symbol}#{move_info[:to_square]}#{move_info[:piece_type]}"
+    # 前の局面が見つからない場合
+    prev_history = previous_board_history
+    return "#{move_number}手目" unless prev_history
+
+    # SFENから局面情報を計算（最小限の情報のみ）
+    current_parsed = Parser::SfenParser.parse(sfen)
+    previous_parsed = Parser::SfenParser.parse(prev_history.sfen)
+    
+    # 手番
+    player_type = previous_parsed[:side]
+    player_symbol = player_type == 'b' ? '▲' : '△'
+    
+    # 移動先と駒種（基本的な情報のみ）
+    # ... 簡略化した処理 ...
+    
+    # 棋譜表記を組み立て
+    "#{player_symbol}#{to_notation}#{piece_name}#{special_notation}"
   end
 
   private

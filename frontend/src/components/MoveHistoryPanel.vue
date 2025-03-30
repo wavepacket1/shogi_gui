@@ -104,22 +104,34 @@ export default defineComponent({
 
     // 指し手の表示形式をフォーマット
     const formatMove = (history: BoardHistory): string => {
-      // バックエンドから提供された棋譜表記を優先的に使用
+      // 初期局面の処理
+      if (history.move_number === 0) {
+        return '開始局面';
+      }
+      
+      // 優先順位:
+      // 1. バックエンドから提供された棋譜表記
       if (history.notation) {
         return history.notation;
       }
       
-      // fallback: 局面の初期表示やnotationがない場合
-      if (!history || !history.last_move_from || !history.last_move_to) {
-        return '開始局面';
+      // 2. move_sfenがある場合はそれを使用
+      if (history.move_sfen) {
+        // ここではシンプルに表示するだけ。より良いフォーマットは今後実装可能
+        return `手: ${history.move_sfen}`;
       }
       
-      const from = history.last_move_from;
-      const to = history.last_move_to;
-      const piece = history.last_move_piece || '';
-      const promoted = history.last_move_promoted ? '成' : '';
+      // 3. 旧フォーマット (後方互換性)
+      if (history.last_move_to) {
+        const playerMark = history.last_move_player === 'b' ? '▲' : '△';
+        const piece = history.last_move_piece || '';
+        const promoted = history.last_move_promoted ? '成' : '';
+        
+        return `${playerMark}${history.last_move_to} ${piece}${promoted}`;
+      }
       
-      return `${to} ${piece}${promoted}`;
+      // フォールバック
+      return `${history.move_number}手目`;
     };
 
     // コンポーネントマウント時に履歴と分岐を取得

@@ -12,6 +12,7 @@ module Api
         # 履歴に棋譜表記を追加
         histories_with_notation = @board_histories.map do |history|
           history_data = history.as_json
+          # 棋譜表記を追加
           history_data['notation'] = history.to_kifu_notation
           history_data
         end
@@ -55,7 +56,9 @@ module Api
           game_id: @game.id,
           board_id: @board.id,
           move_number: @history.move_number,
-          sfen: @history.sfen
+          sfen: @history.sfen,
+          move_sfen: @history.move_sfen,
+          notation: @history.to_kifu_notation
         }
       end
       
@@ -88,7 +91,9 @@ module Api
         render json: {
           game_id: @game.id,
           branch: branch_name,
-          current_move_number: @latest_history.move_number
+          current_move_number: @latest_history.move_number,
+          move_sfen: @latest_history.move_sfen,
+          notation: @latest_history.to_kifu_notation
         }
       end
       

@@ -34,11 +34,12 @@ class Api::V1::MovesController < ApplicationController
       next_move_number = parsed_data[:move_number] + 1
     end
     
-    # 局面の履歴を保存
+    # 局面の履歴を保存（move_sfenを追加）
     @history = @game.board_histories.create!(
       sfen: next_board.sfen,
       move_number: next_move_number,
-      branch: branch
+      branch: branch,
+      move_sfen: params[:move]  # 指し手情報をSFEN形式で保存
     )
     
     # レスポンスに履歴情報を追加
@@ -62,7 +63,9 @@ class Api::V1::MovesController < ApplicationController
       board_id: next_board.id,
       sfen: next_board.sfen,
       move_number: history.move_number,
-      branch: history.branch
+      branch: history.branch,
+      move_sfen: history.move_sfen,  # レスポンスにも指し手情報を含める
+      notation: history.to_kifu_notation  # 棋譜表記も含める
     }, status: :ok
   end
 
