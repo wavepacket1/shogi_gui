@@ -4,21 +4,52 @@ class Api::V1::MovesController < ApplicationController
   def move
     @game = Game.find(params[:game_id])
     @board = Board.find(params[:board_id])
-    parsed_data = Parser::SfenParser.parse(@board.sfen)  
+    
+    # 分岐情報の取得
+    current_move_number = params[:move_number].to_i
+    branch = params[:branch] || 'main'
+    
+    parsed_data = Parser::SfenParser.parse(@board.sfen)
     move_info = Board.parse_move(params[:move])
 
     # 合法手でない場合はDBに保存しない
     return unless Validator.legal?(parsed_data, move_info, @game)
 
+    # 既存のコード: 次の局面を作成
     next_board = Move.process_move(@game, @board, parsed_data, move_info)
-    render_success(next_board, @game)
+    
+    # 分岐処理: 同じ手数で異なる手を指した場合は新しい分岐を作成
+    if current_move_number > 0 && @game.board_histories.exists?(move_number: current_move_number)
+      next_move_number = current_move_number + 1
+      
+      # 既存の分岐と手数が同じ場合、新しい分岐名を生成
+      if @game.board_histories.exists?(move_number: next_move_number, branch: branch)
+        # 既存の分岐をベースに新しい分岐名を生成
+        existing_branches = @game.board_histories.where('branch LIKE ?', "#{branch}_%").pluck(:branch)
+        max_branch_number = existing_branches.map { |b| b.split('_').last.to_i }.max || 0
+        branch = "#{branch}_#{max_branch_number + 1}"
+      end
+    else
+      # 通常の手順（分岐なし）
+      next_move_number = parsed_data[:move_number] + 1
+    end
+    
+    # 局面の履歴を保存
+    @history = @game.board_histories.create!(
+      sfen: next_board.sfen,
+      move_number: next_move_number,
+      branch: branch
+    )
+    
+    # レスポンスに履歴情報を追加
+    render_success(next_board, @game, @history)
   rescue StandardError => e
     render_error(e)
   end
 
   private
 
-  def render_success(next_board, game)
+  def render_success(next_board, game, history)
     next_board_array = Parser::SfenParser.parse(next_board.sfen)[:board_array]
     next_board_hands = Parser::SfenParser.parse(next_board.sfen)[:hand]
     next_side = Parser::SfenParser.parse(next_board.sfen)[:side]
@@ -29,7 +60,9 @@ class Api::V1::MovesController < ApplicationController
       is_repetition: Validator.repetition?(next_board.sfen, game),
       is_repetition_check: Validator.repetition_check?(next_board_array, next_side, game),
       board_id: next_board.id,
-      sfen: next_board.sfen
+      sfen: next_board.sfen,
+      move_number: history.move_number,
+      branch: history.branch
     }, status: :ok
   end
 
