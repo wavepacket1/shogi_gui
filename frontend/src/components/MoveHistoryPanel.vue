@@ -47,11 +47,11 @@ export default defineComponent({
     const error = ref('');
 
     // 盤面履歴を取得
-    const fetchBoardHistories = async () => {
+    const fetchBoardHistories = async (preserveCurrentIndex: boolean = false) => {
       loading.value = true;
       error.value = '';
       try {
-        const response = await boardStore.fetchBoardHistories(props.gameId, currentBranch.value);
+        const response = await boardStore.fetchBoardHistories(props.gameId, currentBranch.value, preserveCurrentIndex);
         boardHistories.value = boardStore.boardHistories;
         currentMoveIndex.value = boardStore.currentMoveIndex;
       } catch (err) {
@@ -72,16 +72,52 @@ export default defineComponent({
       }
     };
 
+    // ストアの状態が変わったら再表示
+    watch(() => boardStore.boardHistories, () => {
+      boardHistories.value = boardStore.boardHistories;
+    });
+
+    // currentMoveIndexの変更を監視（ただし、手動で更新した場合は無視）
+    let isManualUpdate = false;
+    watch(() => boardStore.currentMoveIndex, (newIndex) => {
+      if (!isManualUpdate) {
+        currentMoveIndex.value = newIndex;
+      }
+      isManualUpdate = false;
+    });
+
+    watch(() => boardStore.branches, () => {
+      branches.value = boardStore.branches;
+    });
+
+    watch(() => boardStore.currentBranch, () => {
+      currentBranch.value = boardStore.currentBranch;
+    });
+
     // 特定の手数に移動
-    const navigateToMove = async (moveNumber: number) => {
-      if (moveNumber === currentMoveIndex.value) return;
-      
+    const navigateToMove = async (index: number) => {
       try {
+        const history = boardHistories.value[index];
+        if (!history) {
+          console.error('History not found for index:', index);
+          return;
+        }
+
+        // 手動で現在の手数インデックスを更新
+        currentMoveIndex.value = index;
+        isManualUpdate = true;
+
+        // 局面に移動
         await boardStore.navigateToMove({
           gameId: props.gameId,
-          moveNumber: boardHistories.value[moveNumber].move_number
+          moveNumber: history.move_number
         });
-        currentMoveIndex.value = moveNumber;
+
+        // 履歴を再取得（ハイライトの更新はコンポーネント側で行う）
+        await boardStore.fetchBoardHistories(props.gameId, currentBranch.value, true);
+
+        // 手動で現在の手数インデックスを更新（履歴の再取得後に設定）
+        currentMoveIndex.value = index;
       } catch (err) {
         console.error('Error navigating to move:', err);
       }
@@ -129,46 +165,12 @@ export default defineComponent({
     onMounted(() => {
       fetchBoardHistories();
       fetchBranches();
-      console.log(`Game ID: ${props.gameId}`);
-      console.log('Store state:', boardStore.$state);
     });
 
     // ゲームIDが変わったら再取得
     watch(() => props.gameId, () => {
       fetchBoardHistories();
       fetchBranches();
-    });
-
-    // ストアの状態が変わったら再表示
-    watch(() => boardStore.boardHistories, () => {
-      boardHistories.value = boardStore.boardHistories;
-    });
-
-    watch(() => boardStore.currentMoveIndex, () => {
-      currentMoveIndex.value = boardStore.currentMoveIndex;
-    });
-
-    watch(() => boardStore.branches, () => {
-      branches.value = boardStore.branches;
-    });
-
-    watch(() => boardStore.currentBranch, () => {
-      currentBranch.value = boardStore.currentBranch;
-    });
-
-    // 指し手が進んだときに履歴を自動更新
-    watch(() => boardStore.stepNumber, (newStepNumber, oldStepNumber) => {
-      // 手数が変化したら履歴を再取得
-      if (newStepNumber !== oldStepNumber) {
-        fetchBoardHistories();
-      }
-    });
-
-    // 盤面IDが変わったときにも更新（異なる局面に移動した場合）
-    watch(() => boardStore.board_id, (newBoardId, oldBoardId) => {
-      if (newBoardId !== oldBoardId) {
-        fetchBoardHistories();
-      }
     });
 
     return {

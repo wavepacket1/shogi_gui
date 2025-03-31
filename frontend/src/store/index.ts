@@ -166,12 +166,11 @@ export const useBoardStore = defineStore('board', {
             return response;
         },
 
-        async _updateGameStateFromResponse(response: any) {
+        async _updateGameStateFromResponse(response: any, skipHistoryUpdate: boolean = false) {
             const parsed = parseSFEN(response.data.sfen);
             this.shogiData.board = parsed.board;
             this.shogiData.piecesInHand = parsed.piecesInHand;
             this.activePlayer = parsed.playerToMove;
-            this.stepNumber = parsed.moveCount;
 
             this.board_id = response.data.board_id ?? null;
             this.is_checkmate = response.data.is_checkmate;
@@ -179,24 +178,17 @@ export const useBoardStore = defineStore('board', {
             this.is_repetition_check = response.data.is_repetition_check;
             
             // 駒を動かした後に履歴も更新（現在の手数を保持するように設定）
-            if (this.game?.id) {
+            if (!skipHistoryUpdate && this.game?.id) {
                 try {
                     // 現在表示している手数に合わせて履歴のハイライトを保持
-                    await this.fetchBoardHistories(this.game.id, this.currentBranch, false);
-                    
-                    // 最新の手数に自動更新し、stepNumberに対応するインデックスを設定
-                    if (this.boardHistories.length > 0) {
-                        this.currentMoveIndex = this.boardHistories.findIndex(h => h.move_number === this.stepNumber);
-                        if (this.currentMoveIndex === -1) {
-                            // 見つからない場合は最新の手を選択
-                            const maxMoveNumber = Math.max(...this.boardHistories.map(h => h.move_number));
-                            this.currentMoveIndex = this.boardHistories.findIndex(h => h.move_number === maxMoveNumber);
-                        }
-                    }
+                    await this.fetchBoardHistories(this.game.id, this.currentBranch, true);
                 } catch (error) {
                     console.error('履歴の更新に失敗しました:', error);
                 }
             }
+
+            // 最後にstepNumberを更新
+            this.stepNumber = parsed.moveCount;
         },
 
         _validatePieceSelection() {
@@ -227,20 +219,21 @@ export const useBoardStore = defineStore('board', {
             return await this.handleAsyncAction(async () => {
                 const targetBranch = branch || this.currentBranch;
                 const response = await api.api.v1GamesBoardHistoriesList(gameId, { branch: targetBranch });
-                this.boardHistories = response.data as unknown as Types.BoardHistory[];
                 
                 // 現在の手数インデックスを保持するか決定
+                const currentIndex = preserveCurrentIndex ? this.currentMoveIndex : -1;
+                
+                // 履歴を更新
+                this.boardHistories = response.data as unknown as Types.BoardHistory[];
+                
+                // 現在の手数インデックスを設定
                 if (!preserveCurrentIndex && this.boardHistories.length > 0) {
                     // 自動更新の場合は最新の手をハイライト
                     const maxMoveNumber = Math.max(...this.boardHistories.map(h => h.move_number));
                     this.currentMoveIndex = this.boardHistories.findIndex(h => h.move_number === maxMoveNumber);
-                } else if (this.stepNumber !== undefined && this.boardHistories.length > 0) {
-                    // 現在の手数に合わせたインデックスを設定
-                    this.currentMoveIndex = this.boardHistories.findIndex(h => h.move_number === this.stepNumber);
-                    if (this.currentMoveIndex === -1) {
-                        // 見つからない場合は最初の手を選択
-                        this.currentMoveIndex = 0;
-                    }
+                } else if (preserveCurrentIndex && currentIndex >= 0) {
+                    // 手動更新の場合は現在のインデックスを保持
+                    this.currentMoveIndex = currentIndex;
                 }
                 
                 return response;
@@ -275,9 +268,6 @@ export const useBoardStore = defineStore('board', {
                     return;
                 }
                 
-                // まず、選択したインデックスを更新
-                this.currentMoveIndex = this.boardHistories.findIndex(h => h.move_number === moveNumber);
-                
                 // APIを呼び出して局面に移動
                 const response = await api.api.v1GamesNavigateToCreate(
                     gameId,
@@ -285,13 +275,17 @@ export const useBoardStore = defineStore('board', {
                     { branch: this.currentBranch }
                 );
                 
-                // 盤面情報を更新
-                const parsed = parseSFEN(response.data.sfen);
-                this.shogiData.board = parsed.board;
-                this.shogiData.piecesInHand = parsed.piecesInHand;
-                this.activePlayer = parsed.playerToMove;
-                this.stepNumber = parsed.moveCount || moveNumber; // APIから返されるか、選択した手数を使用
-                this.board_id = response.data.board_id;
+                // 盤面情報を更新（履歴の更新はスキップ）
+                await this._updateGameStateFromResponse(response, true);
+                
+                // 履歴を再取得（ハイライトの更新はコンポーネント側で行う）
+                await this.fetchBoardHistories(gameId, this.currentBranch, true);
+                
+                // 選択した手数のインデックスを設定（履歴の再取得後に設定）
+                const targetIndex = this.boardHistories.findIndex(h => h.move_number === moveNumber);
+                if (targetIndex !== -1) {
+                    this.currentMoveIndex = targetIndex;
+                }
                 
                 return response;
             }, '特定の手数への移動に失敗しました');
