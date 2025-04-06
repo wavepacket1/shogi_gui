@@ -177,17 +177,16 @@ export const useBoardStore = defineStore('board', {
             this.is_repetition = response.data.is_repetition;
             this.is_repetition_check = response.data.is_repetition_check;
             
-            // 駒を動かした後に履歴も更新（現在の手数を保持するように設定）
+            // 駒を動かした後に履歴を更新（一度だけ）
             if (!skipHistoryUpdate && this.game?.id) {
                 try {
-                    // 現在表示している手数に合わせて履歴のハイライトを保持
-                    await this.fetchBoardHistories(this.game.id, this.currentBranch, true);
+                    // 履歴を一度だけ更新
+                    await this.fetchBoardHistories(this.game.id, this.currentBranch, false);
                 } catch (error) {
                     console.error('履歴の更新に失敗しました:', error);
                 }
             }
 
-            // 最後にstepNumberを更新
             this.stepNumber = parsed.moveCount;
         },
 
@@ -220,20 +219,12 @@ export const useBoardStore = defineStore('board', {
                 const targetBranch = branch || this.currentBranch;
                 const response = await api.api.v1GamesBoardHistoriesList(gameId, { branch: targetBranch });
                 
-                // 現在の手数インデックスを保持するか決定
-                const currentIndex = preserveCurrentIndex ? this.currentMoveIndex : -1;
-                
                 // 履歴を更新
                 this.boardHistories = response.data as unknown as Types.BoardHistory[];
                 
-                // 現在の手数インデックスを設定
-                if (!preserveCurrentIndex && this.boardHistories.length > 0) {
-                    // 自動更新の場合は最新の手をハイライト
-                    const maxMoveNumber = Math.max(...this.boardHistories.map(h => h.move_number));
-                    this.currentMoveIndex = this.boardHistories.findIndex(h => h.move_number === maxMoveNumber);
-                } else if (preserveCurrentIndex && currentIndex >= 0) {
-                    // 手動更新の場合は現在のインデックスを保持
-                    this.currentMoveIndex = currentIndex;
+                // preserveCurrentIndexがfalseの場合のみ最新の手にハイライトを移動
+                if (!preserveCurrentIndex) {
+                    this.currentMoveIndex = this.boardHistories.length - 1;
                 }
                 
                 return response;
@@ -278,10 +269,7 @@ export const useBoardStore = defineStore('board', {
                 // 盤面情報を更新（履歴の更新はスキップ）
                 await this._updateGameStateFromResponse(response, true);
                 
-                // 履歴を再取得（ハイライトの更新はコンポーネント側で行う）
-                await this.fetchBoardHistories(gameId, this.currentBranch, true);
-                
-                // 選択した手数のインデックスを設定（履歴の再取得後に設定）
+                // 選択した手数のインデックスを設定
                 const targetIndex = this.boardHistories.findIndex(h => h.move_number === moveNumber);
                 if (targetIndex !== -1) {
                     this.currentMoveIndex = targetIndex;
