@@ -122,6 +122,9 @@ alwaysApply: true
 
 @directorystructure.md
 
+# DB設計
+backend\db\schema.rb
+
 # todoリスト
 @todo.md
 
