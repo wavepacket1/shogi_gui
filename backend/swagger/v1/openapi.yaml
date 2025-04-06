@@ -6,6 +6,329 @@
     "description": "将棋アプリケーションのAPI仕様"
   },
   "paths": {
+    "/api/v1/games/{game_id}/board_histories": {
+      "get": {
+        "summary": "局面履歴の取得",
+        "tags": [
+          "BoardHistories"
+        ],
+        "parameters": [
+          {
+            "name": "game_id",
+            "in": "path",
+            "description": "ゲームID",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "branch",
+            "in": "query",
+            "required": false,
+            "description": "分岐名（デフォルト: main）",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "履歴取得成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "integer"
+                      },
+                      "game_id": {
+                        "type": "integer"
+                      },
+                      "sfen": {
+                        "type": "string"
+                      },
+                      "move_number": {
+                        "type": "integer"
+                      },
+                      "branch": {
+                        "type": "string"
+                      },
+                      "move_sfen": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "前局面からの指し手情報（SFEN形式）。例：7g7f, P*3d, 8h2b+"
+                      },
+                      "notation": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "棋譜表記（例：「▲7六歩」「△8四銀」）。日本語形式で表示された棋譜。"
+                      },
+                      "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                      },
+                      "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "ゲームが見つからない",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/games/{game_id}/board_histories/branches": {
+      "get": {
+        "summary": "分岐リストの取得",
+        "tags": [
+          "BoardHistories"
+        ],
+        "parameters": [
+          {
+            "name": "game_id",
+            "in": "path",
+            "description": "ゲームID",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "分岐リスト取得成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "branches": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "ゲームが見つからない",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/games/{game_id}/navigate_to/{move_number}": {
+      "post": {
+        "summary": "指定した手数の局面に移動",
+        "tags": [
+          "BoardHistories"
+        ],
+        "parameters": [
+          {
+            "name": "game_id",
+            "in": "path",
+            "description": "ゲームID",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "move_number",
+            "in": "path",
+            "description": "移動先の手数",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "branch",
+            "in": "query",
+            "required": false,
+            "description": "分岐名（デフォルト: main）",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "移動成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "game_id": {
+                      "type": "integer"
+                    },
+                    "board_id": {
+                      "type": "integer"
+                    },
+                    "move_number": {
+                      "type": "integer"
+                    },
+                    "sfen": {
+                      "type": "string"
+                    },
+                    "move_sfen": {
+                      "type": "string",
+                      "nullable": true,
+                      "description": "前局面からの指し手情報（SFEN形式）"
+                    },
+                    "notation": {
+                      "type": "string",
+                      "nullable": true,
+                      "description": "棋譜表記（日本語形式）"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "手数が見つからない",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/games/{game_id}/switch_branch/{branch_name}": {
+      "post": {
+        "summary": "分岐切り替え",
+        "tags": [
+          "BoardHistories"
+        ],
+        "parameters": [
+          {
+            "name": "game_id",
+            "in": "path",
+            "description": "ゲームID",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "branch_name",
+            "in": "path",
+            "description": "分岐名",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "分岐切り替え成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "game_id": {
+                      "type": "integer"
+                    },
+                    "branch": {
+                      "type": "string"
+                    },
+                    "current_move_number": {
+                      "type": "integer"
+                    },
+                    "move_sfen": {
+                      "type": "string",
+                      "nullable": true,
+                      "description": "前局面からの指し手情報（SFEN形式）"
+                    },
+                    "notation": {
+                      "type": "string",
+                      "nullable": true,
+                      "description": "棋譜表記（日本語形式）"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "分岐が見つからない",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/boards/{id}": {
       "get": {
         "summary": "ボードの取得",
@@ -288,6 +611,24 @@
             "schema": {
               "type": "integer"
             }
+          },
+          {
+            "name": "move_number",
+            "in": "query",
+            "required": false,
+            "description": "現在の手数（分岐作成用）",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "branch",
+            "in": "query",
+            "required": false,
+            "description": "現在の分岐名（分岐作成用）",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -321,6 +662,24 @@
                     "sfen": {
                       "type": "string",
                       "example": "lnsgkgsnl/1r5b1/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL b - 0"
+                    },
+                    "move_number": {
+                      "type": "integer",
+                      "example": 1
+                    },
+                    "branch": {
+                      "type": "string",
+                      "example": "main"
+                    },
+                    "move_sfen": {
+                      "type": "string",
+                      "example": "7g7f",
+                      "description": "前局面からの指し手情報（SFEN形式）"
+                    },
+                    "notation": {
+                      "type": "string",
+                      "example": "▲7六歩",
+                      "description": "棋譜表記（日本語形式）"
                     }
                   }
                 }
@@ -338,17 +697,9 @@
                       "type": "boolean",
                       "example": false
                     },
-                    "is_checkmate": {
-                      "type": "boolean",
-                      "example": false
-                    },
-                    "is_repetition": {
-                      "type": "boolean",
-                      "example": false
-                    },
-                    "is_repetition_check": {
-                      "type": "boolean",
-                      "example": false
+                    "message": {
+                      "type": "string",
+                      "example": "Invalid move: 8h2b+"
                     },
                     "board_id": {
                       "type": "integer",
@@ -357,10 +708,6 @@
                     "sfen": {
                       "type": "string",
                       "example": "lnsgkgsnl/1r5b1/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL b - 0"
-                    },
-                    "message": {
-                      "type": "string",
-                      "example": "Invalid move: 8h2b+"
                     }
                   }
                 }

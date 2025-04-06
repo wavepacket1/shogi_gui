@@ -2,7 +2,7 @@
 
 ## 概要
 
-本ドキュメントは将棋GUIの手の履歴機能を実装するための手順と注意点をまとめたものです。バックエンド（Ruby on Rails）とフロントエンド（Vue.js）の両方の実装手順を記載しています。
+本ドキュメントは将棋GUIの手の履歴機能を実装するための手順と注意点をまとめたものです。バックエンド（Ruby on Rails）とフロントエンド（Vue.js）の両方の実装手順を記載しています。バックエンドはDockerコンテナ上で動作しています。
 
 ## 実装手順
 
@@ -11,9 +11,8 @@
 #### マイグレーションファイルの作成
 
 ```bash
-# バックエンドディレクトリで実行
-cd backend
-rails generate migration CreateBoardHistories
+# Railsコンテナ内でマイグレーションファイルを生成
+docker-compose exec backend rails generate migration CreateBoardHistories
 ```
 
 以下のようにマイグレーションファイルを編集します：
@@ -37,7 +36,8 @@ end
 マイグレーションを実行します：
 
 ```bash
-rails db:migrate
+# Railsコンテナ内でマイグレーションを実行
+docker-compose exec backend rails db:migrate
 ```
 
 #### モデルの作成
@@ -93,11 +93,25 @@ class BoardHistory < ApplicationRecord
 
   # 棋譜形式で手を表示
   def to_kifu_notation
-    move_info = get_move_info
-    return nil unless move_info
+    return "開始局面" if move_number == 0
 
-    player_symbol = move_info[:player_type] == 'b' ? '▲' : '△'
-    "#{player_symbol}#{move_info[:to_square]}#{move_info[:piece_type]}"
+    # 前の局面が見つからない場合
+    prev_history = previous_board_history
+    return "#{move_number}手目" unless prev_history
+
+    # SFENから局面情報を計算（最小限の情報のみ）
+    current_parsed = Parser::SfenParser.parse(sfen)
+    previous_parsed = Parser::SfenParser.parse(prev_history.sfen)
+    
+    # 手番
+    player_type = previous_parsed[:side]
+    player_symbol = player_type == 'b' ? '▲' : '△'
+    
+    # 移動先と駒種（基本的な情報のみ）
+    # ... 簡略化した処理 ...
+    
+    # 棋譜表記を組み立て
+    "#{player_symbol}#{to_notation}#{piece_name}#{special_notation}"
   end
 
   private
@@ -463,7 +477,32 @@ RSpec.describe BoardHistory, type: :model do
 end
 ```
 
+### 3.3 テストの実行とSwagger仕様の生成
+
+Docker環境でテストを実行し、Swagger仕様を生成します：
+
+```bash
+# バックエンドコンテナ内でテストを実行
+docker-compose exec backend rspec
+
+# Swagger仕様を生成
+docker-compose exec backend rails rswag:specs:swaggerize
+```
+
 ### 4. フロントエンドの実装
+
+#### APIクライアントの生成
+
+OpenAPI仕様からTypeScriptクライアントを生成します：
+
+```bash
+# フロントエンドディレクトリで実行
+cd frontend
+npx swagger-typescript-api generate \
+  --path ../backend/swagger/v1/openapi.yaml \
+  --output ./src/services/api \
+  --name "api.ts"
+```
 
 #### コンポーネントの作成
 
@@ -805,10 +844,51 @@ export class BoardHistoryApi {
 
 ### 5. デプロイとテスト
 
-- データベースマイグレーションの実行
-- フロントエンドビルドと配置
-- 手動テストによる機能確認
-- 自動テストの実行
+#### 5.1 バックエンドのテスト実行
+
+```bash
+# バックエンドコンテナ内でテストを実行
+docker-compose exec backend rspec
+```
+
+#### 5.2 フロントエンドのテスト実行
+
+```bash
+# フロントエンドコンテナ内でテストを実行
+docker-compose exec frontend npm run test
+```
+
+#### 5.3 手動テスト
+
+1. アプリケーションを起動
+   ```bash
+   # Docker環境を起動（既に起動している場合は不要）
+   docker-compose up -d
+   ```
+
+2. 新しいゲームを作成
+3. 駒を動かして履歴が生成されることを確認
+4. 過去の局面に戻れることを確認
+5. 分岐が作成できることを確認
+
+#### 5.4 本番環境へのデプロイ
+
+Docker環境での本番デプロイ手順：
+
+1. 本番環境のDockerイメージをビルド
+   ```bash
+   docker-compose -f docker-compose.prod.yml build
+   ```
+
+2. データベースマイグレーションの実行
+   ```bash
+   docker-compose -f docker-compose.prod.yml exec backend rails db:migrate
+   ```
+
+3. サービスの起動
+   ```bash
+   docker-compose -f docker-compose.prod.yml up -d
+   ```
 
 ## 注意点
 
@@ -836,6 +916,13 @@ export class BoardHistoryApi {
 - ロギングの実装
 - トランザクション管理
 
+### Docker環境での開発に関する注意点
+
+- コンテナ間の通信（ネットワーク設定）の確認
+- ボリュームマウントによるコード変更の反映
+- 環境変数の適切な設定
+- コンテナのリソース制限（メモリ、CPU）の確認
+
 ## 実装後の確認項目
 
 - [ ] 全ての機能が正常に動作するか
@@ -844,6 +931,7 @@ export class BoardHistoryApi {
 - [ ] ブラウザの互換性に問題はないか
 - [ ] モバイル対応は十分か
 - [ ] アクセシビリティに配慮されているか
+- [ ] Dockerコンテナ内で正常に動作するか
 
 ## 拡張ポイント
 
@@ -897,7 +985,8 @@ export class BoardHistoryApi {
 |---------|------------|
 | 予期せぬ問題対応バッファー (20%) | 3.6 |
 | 環境構築・ツール対応 | 0.4 |
-| **小計** | **4.0** |
+| Dockerコンテナ関連の調整 | 1.0 |
+| **小計** | **5.0** |
 
 ### 合計工数
 
@@ -906,10 +995,10 @@ export class BoardHistoryApi {
 | バックエンド実装 | 7.5 |
 | フロントエンド実装 | 7.5 |
 | その他作業 | 3.5 |
-| バッファー | 4.0 |
-| **合計** | **22.5** |
+| バッファー | 5.0 |
+| **合計** | **23.5** |
 
-**合計: 約22人日**（約4.5週間）
+**合計: 約23.5人日**（約4.7週間）
 
 ### 備考
 
@@ -917,4 +1006,5 @@ export class BoardHistoryApi {
 - 開発者のスキルレベルにより、工数は変動する可能性があります
 - チーム開発の場合、コミュニケーションコストが追加で必要になります
 - 仕様変更が発生した場合、工数が増加する可能性があります
-- バッファーは予期せぬ障害や問題解決、他システムとの連携調整などに使用されます 
+- バッファーは予期せぬ障害や問題解決、他システムとの連携調整などに使用されます
+- Docker環境特有の問題（コンテナ間通信、ボリュームマウント、環境変数など）に対応するための時間も考慮しています 

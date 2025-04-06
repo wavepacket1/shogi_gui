@@ -1,27 +1,19 @@
 {
-  "name": "frontend",
+  "name": "shogi-gui-frontend",
+  "version": "1.0.0",
   "private": true,
-  "version": "0.0.0",
-  "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vue-tsc -b && vite build",
-    "preview": "vite preview",
-    "generate-api": "swagger-typescript-api --path /app/backend/swagger/v1/openapi.yaml --output ./src/services/api --name \"api.ts\""
+    "build": "vite build",
+    "preview": "vite preview"
   },
   "dependencies": {
-    "axios": "^1.7.9",
-    "pinia": "^2.3.0",
-    "vue": "^3.5.12"
+    "vue": "^3.2.47",
+    "pinia": "^2.0.32"
   },
   "devDependencies": {
-    "@openapitools/openapi-generator-cli": "^2.15.3",
-    "@types/node": "^22.10.2",
-    "@vitejs/plugin-vue": "^5.1.4",
-    "@vue/tsconfig": "^0.5.0",
-    "swagger-typescript-api": "^13.0.23",
-    "typescript": "~5.6.2",
-    "vite": "^5.4.10",
-    "vue-tsc": "^2.1.8"
+    "vite": "^4.4.0",
+    "@vitejs/plugin-vue": "^4.0.0",
+    "typescript": "^4.9.5"
   }
 }

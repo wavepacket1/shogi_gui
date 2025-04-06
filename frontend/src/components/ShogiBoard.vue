@@ -8,27 +8,34 @@
     </div>
 
     <div class="shogi-container">
-        <PiecesInHand 
-            class="pieces-in-hand-top" 
-            :pieces="piecesInHandW"
-            :isGote="true"
-            :selectedPiece="selectedHandPiece"
-            @piece-click="handlePieceClick"
-        />
+        <div class="board-area">
+            <PiecesInHand 
+                class="pieces-in-hand-top" 
+                :pieces="piecesInHandW"
+                :isGote="true"
+                :selectedPiece="selectedHandPiece"
+                @piece-click="handlePieceClick"
+            />
 
-        <ShogiBoardGrid 
-            :board="boardStore.shogiData.board"
-            :selectedCell="boardStore.selectedCell"
-            @cell-click="handleCellClick"
-        />
+            <ShogiBoardGrid 
+                :board="boardStore.shogiData.board"
+                :selectedCell="boardStore.selectedCell"
+                @cell-click="handleCellClick"
+            />
 
-        <PiecesInHand 
-            class="pieces-in-hand-bottom" 
-            :pieces="piecesInHandB"
-            :isGote="false"
-            :selectedPiece="selectedHandPiece"
-            @piece-click="handlePieceClick"
-        />
+            <PiecesInHand 
+                class="pieces-in-hand-bottom" 
+                :pieces="piecesInHandB"
+                :isGote="false"
+                :selectedPiece="selectedHandPiece"
+                @piece-click="handlePieceClick"
+            />
+        </div>
+        
+        <!-- 棋譜パネルを追加 -->
+        <div v-if="boardStore.game" class="move-history-container">
+            <MoveHistoryPanel :game-id="boardStore.game.id" />
+        </div>
     </div>
 
     <PromotionModal 
@@ -43,13 +50,15 @@ import { useBoardStore } from '@/store';
 import PiecesInHand from './PiecesInHand.vue';
 import ShogiBoardGrid from './ShogiBoardGrid.vue';
 import PromotionModal from './PromotionModal.vue';
+import MoveHistoryPanel from './MoveHistoryPanel.vue';
 
 export default defineComponent({
     name: 'ShogiBoard',
     components: {
         PiecesInHand,
         ShogiBoardGrid,
-        PromotionModal
+        PromotionModal,
+        MoveHistoryPanel
     },
     setup() {
         const boardStore = useBoardStore();
@@ -308,9 +317,17 @@ export default defineComponent({
 <style scoped>
 .shogi-container {
     display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.board-area {
+    display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 10px;
 }
 
 .pieces-in-hand-top {
@@ -324,5 +341,13 @@ export default defineComponent({
 .game-info {
     text-align: center;
     margin-bottom: 10px;
+}
+
+/* 履歴パネル用のスタイル */
+.move-history-container {
+    width: 200px;
+    height: 400px;
+    margin: 0;
+    order: 3;
 }
 </style>

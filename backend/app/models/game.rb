@@ -1,5 +1,6 @@
 class Game < ApplicationRecord
   has_one :board, dependent: :destroy
+  has_many :board_histories, dependent: :destroy
   validates :status, presence: true, inclusion: { in: ['active', 'finished', 'pause'] }
 
   def nyugyoku_declaration(board)

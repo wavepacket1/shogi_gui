@@ -12,5 +12,14 @@ export default defineConfig({
     alias: {
       '@': resolve(__dirname, './src')
     }
+  },
+  server: {
+    watch: {
+      usePolling: true // Dockerでのホットリロード対応
+    },
+    host: true, // コンテナ外からのアクセスを許可
+    hmr: {
+      host: 'localhost'
+    }
   }
 })

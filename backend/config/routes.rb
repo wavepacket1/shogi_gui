@@ -13,6 +13,12 @@ Rails.application.routes.draw do
 
       post '/games/:game_id/boards/:board_id/nyugyoku_declaration', to: 'games#nyugyoku_declaration'
       patch '/games/:game_id/boards/:board_id/move', to: 'moves#move'
+
+      # 履歴関連のルート
+      get '/games/:game_id/board_histories', to: 'board_histories#index'
+      get '/games/:game_id/board_histories/branches', to: 'board_histories#branches'
+      post '/games/:game_id/navigate_to/:move_number', to: 'board_histories#navigate_to'
+      post '/games/:game_id/switch_branch/:branch_name', to: 'board_histories#switch_branch'
     end
   end
 end

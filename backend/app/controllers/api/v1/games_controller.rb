@@ -10,6 +10,14 @@ module Api
         
         if @game.errors.empty? && @game.save
           @board = @game.create_board!(sfen: Board.default_sfen)
+          
+          # 0手目（開始局面）の履歴を作成
+          @game.board_histories.create!(
+            sfen: @board.sfen,
+            move_number: 0,
+            branch: 'main'
+          )
+          
           render json: {
             game_id: @game.id,
             status: @game.status,

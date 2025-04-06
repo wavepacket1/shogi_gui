@@ -1,4 +1,4 @@
-FROM node:16
+FROM node:18
 
 # 作業ディレクトリの設定
 WORKDIR /app

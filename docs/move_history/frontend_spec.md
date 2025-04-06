@@ -8,9 +8,8 @@
 
 - Vue.js 3
 - TypeScript
-- Vue Router
-- Vuex / Pinia（状態管理）
-- SCSS / Tailwind CSS（スタイリング）
+- Pinia（状態管理）
+- CSS（スタイリング）
 
 ## コンポーネント構成
 
@@ -24,200 +23,345 @@
 - 任意の手への移動機能
 - 分岐の表示と切り替え
 
-**構成:**
-```
+**実装構造:**
+```vue
 <template>
   <div class="move-history-panel">
     <div class="panel-header">
       <h3>棋譜</h3>
-      <div class="branch-selector">
-        <select v-model="selectedBranch" @change="changeBranch">
-          <option v-for="branch in branches" :key="branch" :value="branch">
-            {{ branch }}
-          </option>
+      <div class="branch-selector" v-if="branches.length > 1">
+        <label for="branch-select">分岐:</label>
+        <select id="branch-select" v-model="currentBranch" @change="onBranchChange">
+          <option v-for="branch in branches" :key="branch" :value="branch">{{ branch }}</option>
         </select>
       </div>
     </div>
     
-    <div class="move-list">
+    <div class="moves-container">
       <div 
-        v-for="history in boardHistories" 
-        :key="history.id"
-        :class="['move-item', { 'current': history.move_number === currentMoveNumber }]"
-        @click="navigateToMove(history.move_number)"
+        v-for="(history, index) in boardHistories" 
+        :key="index"
+        :class="['move-item', { 'active': currentMoveIndex === index }]"
+        @click="navigateToMove(index)"
       >
-        <span class="move-number">{{ history.move_number }}</span>
-        <span class="notation">{{ history.notation || '開始局面' }}</span>
+        <span class="move-number">{{ index + 1 }}.</span>
+        <span class="move-notation">{{ formatMove(history) }}</span>
       </div>
-    </div>
-    
-    <div class="navigation-controls">
-      <button @click="navigateToFirst">|◀</button>
-      <button @click="navigateToPrevious">◀</button>
-      <button @click="navigateToNext">▶</button>
-      <button @click="navigateToLast">▶|</button>
     </div>
   </div>
 </template>
 ```
 
 **Props:**
-- `gameId`: ゲームID
+- `gameId`: ゲームID（必須）
 
 **データ:**
 - `boardHistories`: 局面履歴の配列
-- `currentMoveNumber`: 現在の手数
-- `selectedBranch`: 選択中の分岐
 - `branches`: 利用可能な分岐のリスト
+- `currentBranch`: 現在選択中の分岐
+- `currentMoveIndex`: 現在の手数インデックス
+- `loading`: 読み込み中かどうか
+- `error`: エラーメッセージ
 
 **メソッド:**
-- `fetchHistories()`: 履歴を取得する
+- `fetchBoardHistories()`: 履歴を取得する
 - `fetchBranches()`: 分岐リストを取得する
-- `navigateToMove(moveNumber)`: 指定した手数の局面に移動
-- `navigateToFirst()`: 最初の局面に移動
-- `navigateToPrevious()`: 一手前に移動
-- `navigateToNext()`: 一手先に移動
-- `navigateToLast()`: 最後の局面に移動
-- `changeBranch()`: 分岐を切り替える
+- `navigateToMove(index)`: インデックスで指定した手数の局面に移動
+- `onBranchChange()`: 分岐を切り替える
+- `formatMove(history)`: 棋譜表記をフォーマットする
+
+**Watchers:**
+- `props.gameId`: ゲームIDが変わったときに履歴と分岐を再取得
+- `boardStore.boardHistories`: ストアの履歴が更新されたときにコンポーネントの状態を更新
+- `boardStore.currentMoveIndex`: ストアの現在の手数が更新されたときにコンポーネントの状態を更新
+- `boardStore.branches`: ストアの分岐リストが更新されたときにコンポーネントの状態を更新
+- `boardStore.currentBranch`: ストアの現在の分岐が更新されたときにコンポーネントの状態を更新
 
 ### 2. ShogiBoard.vue の拡張
 
-既存の将棋盤コンポーネントに手の履歴機能を連携させる必要があります。
-
-**追加機能:**
-- 局面の移動時に盤面を更新
-- 局面を戻した後の新しい手による分岐の作成
+既存の将棋盤コンポーネントに手の履歴機能を統合しました。
 
 **変更点:**
 ```vue
 <template>
-  <div class="game-container">
-    <!-- 既存の将棋盤表示 -->
-    <div class="board-area">
-      <!-- 既存のコード -->
-    </div>
+  <div class="game-info">
+    <!-- 既存のUI要素 -->
+  </div>
+
+  <div class="shogi-container">
+    <PiecesInHand class="pieces-in-hand-top" ... />
+    <ShogiBoardGrid ... />
+    <PiecesInHand class="pieces-in-hand-bottom" ... />
     
     <!-- 追加: 履歴パネル -->
-    <MoveHistoryPanel 
-      v-if="boardStore.game" 
-      :game-id="boardStore.game.id"
-      @move-navigated="handleMoveNavigated"
-    />
+    <div v-if="boardStore.game" class="move-history-container">
+      <MoveHistoryPanel :game-id="boardStore.game.id" />
+    </div>
   </div>
+
+  <PromotionModal ... />
 </template>
-
-<script setup>
-import { ref, computed, onMounted, watch } from 'vue';
-import { useBoardStore } from '@/stores/board';
-import MoveHistoryPanel from '@/components/MoveHistoryPanel.vue';
-
-const boardStore = useBoardStore();
-
-// 履歴から局面に移動した際の処理
-const handleMoveNavigated = (moveNumber) => {
-  console.log(`Navigated to move: ${moveNumber}`);
-  // ここで盤面の状態を更新
-};
-
-// 手を指した際の処理を拡張して、履歴も保存するように
-const makeMove = async (move) => {
-  // 既存のコード
-
-  // 分岐作成の判定
-  if (boardStore.currentMoveNumber < boardStore.maxMoveNumber) {
-    // 分岐作成のロジック
-  }
-  
-  // 履歴の更新
-  await boardStore.fetchBoardHistories();
-};
-</script>
 ```
 
-## APIとの連携
+**スタイル変更:**
+```css
+.shogi-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
 
-フロントエンドは以下のAPIエンドポイントを利用します：
-
-```typescript
-// APIクライアント例
-export class BoardHistoryApi {
-  // 履歴の取得
-  static async getBoardHistories(gameId: number, branch: string = 'main') {
-    return apiClient.get(`/api/v1/games/${gameId}/board_histories`, { params: { branch } });
-  }
-
-  // 分岐リストの取得
-  static async getBranches(gameId: number) {
-    return apiClient.get(`/api/v1/games/${gameId}/board_histories/branches`);
-  }
-
-  // 指定した手数への移動
-  static async navigateToMove(gameId: number, moveNumber: number, branch: string = 'main') {
-    return apiClient.post(`/api/v1/games/${gameId}/navigate_to/${moveNumber}`, null, {
-      params: { branch }
-    });
-  }
-
-  // 分岐切り替え
-  static async switchBranch(gameId: number, branchName: string) {
-    return apiClient.post(`/api/v1/games/${gameId}/switch_branch/${branchName}`);
-  }
+/* 履歴パネル用のスタイル */
+.move-history-container {
+  width: 200px;
+  height: 400px;
+  margin-left: 20px;
+  order: 3;
 }
 ```
 
-## 状態管理
+## APIクライアント
 
-Vuexまたは Pinia ストアを使用して、局面履歴の状態を管理します。
+フロントエンドでは以下のAPIエンドポイントを使用して棋譜を操作します：
 
 ```typescript
-// board.ts (Pinia Store)
-export const useBoardStore = defineStore('board', {
-  state: () => ({
-    game: null,
-    board: null,
-    boardHistories: [],
-    currentMoveNumber: 0,
-    maxMoveNumber: 0,
-    availableBranches: ['main'],
-    currentBranch: 'main'
-  }),
-  
-  actions: {
-    // 履歴の取得
-    async fetchBoardHistories() {
-      const response = await BoardHistoryApi.getBoardHistories(this.game.id, this.currentBranch);
-      this.boardHistories = response.data;
-      this.maxMoveNumber = this.boardHistories.length > 0 
-        ? Math.max(...this.boardHistories.map(h => h.move_number))
-        : 0;
-    },
-    
-    // 分岐リストの取得
-    async fetchBranches() {
-      const response = await BoardHistoryApi.getBranches(this.game.id);
-      this.availableBranches = response.data.branches;
-    },
-    
-    // 指定手数への移動
-    async navigateToMove(moveNumber) {
-      const response = await BoardHistoryApi.navigateToMove(
-        this.game.id, 
-        moveNumber, 
-        this.currentBranch
-      );
-      this.board = { id: response.data.board_id, sfen: response.data.sfen };
-      this.currentMoveNumber = moveNumber;
-    },
-    
-    // 分岐切り替え
-    async switchBranch(branchName) {
-      const response = await BoardHistoryApi.switchBranch(this.game.id, branchName);
-      this.currentBranch = branchName;
-      this.currentMoveNumber = response.data.current_move_number;
-      await this.fetchBoardHistories();
-    }
+// api.ts（OpenAPI自動生成）の拡張部分
+/**
+ * 棋譜を取得する
+ *
+ * @tags BoardHistories
+ * @name V1GamesBoardHistoriesList
+ * @summary 局面履歴の取得
+ * @request GET:/api/v1/games/{game_id}/board_histories
+ */
+v1GamesBoardHistoriesList: (
+  gameId: number,
+  query?: { 
+    branch?: string 
+  },
+  params: RequestParams = {},
+) => this.request<BoardHistory[], Error>({ ... }),
+
+/**
+ * 分岐リストを取得する
+ *
+ * @tags BoardHistories
+ * @name V1GamesBoardHistoriesBranchesList
+ * @summary 分岐リストの取得
+ * @request GET:/api/v1/games/{game_id}/board_histories/branches
+ */
+v1GamesBoardHistoriesBranchesList: (gameId: number, params: RequestParams = {}) => 
+  this.request<{ branches: string[] }, Error>({ ... }),
+
+/**
+ * 特定の手数に移動する
+ *
+ * @tags BoardHistories
+ * @name V1GamesNavigateToCreate
+ * @summary 特定の手数に移動
+ * @request POST:/api/v1/games/{game_id}/navigate_to/{move_number}
+ */
+v1GamesNavigateToCreate: (
+  gameId: number,
+  moveNumber: number,
+  query?: { branch?: string },
+  params: RequestParams = {},
+) => this.request<NavigateResponse, Error>({ ... }),
+
+/**
+ * 分岐を切り替える
+ *
+ * @tags BoardHistories
+ * @name V1GamesSwitchBranchCreate
+ * @summary 分岐切り替え
+ * @request POST:/api/v1/games/{game_id}/switch_branch/{branch_name}
+ */
+v1GamesSwitchBranchCreate: (
+  gameId: number,
+  branchName: string,
+  params: RequestParams = {},
+) => this.request<SwitchBranchResponse, Error>({ ... }),
+```
+
+## 状態管理（Pinia Store）
+
+手の履歴機能のための状態を管理するために、既存のボードストアを拡張しました：
+
+```typescript
+// BoardStateへの追加
+export interface BoardState {
+  // 既存の状態
+  shogiData: ShogiData;
+  stepNumber: number;
+  activePlayer: Player | null;
+  // ...
+
+  // 盤面履歴関連の状態
+  boardHistories: BoardHistory[];
+  currentBranch: string;
+  branches: string[];
+  currentMoveIndex: number;
+}
+
+// 新しい型定義
+export interface BoardHistory {
+  id: number;
+  game_id: number;
+  sfen: string;
+  move_number: number;
+  branch: string;
+  created_at: string;
+  updated_at: string;
+  notation: string | null;
+  last_move_from?: string;
+  last_move_to?: string;
+  last_move_piece?: string;
+  last_move_promoted?: boolean;
+}
+
+export interface BranchesResponse {
+  branches: string[];
+}
+
+export interface NavigateResponse {
+  game_id: number;
+  board_id: number;
+  move_number: number;
+  sfen: string;
+}
+```
+
+**ストアアクション:**
+```typescript
+// 盤面履歴関連のアクション
+// 盤面履歴一覧の取得
+async fetchBoardHistories(gameId: number, branch?: string) {
+  if (!gameId) {
+    console.error('Game ID is required');
+    return { data: [] };
   }
-});
+
+  return await this.handleAsyncAction(async () => {
+    const targetBranch = branch || this.currentBranch;
+    const response = await api.api.v1GamesBoardHistoriesList(gameId, { branch: targetBranch });
+    this.boardHistories = response.data as unknown as Types.BoardHistory[];
+    if (this.boardHistories.length > 0) {
+      // 最新の手数を現在の手数として設定
+      const maxMoveNumber = Math.max(...this.boardHistories.map(h => h.move_number));
+      this.currentMoveIndex = this.boardHistories.findIndex(h => h.move_number === maxMoveNumber);
+    }
+    return response;
+  }, '盤面履歴の取得に失敗しました');
+},
+
+// 分岐一覧の取得
+async fetchBranches(gameId: number) {
+  if (!gameId) {
+    console.error('Game ID is required');
+    return { data: { branches: ['main'] } };
+  }
+
+  return await this.handleAsyncAction(async () => {
+    const response = await api.api.v1GamesBoardHistoriesBranchesList(gameId);
+    this.branches = (response.data as unknown as Types.BranchesResponse).branches;
+    return response;
+  }, '分岐一覧の取得に失敗しました');
+},
+
+// 特定の手数に移動
+async navigateToMove(params: { gameId: number, moveNumber: number }) {
+  const { gameId, moveNumber } = params;
+  if (!gameId || moveNumber === undefined) {
+    console.error('Game ID and move number are required');
+    return;
+  }
+
+  return await this.handleAsyncAction(async () => {
+    const response = await api.api.v1GamesNavigateToCreate(
+      gameId,
+      moveNumber,
+      { branch: this.currentBranch }
+    );
+    
+    // 盤面情報を更新
+    const parsed = parseSFEN(response.data.sfen);
+    this.shogiData.board = parsed.board;
+    this.shogiData.piecesInHand = parsed.piecesInHand;
+    this.activePlayer = parsed.playerToMove;
+    this.stepNumber = parsed.moveCount;
+    this.board_id = response.data.board_id;
+    
+    // 現在の手数インデックスを更新
+    this.currentMoveIndex = this.boardHistories.findIndex(h => h.move_number === moveNumber);
+    
+    return response;
+  }, '特定の手数への移動に失敗しました');
+},
+
+// 分岐切り替え
+async switchBranch(params: { gameId: number, branchName: string }) {
+  const { gameId, branchName } = params;
+  if (!gameId || !branchName) {
+    console.error('Game ID and branch name are required');
+    return;
+  }
+
+  return await this.handleAsyncAction(async () => {
+    const response = await api.api.v1GamesSwitchBranchCreate(
+      gameId,
+      branchName
+    );
+    
+    // 盤面情報を更新
+    const parsed = parseSFEN(response.data.sfen);
+    this.shogiData.board = parsed.board;
+    this.shogiData.piecesInHand = parsed.piecesInHand;
+    this.activePlayer = parsed.playerToMove;
+    this.stepNumber = parsed.moveCount;
+    this.board_id = response.data.board_id;
+    
+    // 分岐を更新
+    this.currentBranch = branchName;
+    // 履歴を再取得
+    await this.fetchBoardHistories(gameId, branchName);
+    
+    return response;
+  }, '分岐切り替えに失敗しました');
+}
+```
+
+## 指し手表記の実装
+
+指し手の表示形式として、以下のフォーマットを使用します：
+
+```typescript
+// 指し手の表示形式をフォーマット
+const formatMove = (history: BoardHistory): string => {
+  if (!history || !history.last_move_from || !history.last_move_to) {
+    return '開始局面';
+  }
+  
+  const from = history.last_move_from;
+  const to = history.last_move_to;
+  const piece = history.last_move_piece || '';
+  const promoted = history.last_move_promoted ? '成' : '';
+  
+  return `${to} ${piece}${promoted}`;
+};
+```
+
+バックエンドでは、以下のように棋譜形式で表記を生成します：
+
+```ruby
+# 棋譜形式で手を表示 (backend/app/models/board_history.rb)
+def to_kifu_notation
+  move_info = get_move_info
+  return nil unless move_info
+
+  player_symbol = move_info[:player_type] == 'b' ? '▲' : '△'
+  "#{player_symbol}#{move_info[:to_square]}#{move_info[:piece_type]}"
+end
 ```
 
 ## UI設計
@@ -225,82 +369,72 @@ export const useBoardStore = defineStore('board', {
 ### レイアウト
 
 ```
-+------------------+----------------------+
-|                  |                      |
-|                  |   Move History       |
-|                  |   +------------+     |
-|                  |   | 0:初期局面  |     |
-|   Shogi Board    |   | 1:▲７六歩  |     |
-|                  |   | 2:△３四歩  |     |
-|                  |   | 3:▲２六歩  |     |
-|                  |   | 4:△８八角成 |     |
-|                  |   +------------+     |
-|                  |   [◀◀][◀][▶][▶▶]    |
-|                  |                      |
-+------------------+----------------------+
++-------------------------------------------+
+|            手数 X 手番 先手/後手           |
++-------------------------------------------+
+|                                           |
+| +-------+                       +------+  |
+| |       |                       |棋譜| |
+| |後手の持ち駒|                     +------+  |
+| |       |                       |1. 7六歩  | |
+| +-------+                       |2. 3四歩  | |
+|                                 |3. 2二角  | |
+| +-------------------+           |...      | |
+| |                   |           +------+  |
+| |                   |                     |
+| |     将棋盤        |                     |
+| |                   |                     |
+| |                   |                     |
+| +-------------------+                     |
+|                                           |
+| +-------+                                 |
+| |       |                                 |
+| |先手の持ち駒|                               |
+| |       |                                 |
+| +-------+                                 |
+|                                           |
++-------------------------------------------+
 ```
 
 ### スタイル設計
 
-```scss
+```css
 .move-history-panel {
-  width: 250px;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
   border: 1px solid #ccc;
   border-radius: 4px;
-  padding: 10px;
-  
-  .panel-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 10px;
-    
-    h3 {
-      margin: 0;
-      font-size: 16px;
-    }
-  }
-  
-  .move-list {
-    max-height: 400px;
-    overflow-y: auto;
-    margin-bottom: 10px;
-    
-    .move-item {
-      padding: 5px;
-      cursor: pointer;
-      display: flex;
-      
-      &:hover {
-        background-color: #f0f0f0;
-      }
-      
-      &.current {
-        background-color: #e0f0ff;
-        font-weight: bold;
-      }
-      
-      .move-number {
-        width: 30px;
-      }
-    }
-  }
-  
-  .navigation-controls {
-    display: flex;
-    justify-content: space-between;
-    
-    button {
-      flex: 1;
-      margin: 0 2px;
-      padding: 5px;
-    }
-  }
+  overflow: hidden;
 }
 
-.game-container {
+.panel-header {
   display: flex;
-  gap: 20px;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background-color: #f5f5f5;
+  border-bottom: 1px solid #ccc;
+}
+
+.moves-container {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+}
+
+.move-item {
+  display: flex;
+  padding: 4px 8px;
+  cursor: pointer;
+  border-radius: 4px;
+  margin-bottom: 2px;
+}
+
+.move-item.active {
+  background-color: #e3f2fd;
+  font-weight: bold;
 }
 ```
 

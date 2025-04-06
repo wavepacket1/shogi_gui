@@ -46,12 +46,23 @@
 | game_id      | integer    | foreign key, not null| ゲームへの参照          |
 | sfen         | string     | not null             | 局面のSFEN形式表現      |
 | move_number  | integer    | not null             | 手数                    |
+| move_sfen    | string     |                      | 前局面から現局面への指し手（SFEN形式） |
 | branch       | string     | default: 'main'      | 分岐名                  |
 | created_at   | datetime   | not null             | 作成日時                |
 | updated_at   | datetime   | not null             | 更新日時                |
 
 **インデックス**:
 - `[game_id, move_number, branch]` (一意性制約)
+
+**move_sfenの形式**:
+- 通常の指し手: 「始点の位置」+「終点の位置」+「成り（任意）」
+  - 例: `7g7f` - 7六から7五への移動（歩の場合）
+  - 例: `8h2b+` - 8八から2二への移動で成り
+- 駒打ち: 「駒の種類」+「*」+「打つ位置」
+  - 例: `P*3d` - 歩を3四に打つ
+  - 例: `G*5f` - 金を5六に打つ
+
+これにより、局面間の差分を計算するのではなく、実際に指された手を直接参照できるようになり、処理が効率化されます。
 
 ### 3.3 リレーションシップ
 
@@ -69,14 +80,14 @@
 | +board         |       | +sfen          |       | +sfen          |
 | +board_histories|      | +game          |       | +move_number   |
 |                |       |                |       | +branch        |
-+----------------+       +----------------+       | +game          |
-| +create()      |       | +update()      |       |                |
++----------------+       +----------------+       | +move_sfen     |
+| +create()      |       | +update()      |       | +game          |
+|                |       |                |       |                |
 |                |       |                |       +----------------+
-|                |       |                |       | +previous_board_history() |
-+----------------+       +----------------+       | +next_board_history()     |
++----------------+       +----------------+       | +previous_board_history() |
+                                                 | +next_board_history()     |
                                                  | +first_board_history()    |
                                                  | +last_board_history()     |
-                                                 | +get_move_info()          |
                                                  | +to_kifu_notation()       |
                                                  +----------------+
 ```
@@ -90,7 +101,7 @@ BoardHistoryモデルは以下のメソッドを提供します：
 - **first_board_history**: 同じ分岐の最初の局面を取得
 - **last_board_history**: 同じ分岐の最後の局面を取得
 - **get_move_info**: 前の局面との差分から手の情報を取得
-- **to_kifu_notation**: 日本語の棋譜表記を生成
+- **to_kifu_notation**: SFEN形式の指し手（move_sfen）から日本語の棋譜表記（例：「▲7六歩」「△8四飛」）を生成
 
 ### 4.3 コントローラ
 
@@ -157,11 +168,13 @@ BoardHistoryモデルは以下のメソッドを提供します：
 ### 6.1 バックエンド
 
 1. `BoardHistory`モデルとマイグレーションの作成
-2. モデル間のリレーションシップの設定
-3. `BoardHistoriesController`の実装
-4. `MovesController`の拡張
-5. ルーティングの設定
-6. Rswagによるapi仕様の作成・テスト
+2. `move_sfen`カラムを追加するマイグレーションの実装
+3. SFEN形式の指し手を日本語表記に変換する`to_kifu_notation`メソッドの実装
+4. モデル間のリレーションシップの設定
+5. `BoardHistoriesController`の実装
+6. `MovesController`の拡張（指し手情報の保存処理を追加）
+7. ルーティングの設定
+8. Rswagによるapi仕様の作成・テスト
 
 ### 6.2 フロントエンド
 
@@ -218,4 +231,36 @@ BoardHistoryモデルは以下のメソッドを提供します：
 2. AIによる指し手評価の表示
 3. 棋譜のエクスポート/インポート機能
 4. 複数のゲーム間での局面の共有
-5. 分岐の視覚的表現（ツリービュー） 
+5. 分岐の視覚的表現（ツリービュー）
+
+## 10. 実装状況と完了タスク
+
+本ドキュメントに記載された機能のうち、以下のタスクが完了しています：
+
+### 10.1. データモデルの実装
+
+- ✅ BoardHistoriesテーブルの作成 (v1.0)
+- ✅ `move_sfen`カラムの追加 (v1.1) - 2025/03/30実装
+  - 前局面から現局面への指し手情報をSFEN形式で保存
+  - 複雑な差分解析を不要にし、パフォーマンスを向上
+
+### 10.2. API実装
+
+- ✅ 局面履歴の取得API (`GET /api/v1/games/{game_id}/board_histories`)
+- ✅ 局面移動API (`POST /api/v1/games/{game_id}/navigate_to/{move_number}`)
+- ✅ 分岐切り替えAPI (`POST /api/v1/games/{game_id}/switch_branch/{branch_name}`)
+- ✅ 指し手APIの拡張 (`PATCH /api/v1/games/{game_id}/boards/{board_id}/move`)
+  - `move_sfen`と`notation`をレスポンスに含める - 2025/03/30実装
+
+### 10.3. フロントエンド実装
+
+- ✅ MoveHistoryPanelコンポーネントの実装
+- ✅ 履歴表示機能と手数ナビゲーション
+- ✅ 分岐選択と切り替え機能
+- ✅ バックエンドから提供される`notation`を優先表示する処理 - 2025/03/30実装
+
+### 10.4. 今後の課題
+
+- 🔲 古いレコードの`move_sfen`値の補完（マイグレーション）
+- 🔲 パフォーマンステストと最適化
+- 🔲 UI/UXの改善 
