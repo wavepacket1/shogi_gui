@@ -10,6 +10,42 @@
       </div>
     </div>
     
+    <!-- 棋譜操作ボタンを追加 -->
+    <div class="navigation-controls">
+      <button 
+        class="nav-button"
+        @click="navigateToFirst()"
+        :disabled="currentMoveIndex <= 0"
+        title="最初の局面"
+      >
+        |◀
+      </button>
+      <button 
+        class="nav-button"
+        @click="navigateToPrev()"
+        :disabled="currentMoveIndex <= 0"
+        title="一手戻る"
+      >
+        ◀
+      </button>
+      <button 
+        class="nav-button"
+        @click="navigateToNext()"
+        :disabled="currentMoveIndex >= boardHistories.length - 1"
+        title="一手進む"
+      >
+        ▶
+      </button>
+      <button 
+        class="nav-button"
+        @click="navigateToLast()"
+        :disabled="currentMoveIndex >= boardHistories.length - 1"
+        title="最後の局面"
+      >
+        ▶|
+      </button>
+    </div>
+    
     <div class="moves-container">
       <div 
         v-for="(history, index) in boardHistories" 
@@ -173,6 +209,31 @@ export default defineComponent({
       fetchBranches();
     });
 
+    // ナビゲーション用の関数を追加
+    const navigateToFirst = async () => {
+      if (boardHistories.value.length > 0) {
+        await navigateToMove(0);
+      }
+    };
+
+    const navigateToPrev = async () => {
+      if (currentMoveIndex.value > 0) {
+        await navigateToMove(currentMoveIndex.value - 1);
+      }
+    };
+
+    const navigateToNext = async () => {
+      if (currentMoveIndex.value < boardHistories.value.length - 1) {
+        await navigateToMove(currentMoveIndex.value + 1);
+      }
+    };
+
+    const navigateToLast = async () => {
+      if (boardHistories.value.length > 0) {
+        await navigateToMove(boardHistories.value.length - 1);
+      }
+    };
+
     return {
       boardHistories,
       branches,
@@ -182,7 +243,11 @@ export default defineComponent({
       error,
       navigateToMove,
       onBranchChange,
-      formatMove
+      formatMove,
+      navigateToFirst,
+      navigateToPrev,
+      navigateToNext,
+      navigateToLast
     };
   }
 });
@@ -262,5 +327,50 @@ export default defineComponent({
 
 .move-notation {
   flex: 1;
+}
+
+.navigation-controls {
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  padding: 8px;
+  background-color: #f5f5f5;
+  border-bottom: 1px solid #ccc;
+}
+
+.nav-button {
+  min-width: 32px;
+  height: 28px;
+  padding: 0 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background-color: #fff;
+  color: #1976d2;  /* パネルの青色に合わせる */
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+.nav-button:hover:not(:disabled) {
+  background-color: #e3f2fd;  /* アクティブな項目の背景色と同じ */
+  border-color: #1976d2;
+}
+
+.nav-button:active:not(:disabled) {
+  background-color: #bbdefb;
+  transform: translateY(1px);
+  box-shadow: none;
+}
+
+.nav-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background-color: #f5f5f5;
+  border-color: #ddd;
+  color: #999;
 }
 </style> 
