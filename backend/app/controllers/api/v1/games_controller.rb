@@ -3,6 +3,9 @@
 module Api
   module V1
     class GamesController < ApplicationController
+      before_action :authenticate_user!
+      before_action :set_game, only: [:resign]
+
       def create
         @game = Game.new(game_params)
 
@@ -62,7 +65,33 @@ module Api
         }, status: :not_found
       end
 
+      def resign
+        @game.resign!(user: current_user)
+        
+        render json: {
+          status: 'success',
+          message: '投了が完了しました',
+          game_status: 'finished',
+          winner: @game.winner,
+          ended_at: @game.ended_at.iso8601
+        }
+      rescue GameError => e
+        render json: { 
+          status: 'error', 
+          message: e.message 
+        }, status: :unprocessable_entity
+      rescue => e
+        render json: { 
+          status: 'error', 
+          message: 'システムエラーが発生しました' 
+        }, status: :internal_server_error
+      end
+
       private
+
+      def set_game
+        @game = Game.find(params[:id])
+      end
 
       def game_params
         params.require(:game).permit(:status)
