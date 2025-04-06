@@ -27,7 +27,7 @@ services:
     build: ./frontend
     command: /app/start.sh
     volumes:
-      # - ./frontend:/app
+      - ./frontend:/app
       - /app/node_modules
       - ./backend/swagger:/app/backend/swagger
     ports:
