@@ -2,8 +2,7 @@
 
 module Api
   module V1
-    class GamesController < ApplicationController
-      before_action :authenticate_user!
+    class GamesController < BaseController
       before_action :set_game, only: [:resign]
 
       def create
@@ -66,7 +65,7 @@ module Api
       end
 
       def resign
-        @game.resign!(user: current_user)
+        @game.resign!(user: current_api_v1_user)
         
         render json: {
           status: 'success',
