@@ -56,8 +56,7 @@
 export const useModeStore = defineStore('mode', {
   state: () => ({
     currentMode: GameMode.PLAY,
-    previousMode: null,
-    modeHistory: [],
+    preservedState: null,
     editState: {
       unsavedChanges: false,
       selectedPiece: null
@@ -68,9 +67,8 @@ export const useModeStore = defineStore('mode', {
     async changeMode(newMode: GameMode) {
       // モード変更前の検証
       if (await this.validateModeChange(newMode)) {
-        this.previousMode = this.currentMode;
+        this.preservedState = this.getCurrentStateForPreservation();
         this.currentMode = newMode;
-        this.modeHistory.push(newMode);
       }
     }
   }
@@ -90,8 +88,6 @@ interface EditHistoryEntry {
 
 interface EditState {
   history: EditHistoryEntry[];
-  canUndo: boolean;
-  canRedo: boolean;
 }
 ```
 
@@ -100,10 +96,10 @@ interface EditState {
 ### 3.1 モード切替フロー
 
 1. ユーザーがモード切替ボタンをクリック
-2. 現在の状態をチェック（未保存の変更など）
-3. 必要に応じて確認ダイアログを表示
-4. モード切替の実行
-5. UI要素の更新
+2. 未保存の変更がある場合は確認ダイアログを表示
+3. 現在の状態を保存
+4. 新しいモードに切替
+5. 必要に応じて保存した状態を復元
 
 ### 3.2 モード別操作
 
@@ -264,3 +260,77 @@ describe('GameModeSelector', () => {
 - モード間の状態維持テスト
 - データの永続化テスト
 - 実際の操作シーケンスのテスト
+
+## 待った機能
+
+### UI要素
+
+#### 待ったボタン
+- 配置: 対局画面の操作パネル内
+- 表示条件:
+  - 自分の手番の時
+  - 直前の手がある時
+  - 残り待った回数が1回以上
+- 無効条件:
+  - 相手の手番の時
+  - 既に待った要求を出している時
+  - 残り待った回数が0の時
+
+#### 待った要求ダイアログ（相手側）
+- タイトル: 「待った要求」
+- 内容:
+  - 「相手が待ったを要求しています」
+  - 取り消したい手の情報表示
+- ボタン:
+  - 「承認」: 待った要求を受け入れ
+  - 「拒否」: 待った要求を拒否
+- タイマー: 30秒のカウントダウン表示
+
+### 状態管理
+
+```typescript
+interface TakeBackState {
+  isRequesting: boolean;
+  currentRequest?: {
+    requestId: string;
+    moveNumber: number;
+    timeoutAt: string;
+  };
+  remainingTakeBacks: number;
+}
+```
+
+### イベント処理
+
+1. 待った要求送信
+   - ボタンクリック時に確認ダイアログを表示
+   - 確認後にAPIリクエスト送信
+   - 成功時: 要求中状態に移行
+   - 失敗時: エラーメッセージ表示
+
+2. 待った要求受信
+   - WebSocket経由で通知を受信
+   - ダイアログを表示
+   - タイマー開始
+   - タイムアウト時は自動的に拒否
+
+3. 待った応答処理
+   - 承認/拒否の選択時にAPIリクエスト送信
+   - 承認時:
+     - 盤面を該当手前に戻す
+     - 残り手数を更新
+   - 拒否時:
+     - 要求元に拒否通知
+
+### エラーハンドリング
+
+- ネットワークエラー: 再試行オプション付きエラーメッセージ
+- タイムアウト: 自動拒否として処理
+- 不正な操作: エラーメッセージと無効な操作を防止
+
+### アニメーション
+
+- 待った実行時:
+  - 盤面を徐々に前の状態に戻す
+  - 取り消された手を強調表示
+  - 移動した駒を元の位置に戻す

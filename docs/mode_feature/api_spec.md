@@ -114,10 +114,7 @@ enum GameMode {
 
 interface GameModeUpdate {
   mode: GameMode;
-  metadata?: {
-    preserved_state?: string;  // 前のモードの状態を保存
-    transition_reason?: string;  // モード変更の理由
-  };
+  preserved_state?: string;  // 前のモードの状態を保存
 }
 ```
 
@@ -133,30 +130,11 @@ interface Position {
   metadata: {
     created_at: string;
     updated_at: string;
-    comment?: string;
-    tags?: string[];
   };
 }
 ```
 
-### 2.3 コメントデータ
-
-```typescript
-interface MoveComment {
-  id: number;
-  game_id: number;
-  move_number: number;
-  branch: string;
-  content: string;
-  author_id?: number;
-  created_at: string;
-  updated_at: string;
-}
-```
-
 ## 3. エラー定義
-
-### 3.1 エラーレスポンス
 
 ```typescript
 interface ApiError {
@@ -189,81 +167,7 @@ MODE_NOT_SUPPORTED:
   message: '現在のモードではサポートされていない操作です'
 ```
 
-## 4. 認証・認可
-
-### 4.1 必要な権限
-
-- 対局モード: 対局参加者のみ
-- 編集モード: 管理者権限または対局作成者
-- 検討モード: 閲覧権限を持つユーザー
-
-### 4.2 権限チェック
-
-```yaml
-ヘッダー要件:
-  Authorization: Bearer <token>
-  
-権限エラーレスポンス:
-  401:
-    description: 認証が必要です
-  403:
-    description: 権限がありません
-```
-
-## 5. レート制限
-
-```yaml
-制限:
-  - モード切替: 10回/分
-  - 局面保存: 30回/分
-  - コメント追加: 60回/分
-
-ヘッダー:
-  X-RateLimit-Limit: 制限値
-  X-RateLimit-Remaining: 残り回数
-  X-RateLimit-Reset: リセット時刻
-```
-
-## 6. バッチ処理
-
-### 6.1 定期実行
-
-```yaml
-- 未使用の保存局面の削除: 毎日深夜
-- 編集モードの自動保存: 5分ごと
-- 長時間放置された編集セッションの終了: 1時間ごと
-```
-
-## 7. WebSocket通知
-
-### 7.1 イベント定義
-
-```yaml
-mode_changed:
-  type: モード変更通知
-  data:
-    game_id: ゲームID
-    new_mode: 新しいモード
-    changed_by: 変更したユーザーID
-
-position_updated:
-  type: 局面更新通知
-  data:
-    game_id: ゲームID
-    position_id: 局面ID
-    sfen: 新しい局面
-
-comment_added:
-  type: コメント追加通知
-  data:
-    game_id: ゲームID
-    move_number: 手数
-    comment_id: コメントID
-```
-
 ## 8. キャッシュ戦略
-
-### 8.1 キャッシュ対象
 
 ```yaml
 - 頻繁にアクセスされる局面
@@ -290,3 +194,164 @@ CREATE INDEX idx_positions_sfen ON positions(sfen);
 CREATE INDEX idx_comments_game_move ON comments(game_id, move_number);
 CREATE INDEX idx_comments_branch ON comments(branch);
 ```
+
+## 待った機能 API
+
+### 待った要求の送信
+
+```
+POST /api/v1/games/{gameId}/take-back-requests
+```
+
+#### リクエスト
+```json
+{
+  "moveNumber": 123  // 取り消したい手の番号
+}
+```
+
+#### レスポンス
+```json
+{
+  "requestId": "uuid-xxx",
+  "status": "pending",
+  "requestedAt": "2025-04-13T10:00:00Z",
+  "timeoutAt": "2025-04-13T10:00:30Z"
+}
+```
+
+### 待った要求への応答
+
+```
+PUT /api/v1/games/{gameId}/take-back-requests/{requestId}
+```
+
+#### リクエスト
+```json
+{
+  "response": "accept" | "reject"
+}
+```
+
+#### レスポンス
+```json
+{
+  "requestId": "uuid-xxx",
+  "status": "accepted" | "rejected",
+  "respondedAt": "2025-04-13T10:00:15Z"
+}
+```
+
+### 待った履歴の取得
+
+```
+GET /api/v1/games/{gameId}/take-back-history
+```
+
+#### レスポンス
+```json
+{
+  "takeBackHistory": [
+    {
+      "requestId": "uuid-xxx",
+      "moveNumber": 123,
+      "requesterId": "user-id",
+      "status": "accepted",
+      "requestedAt": "2025-04-13T10:00:00Z",
+      "respondedAt": "2025-04-13T10:00:15Z"
+    }
+  ],
+  "remainingTakeBacks": 2  // 残りの待った回数
+}
+```
+
+### エラーレスポンス
+- 400 Bad Request: 不正なリクエスト
+  - 直前の手以外を指定した場合
+  - 残り回数が0の場合
+- 403 Forbidden: 権限エラー
+  - 自分の手番でない場合
+  - 待った機能が無効な場合
+- 404 Not Found: 指定されたゲームまたはリクエストが存在しない
+- 409 Conflict: 既に他の待った要求が処理中
+
+### 待った要求を送信
+
+```
+POST /api/games/{gameId}/takeback
+```
+
+#### リクエスト
+```json
+{
+  "moveNumber": number  // 取り消したい手の番号
+}
+```
+
+#### レスポンス
+- 成功時 (200 OK)
+```json
+{
+  "requestId": string,
+  "timeoutAt": string,
+  "remainingTakeBacks": number
+}
+```
+
+### 待った要求に応答
+
+```
+PUT /api/games/{gameId}/takeback/{requestId}
+```
+
+#### リクエスト
+```json
+{
+  "accepted": boolean
+}
+```
+
+#### レスポンス
+- 成功時 (200 OK)
+```json
+{
+  "success": true,
+  "boardState": {
+    // 更新された盤面情報
+  }
+}
+```
+
+### WebSocket Events
+
+#### 待った要求通知
+```json
+{
+  "type": "TAKEBACK_REQUESTED",
+  "data": {
+    "requestId": string,
+    "moveNumber": number,
+    "requestedBy": string,
+    "timeoutAt": string
+  }
+}
+```
+
+#### 待った応答通知
+```json
+{
+  "type": "TAKEBACK_RESPONDED",
+  "data": {
+    "requestId": string,
+    "accepted": boolean,
+    "boardState": object // accepted=trueの場合のみ
+  }
+}
+```
+
+### エラーレスポンス
+- 400 Bad Request: 無効な手番号
+- 403 Forbidden: 待った権限なし
+- 404 Not Found: 指定された対局またはリクエストが存在しない
+- 409 Conflict: 既に待った要求中
+- 410 Gone: 待った要求がタイムアウト
