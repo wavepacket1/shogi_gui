@@ -37,29 +37,43 @@ class BoardHistory < ApplicationRecord
       # 開始局面の場合
       return "開始局面" if move_number == 0
 
-      
+      # 通常の手の場合
       begin
-        # プレイヤー記号（先手・後手）
+        # この履歴が最後の手で、かつゲームが終了している場合
+        game = self.game
+        if game.status == 'finished' && game.ended_at && game.winner &&
+           self == game.board_histories.where(branch: branch).ordered.last
+          return "投了"
+        end
+
+        # 前の局面の情報を取得
         prev_history = previous_board_history
+        return "#{move_number}手目" unless prev_history
         
+        # プレイヤー記号（先手・後手）
         player_position = Parser::SfenParser.parse(prev_history.sfen)
         player_type = player_position[:side]  # 前の局面の手番が現在の指し手の手番
         player_symbol = player_type == 'b' ? '▲' : '△'
         
-        # move_sfenを解析
-        to_square, piece_type, is_drop, is_promotion = parse_move_sfen(move_sfen)
-        
-        # 表示用に変換
-        position_str = format_position(to_square)
-        piece_name = piece_to_japanese(piece_type)
-        
-        # 駒打ちと成りの表記
-        special_notation = ""
-        special_notation += "打" if is_drop
-        special_notation += "成" if is_promotion
-        
-        # 棋譜表記
-        "#{player_symbol}#{position_str}#{piece_name}#{special_notation}"
+        # 通常の手の場合の処理
+        if move_sfen
+          # move_sfenを解析
+          to_square, piece_type, is_drop, is_promotion = parse_move_sfen(move_sfen)
+          
+          # 表示用に変換
+          position_str = format_position(to_square)
+          piece_name = piece_to_japanese(piece_type)
+          
+          # 駒打ちと成りの表記
+          special_notation = ""
+          special_notation += "打" if is_drop
+          special_notation += "成" if is_promotion
+          
+          # 棋譜表記
+          "#{player_symbol}#{position_str}#{piece_name}#{special_notation}"
+        else
+          "#{move_number}手目"
+        end
       rescue => e
         Rails.logger.error "棋譜表記の計算でエラー: #{e.message}"
         "#{move_number}手目"

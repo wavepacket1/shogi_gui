@@ -2,6 +2,13 @@
     <div class="game-info">
         <button @click="startGame">対局開始</button> 
         <button @click="entering_king_declaration">入玉宣言</button>
+        <ResignButton
+            v-if="boardStore.game?.id"
+            :game-id="boardStore.game.id"
+            :disabled="!canResign"
+            @resign-complete="handleResignComplete"
+            class="mr-2"
+        />
         <div>手数 {{ getStepNumber }}</div>
         <div>手番 {{ getOwner }}</div>
         <div>{{ getGameState }}</div>
@@ -51,6 +58,7 @@ import PiecesInHand from './PiecesInHand.vue';
 import ShogiBoardGrid from './ShogiBoardGrid.vue';
 import PromotionModal from './PromotionModal.vue';
 import MoveHistoryPanel from './MoveHistoryPanel.vue';
+import ResignButton from '@/components/game/ResignButton.vue';
 
 export default defineComponent({
     name: 'ShogiBoard',
@@ -58,7 +66,8 @@ export default defineComponent({
         PiecesInHand,
         ShogiBoardGrid,
         PromotionModal,
-        MoveHistoryPanel
+        MoveHistoryPanel,
+        ResignButton,
     },
     setup() {
         const boardStore = useBoardStore();
@@ -73,6 +82,18 @@ export default defineComponent({
         const getOwner = computed(() => (boardStore.activePlayer === 'b' ? '先手' : '後手'));
 
         const getGameState = computed(() => {
+            // ゲームが存在しない場合は空文字を返す
+            if (!boardStore.game) {
+                return '';
+            }
+
+            // ゲームが終了している場合は投了による勝敗を表示
+            if (boardStore.game.status === 'finished') {
+                // activePlayerが先手('b')の場合は後手の勝ち、後手('w')の場合は先手の勝ち
+                return boardStore.activePlayer === 'b' ? '後手の勝ち（先手投了）' : '先手の勝ち（後手投了）';
+            }
+
+            // その他の勝敗判定
             if (boardStore.is_checkmate) {
                 return boardStore.activePlayer === 'b' ? '後手勝ち' : '先手勝ち';
             }
@@ -261,6 +282,22 @@ export default defineComponent({
             await boardStore.createGame();
         };
 
+        // 投了ボタンの表示・有効化条件
+        const canResign = computed(() => {
+            return !!boardStore.game?.id && boardStore.game.status === 'active';
+        });
+
+        // 投了完了時の処理
+        const handleResignComplete = async () => {
+            console.log('投了完了。ゲーム状態を更新します...');
+            if (boardStore.game?.id) {
+                try {
+                    await boardStore.fetchBoardHistories(boardStore.game.id, boardStore.currentBranch, false);
+                } catch (error) {
+                    console.error("ゲーム状態の更新に失敗:", error);
+                }
+            }
+        };
 
         // 駒の順序を定義
         const PIECE_ORDER = ['P', 'N', 'L', 'S', 'G', 'B', 'R'];
@@ -309,6 +346,8 @@ export default defineComponent({
             selectedHandPiece,
             entering_king_declaration,
             startGame,
+            canResign,
+            handleResignComplete,
         };
     },
 });
