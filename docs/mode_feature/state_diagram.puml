@@ -1,70 +1,81 @@
-@startuml モード切替状態遷移図
-
+@startuml
 ' モードの定義
-state "対局モード" as PlayMode {
-  state "通常対局" as NormalPlay
-  state "最新手" as LatestMove
-  state "閲覧中" as ViewMode
+[*] --> 対局モード
+
+state "対局モード" as 対局モード {
+  state "通常対局" as 通常対局
   
-  [*] --> NormalPlay
-  NormalPlay --> ViewMode : 過去の手に移動
-  ViewMode --> NormalPlay : 最新手に移動
+  [*] --> 通常対局
+  note right of 通常対局
+    - 最新の局面でのみ操作可能
+    - 過去の手に戻ることはできない
+  end note
 }
 
-state "編集モード" as EditMode {
-  state "駒配置中" as PlacingPieces
-  state "駒削除中" as RemovingPieces
-  state "持ち駒編集中" as EditingHand
-  state "手番設定中" as SettingPlayer
+state "編集モード" as 編集モード {
+  state "駒配置" as 駒配置
+  state "駒削除" as 駒削除
+  state "持ち駒編集" as 持ち駒編集
+  state "手番設定" as 手番設定
   
-  [*] --> PlacingPieces
-  PlacingPieces --> RemovingPieces : 削除モード選択
-  RemovingPieces --> PlacingPieces : 配置モード選択
-  PlacingPieces --> EditingHand : 持ち駒編集
-  EditingHand --> PlacingPieces : 盤面編集
-  PlacingPieces --> SettingPlayer : 手番変更
-  SettingPlayer --> PlacingPieces : 設定完了
+  [*] --> 駒配置
+  駒配置 --> 駒削除 : 削除モード選択
+  駒削除 --> 駒配置 : 配置モード選択
+  駒配置 --> 持ち駒編集 : 持ち駒編集
+  持ち駒編集 --> 駒配置 : 盤面編集
+  駒配置 --> 手番設定 : 手番変更
+  手番設定 --> 駒配置 : 設定完了
+
+  note right of 駒配置
+    編集操作の種類：
+    - 駒の配置/削除
+    - 持ち駒の増減
+    - 手番の変更
+    各操作は操作履歴として記録
+  end note
 }
 
-state "検討モード" as StudyMode {
-  state "手順確認中" as ReviewingMoves
-  state "分岐作成中" as CreatingBranch
-  state "コメント入力中" as InputtingComment
+state "検討モード" as 検討モード {
+  state "手順確認" as 手順確認
+  state "変化作成" as 変化作成
+  state "コメント入力" as コメント入力
   
-  [*] --> ReviewingMoves
-  ReviewingMoves --> CreatingBranch : 新しい手順入力
-  CreatingBranch --> ReviewingMoves : 分岐確定
-  ReviewingMoves --> InputtingComment : コメント追加
-  InputtingComment --> ReviewingMoves : コメント保存
+  [*] --> 手順確認
+  手順確認 --> 変化作成 : 新しい手順入力
+  変化作成 --> 手順確認 : 変化確定
+  手順確認 --> コメント入力 : コメント追加
+  コメント入力 --> 手順確認 : コメント保存
 }
 
 ' モード間の遷移
-PlayMode --> EditMode : 編集開始\n(確認ダイアログ)
-EditMode --> PlayMode : 編集完了\n(局面を初期状態として設定)
+対局モード --> 編集モード : 編集開始\n(確認ダイアログ)
+編集モード --> 対局モード : 編集完了\n(局面を初期状態として設定)
 
-PlayMode --> StudyMode : 検討開始
-StudyMode --> PlayMode : 検討終了\n(現在の局面から対局開始)
+対局モード --> 検討モード : 検討開始\n(現在の局面から検討モードへ)
+検討モード --> 対局モード : 検討終了\n(現在の局面から対局開始)
 
-EditMode --> StudyMode : 編集完了\n(編集局面から検討開始)
-StudyMode --> EditMode : 局面編集開始\n(現在の局面を編集)
+編集モード --> 検討モード : 編集完了\n(編集局面から検討開始)
+検討モード --> 編集モード : 局面編集開始\n(現在の局面を編集)
 
 ' 各モードの説明注釈
-note right of PlayMode
+note right of 対局モード
   - 手番制約あり
   - 合法手チェックあり
+  - 過去の手に戻れない（履歴閲覧不可）
   - 最新手でのみ指し手可能
 end note
 
-note right of EditMode
+note right of 編集モード
   - 自由な駒配置
   - 持ち駒の増減可能
   - 手番の切り替え可能
-  - アンドゥ/リドゥ可能
+  - 操作履歴の保持（配置/削除/持ち駒/手番）
+  - 局面のみを保持（手順は保持しない）
 end note
 
-note right of StudyMode
-  - 任意の手順入力可能
-  - 分岐作成可能
+note right of 検討モード
+  - 任意の手順の閲覧・移動可能
+  - 変化作成可能
   - コメント追加可能
   - 手順の削除可能
 end note
