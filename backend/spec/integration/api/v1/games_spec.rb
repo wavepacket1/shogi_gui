@@ -76,4 +76,64 @@ describe 'Games API' do
       end
     end
   end
+
+  path '/api/v1/games/:id/resign' do
+    post '投了を行う' do
+      tags 'Games'
+      consumes 'application/json'
+      produces 'application/json'
+
+      parameter name: :id, in: :path, type: :integer, description: 'Game ID'
+
+      response '200', '投了が成功すること' do
+        schema type: :object,
+          properties: {
+            status: { type: :string, enum: ['success', 'failed'] },
+            game_status: { type: :string, enum: ['finished'] },
+            winner: { type: :string },
+            ended_at: { type: :string }
+          },
+          required: ['status', 'game_status', 'winner', 'ended_at']
+
+        let(:id) { create(:game, status: 'active').id }
+        run_test!
+      end
+
+      response '401', '未認証ユーザーはアクセスできないこと' do
+        schema type: :object,
+          properties: {
+            status: { type: :string },
+            message: { type: :string }
+          },
+          required: ['status', 'message']
+
+        let(:id) { create(:game, status: 'active').id }
+        run_test!
+      end
+
+      response '403', '対局参加者以外は投了できないこと' do
+        schema type: :object,
+          properties: {
+            status: { type: :string },
+            message: { type: :string }
+          },
+          required: ['status', 'message']
+
+        let(:id) { create(:game, status: 'active').id }
+        run_test!
+      end
+
+      response '409', '既に終了した対局では投了できないこと' do
+        schema type: :object,
+          properties: {
+            status: { type: :string },
+            message: { type: :string }
+          },
+          required: ['status', 'message']
+
+        let(:id) { create(:game, status: 'finished').id }
+        run_test!
+      end
+    end
+  end
 end

@@ -485,6 +485,33 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @tags Games
+     * @name V1GamesIdResignCreate
+     * @summary 投了を行う
+     * @request POST:/api/v1/games/:id/resign
+     */
+    v1GamesIdResignCreate: (id: number, params: RequestParams = {}) =>
+      this.request<
+        {
+          status: "success" | "failed";
+          game_status: "finished";
+          winner: string;
+          ended_at: string;
+        },
+        {
+          status: string;
+          message: string;
+        }
+      >({
+        path: `/api/v1/games/${id}/resign`,
+        method: "POST",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
      * @tags Moves
      * @name V1GamesBoardsMovePartialUpdate
      * @summary 駒の移動API
