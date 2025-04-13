@@ -63,4 +63,30 @@ DeviseTokenAuth.setup do |config|
   # devise confirmable module. If you want to use devise confirmable module and
   # send email, set it to true. (This is a setting for compatibility)
   # config.send_confirmation_email = true
+
+  # By default the confirmation mail event is initiated after register. If you want
+  # to trigger the event before registration use `add_confirmable_action :before_register_action`
+  # config.add_confirmable_action :before_register_action
+
+  # If using ActiveJob, specify the delivery method:
+  # config.active_job_delivery_method = :deliver_later
+  # Default is :deliver_now
+
+  # Allow multiple simultaneous sessions per account per client. Acceptable values are `true` or `false`. Default is `false`.
+  # Note: When enabled, the `token` field must be indexed in the database as it's used for lookups. Ensure this has been done.
+  # config.enable_multiple_simultaneous_sessions = false
+
+  # By default, `confirmation_success_url` is mandatory for email confirmations. Setting this option to `true`
+  # allows the client to skip the `confirmation_success_url` parameter and doesn't send the user to the login page. Default is false.
+  # config.skip_confirmation_url_check = false
+
+  # The default value for the maximum number of login attempts is 10. After the user exceeds
+  # this number of attempts, their account will be locked. Set this value to 0 to disable locking.
+  # config.max_number_of_login_attempts = 10
+
+  # The default interval for sending password reset emails is 1 minute. Set this value to 0 to disable the interval.
+  # config.time_interval_for_password_reset_emails = 1.minute
+
+  # By default, DeviseTokenAuth uses the standard Devise mailer to send emails. You can customize the mailer class by setting this option.
+  # config.mailer = 'Devise::Mailer'
 end
