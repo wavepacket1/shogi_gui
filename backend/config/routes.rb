@@ -1,4 +1,5 @@
 Rails.application.routes.draw do
+  mount_devise_token_auth_for 'User', at: 'auth'
   mount Rswag::Ui::Engine => '/api-docs'
   mount Rswag::Api::Engine => '/api-docs'
   
@@ -9,7 +10,12 @@ Rails.application.routes.draw do
           get 'default', to: 'boards#default'
         end
       end
-      resources :games, only: [:create, :show] 
+
+      resources :games, only: [:create, :show] do
+        member do
+          post :resign
+        end
+      end
 
       post '/games/:game_id/boards/:board_id/nyugyoku_declaration', to: 'games#nyugyoku_declaration'
       patch '/games/:game_id/boards/:board_id/move', to: 'moves#move'

@@ -26,4 +26,12 @@ export default defineComponent({
   user-select: none;        
   -webkit-user-select: none;
 }
+
+.game-controls {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+}
 </style>
