@@ -202,10 +202,7 @@ interface BoardState {
 - 待った機能の制限
   - 対局モードでのみ有効
   - 設定で無効化されている場合は使用不可
-  - 制限回数を超えた場合は使用不可
   - 直前の手以外は取り消し不可
-  - 両対局者の同意が得られない場合は実行不可
-  - タイムアウト時は要求が自動的にキャンセル
 
 ## 7. 実装方針
 
@@ -256,21 +253,7 @@ interface BoardState {
 
 ## 11. データモデル
 
-### 11.1 対局設定データ構造
-
-```typescript
-interface GameSettings {
-  // ...existing code...
-  takeBackSettings: {
-    enabled: boolean;           // 待った機能の有効/無効
-    maxTakeBacksPerGame: number; // 1局あたりの制限回数（デフォルト3）
-    requestTimeoutSeconds: number; // 待った要求のタイムアウト時間（秒）
-  };
-  // ...existing code...
-}
-```
-
-### 11.2 待った要求データ構造
+### 11.1 待った要求データ構造
 
 ```typescript
 interface TakeBackRequest {
@@ -283,7 +266,12 @@ interface TakeBackRequest {
 }
 ```
 
-### 11.3 待った履歴データ構造
+メモ: 
+moveNumberではなくsfenから持ってきたほうが良い？
+
+
+
+### 11.2 待った履歴データ構造
 
 ```typescript
 interface TakeBackHistory {
