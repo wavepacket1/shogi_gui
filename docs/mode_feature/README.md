@@ -265,23 +265,3 @@ interface TakeBackRequest {
   responseAt?: Date;        // 応答日時
 }
 ```
-
-メモ: 
-moveNumberではなくsfenから持ってきたほうが良い？
-
-
-
-### 11.2 待った履歴データ構造
-
-```typescript
-interface TakeBackHistory {
-  gameId: string;           // 対局ID
-  moveNumber: number;       // 取り消された手の番号
-  requesterId: string;      // 要求者のユーザーID
-  accepterId: string;       // 承認者のユーザーID
-  executedAt: Date;         // 実行日時
-  previousSfen: string;     // 取り消し前のSFEN
-  currentSfen: string;      // 取り消し後のSFEN
-}
-```
-メモ: 待った履歴はいらなそう
