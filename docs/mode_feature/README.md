@@ -283,3 +283,5 @@ interface TakeBackHistory {
   previousSfen: string;     // 取り消し前のSFEN
   currentSfen: string;      // 取り消し後のSFEN
 }
+```
+メモ: 待った履歴はいらなそう
