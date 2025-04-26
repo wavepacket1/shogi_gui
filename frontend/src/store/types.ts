@@ -33,11 +33,6 @@ export interface BoardState {
     currentBranch: string;
     branches: string[];
     currentMoveIndex: number;
-    mode: 'play' | 'edit' | 'study';
-    preservedState: unknown[] | null;
-    takeBackEnabled: boolean;
-    maxTakeBacks: number;
-    takeBackTimeout: number;
 }
 
 export interface selectedCell {
@@ -113,13 +108,4 @@ export interface NavigateResponse {
     move_sfen?: string | null;
     /** 棋譜表記（日本語形式） */
     notation?: string | null;
-}
-
-// モード設定取得 API レスポンス型
-export interface GameModeResponse {
-    mode: 'play' | 'edit' | 'study';
-    preserved_state: unknown[] | null;
-    take_back_enabled: boolean;
-    max_take_backs: number;
-    take_back_timeout: number;
 }
