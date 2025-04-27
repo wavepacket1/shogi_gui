@@ -70,7 +70,7 @@
 
 ## 4. モード切替フロー
 - モード切替時には、Gameオブジェクトの `mode` 属性を選択されたモードに更新するだけ
-  - 例:`game.mode = GameMode.EDIT` や `game.mode = GameMode.ANALYSIS`
+  - 例:`game.mode = GameMode.EDIT` や `game.mode = GameMode.STUDY`
 - その他の局面・手番・手順履歴などの状態はそのまま維持
 - UI は更新後の `game.mode` を参照して表示を切り替え
 
