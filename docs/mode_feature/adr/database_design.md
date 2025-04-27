@@ -5,10 +5,9 @@
 ### 1.1 既存テーブルの変更
 
 ```ruby
-class AddModeAndPreservedStateToGames < ActiveRecord::Migration[6.1]
+class AddModeToGames < ActiveRecord::Migration[6.1]
   def change
     add_column :games, :mode, :string, null: false, default: 'play'
-    add_column :games, :preserved_state, :text
   end
 end
 ```
@@ -20,6 +19,20 @@ class AddEditedFieldsToBoardHistories < ActiveRecord::Migration[6.1]
     add_column :board_histories, :is_edited, :boolean, default: false
     # edited_at: 手動編集が行われた日時を保存
     add_column :board_histories, :edited_at, :datetime
+  end
+end
+```
+
+### 1.2 新規テーブルの追加: comments
+```ruby
+class CreateComments < ActiveRecord::Migration[6.1]
+  def change
+    create_table :comments do |t|
+      t.references :board_history, null: false, foreign_key: true, index: { name: 'idx_comments_board_history_id' }
+      t.text :content, null: false
+      t.timestamps
+    end
+    add_index :comments, :board_history_id, name: 'idx_comments_board_history'
   end
 end
 ```
@@ -44,6 +57,7 @@ end
 class AddIndexesForModeFeature < ActiveRecord::Migration[6.1]
   def change
     add_index :games, :mode, name: 'idx_games_mode'
+    add_index :comments, :board_history_id, name: 'idx_comments_board_history'
   end
 end
 ```
@@ -63,10 +77,9 @@ end
 ## 5. ロールバック計画
 
 ```ruby
-# 例：AddModeAndPreservedStateToGames の down
-class AddModeAndPreservedStateToGames < ActiveRecord::Migration[6.1]
+# 例：AddModeToGames の down
+class AddModeToGames < ActiveRecord::Migration[6.1]
   def down
-    remove_column :games, :preserved_state
     remove_column :games, :mode
   end
 end
