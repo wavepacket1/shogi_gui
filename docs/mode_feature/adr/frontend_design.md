@@ -26,12 +26,28 @@
 ```vue
 <template>
   <div class="edit-mode-panel">
-    <div class="piece-palette">
-      <!-- 駒選択パレット -->
-    </div>
-    <div class="edit-controls">
-      <!-- 編集用コントロール -->
-    </div>
+    <header class="mode-tabs">
+      <button class="tab">対局モード</button>
+      <button class="tab active">編集モード</button>
+      <button class="tab">検討モード</button>
+    </header>
+    <main class="edit-main">
+      <section class="left-panel">
+        <div class="control-panel">
+          <button class="button">手番変更</button>
+        </div>
+        <div class="info">手番: {{ currentTurn }}</div>
+        <div class="captured-gote">
+          <!-- 後手持ち駒を表示 -->
+        </div>
+        <ShogiBoard />
+        <div class="captured-sente">
+          <!-- 先手持ち駒を表示 -->
+        </div>
+      </section>
+      <!-- 検討パネルは編集モードでは非表示 -->
+      <section class="history-panel" v-if="false"></section>
+    </main>
   </div>
 </template>
 ```
@@ -126,13 +142,14 @@ interface EditState {
 +----------------------------------------+
 |  モード切替タブ                         |
 +----------------------------------------+
-|        |                    |          |
-| 持ち駒 |                    | モード別  |
-|        |      将棋盤        | パネル   |
-|        |                    |          |
-|        |                    |          |
+|                                        |
+|  ControlPanel  |      ShogiBoard       |
+|  (手番変更,    |  (盤面上で直接駒操作) |
+|   手番表示,    |                        |
+|   持ち駒表示)  |                        |
+|  Captured      |                        |
 +----------------------------------------+
-|            操作パネル                   |
+|  HistoryPanel   (編集モードでは非表示)  |
 +----------------------------------------+
 ```
 
