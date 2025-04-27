@@ -7,7 +7,6 @@
 
 ## 参照設計
 - `database_design.md`
-- `state_diagram_design.puml`（DB関連ステート）
 
 ## 実装タスク
 1. マイグレーションファイルの作成（`db/migrate`）

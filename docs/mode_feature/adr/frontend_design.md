@@ -1,159 +1,62 @@
 # モード切替機能 フロントエンド設計書
 
-## 1. コンポーネント構成
+## 1. 概要
+- 将棋GUIアプリケーションにおいて、以下の3つのモードを切り替えて使用できる機能を提供します。
+  - 対局モード: 実際の対局を行う機能
+  - 編集モード: 任意の局面を作成・編集する機能
+  - 検討モード: 局面の再生・分岐検討・コメント追加機能
 
-### 1.1 新規コンポーネント
+## 2. 機能要件
 
-#### GameModeSelector.vue
-```vue
-<template>
-  <div class="mode-selector">
-    <div class="mode-tabs">
-      <button 
-        v-for="mode in modes" 
-        :key="mode.value"
-        :class="['mode-tab', { active: currentMode === mode.value }]"
-        @click="changeMode(mode.value)"
-      >
-        {{ mode.label }}
-      </button>
-    </div>
-  </div>
-</template>
-```
+### 2.1 対局モード
+- 通常の対局ルールに従い、先手・後手が交互に指し手を入力
+- 駒の移動、持ち駒の使用、投了機能を提供
 
-#### EditModePanel.vue
-```vue
-<template>
-  <div class="edit-mode-panel">
-    <header class="mode-tabs">
-      <button class="tab">対局モード</button>
-      <button class="tab active">編集モード</button>
-      <button class="tab">検討モード</button>
-    </header>
-    <main class="edit-main">
-      <section class="left-panel">
-        <div class="control-panel">
-          <button class="button">手番変更</button>
-        </div>
-        <div class="info">手番: {{ currentTurn }}</div>
-        <div class="captured-gote">
-          <!-- 後手持ち駒を表示 -->
-        </div>
-        <ShogiBoard />
-        <div class="captured-sente">
-          <!-- 先手持ち駒を表示 -->
-        </div>
-      </section>
-      <!-- 検討パネルは編集モードでは非表示 -->
-      <section class="history-panel" v-if="false"></section>
-    </main>
-  </div>
-</template>
-```
+### 2.2 編集モード
+- 任意の局面を作成・編集可能
+- 駒の配置・成り/不成り切替、持ち駒操作、手番切替をサポート
+- 編集完了後に対局モードまたは検討モードへ遷移可能
 
-### 1.2 既存コンポーネントの変更
+### 2.3 検討モード
+- 棋譜の再生・分岐検討機能を提供
+- 任意の局面移動、新規分岐の追加・削除、コメント追加機能
 
-#### ShogiBoard.vue
-- モードに応じた駒の移動制御
-- 編集モード時の駒配置ロジック
-- 検討モード時の手順管理
+## 3. コンポーネント構成
 
-#### MoveHistoryPanel.vue
-- 検討モード時の分岐編集UI追加
-- コメント入力機能の追加
+- ### 3.1 新規コンポーネント
+  - `GameModeSelector.vue`: モード切替タブの表示・切替制御
+  - `EditModePanel.vue`: 編集モード用パネルUI
 
-## 2. 状態管理（Pinia）
+- ### 3.2 既存コンポーネントの変更
+  - `ShogiBoard.vue`: モード別の駒移動・編集制御
+  - `MoveHistoryPanel.vue`: 分岐編集・コメント入力UIを追加
 
-### 2.1 モードステート
+## 4. 状態管理（Pinia）
 
-```typescript
-// stores/mode.ts
-export const useModeStore = defineStore('mode', {
-  state: () => ({
-    currentMode: GameMode.PLAY,
-    preservedState: null,
-    editState: {
-      unsavedChanges: false,
-      selectedPiece: null
-    }
-  }),
-  
-  actions: {
-    async changeMode(newMode: GameMode) {
-      // モード変更前の検証
-      if (await this.validateModeChange(newMode)) {
-        this.preservedState = this.getCurrentStateForPreservation();
-        this.currentMode = newMode;
-      }
-    }
-  }
-});
-```
+- ### 4.1 モードステート (`stores/mode.ts`)
+  - `currentMode`、`editState` などを管理
+  - `changeMode` アクションでモード遷移検証を実装
 
-### 2.2 局面編集ステート
+- ### 4.2 局面編集ステート (`stores/board.ts` 拡張)
+  - 編集履歴 (`EditHistoryEntry[]`) を保持し Undo/Redo をサポート
 
-```typescript
-// stores/board.ts 拡張
-interface EditHistoryEntry {
-  type: 'place' | 'remove' | 'promote' | 'unpromote';
-  piece: Piece;
-  position: Position;
-  timestamp: number;
-}
+## 5. UI仕様
 
-interface EditState {
-  history: EditHistoryEntry[];
-}
-```
+### 5.1 モード切替UI
+- 画面上部にタブまたはドロップダウンを設置し、現在のモードを明示的に表示
+- `<GameModeSelector>` コンポーネントで切替を実装
 
-## 3. インタラクション設計
+### 5.2 モード別UI要素
+- **対局モード**: 基本盤面、持ち駒表示、手番表示、投了ボタン
+- **編集モード**: 手番変更ボタン、駒配置/ドラッグ&ドロップ、成り/不成り切替
+- **検討モード**: 棋譜表示パネル、分岐作成/切替、コメント入力エリア
 
-### 3.1 モード切替フロー
+### 5.3 UIモックアップ
+- 対局モード: `ui_ux_mockup.html`
+- 編集モード: `ui_ux_edit_mockup.html`
+- 検討モード: `ui_ux_analysis_mockup.html`
 
-1. ユーザーがモード切替ボタンをクリック
-2. 未保存の変更がある場合は確認ダイアログを表示
-3. 現在の状態を保存
-4. 新しいモードに切替
-5. 必要に応じて保存した状態を復元
-
-### 3.2 モード別操作
-
-#### 対局モード
-- 通常の対局ルールに従う
-- 手番制限を適用
-- 合法手チェックを実施
-
-#### 編集モード
-- クリックで駒を配置（盤面と持ち駒の合計枚数は常に一定、合法手制限なし）
-- ドラッグ&ドロップで駒を移動（盤面と持ち駒の合計枚数は常に一定、合法手制限なし）
-- 右クリックで成り/不成り切替
-
-#### 検討モード
-- 任意のタイミングで指し手入力
-- 分岐の作成と切替
-- コメントの追加と編集
-
-## 4. UI設計
-
-### 4.1 全体レイアウト
-
-```
-+----------------------------------------+
-|  モード切替タブ                         |
-+----------------------------------------+
-|                                        |
-|  ControlPanel  |      ShogiBoard       |
-|  (手番変更,    |  (盤面上で直接駒操作) |
-|   手番表示,    |                        |
-|   持ち駒表示)  |                        |
-|  Captured      |                        |
-+----------------------------------------+
-|  HistoryPanel   (編集モードでは非表示)  |
-+----------------------------------------+
-```
-
-### 4.2 スタイリング
+### 5.4 スタイリング
 
 ```scss
 .mode-selector {
@@ -181,70 +84,64 @@ interface EditState {
 }
 ```
 
-## 5. エラーハンドリング
+## 6. モード切替フロー
+- モード切替時に `currentMode` を更新する
+- その他の盤面・手番等の状態はそのまま維持
+- UI は `currentMode` を参照して動的に切り替え
 
-### 5.1 バリデーション
+## 7. エラーハンドリング
+
+### 7.1 モード切替時のエラー
+- 不正な局面での切替防止
+- 未保存の変更がある場合の警告表示
+- 編集モードでの無効な配置検出
+
+### 7.2 操作制限
+- 各モードで許可外の操作を無効化し、該当UI要素をグレイアウトまたは非表示
+- 権限エラーや不正操作時はツールチップ/メッセージを表示
+
+## 8. 注意事項
+- UI/UXの大幅な変更は禁止
+- 技術スタックのバージョンを固定し、変更時は承認を要する
+- 仕様変更時は各設計書を同時に更新
+
+## 9. テスト仕様
+
+### 9.1 ユニットテスト
 
 ```typescript
-interface ValidationResult {
-  valid: boolean;
-  message?: string;
-}
-
-// モード切替時のバリデーション
-function validateModeChange(
-  currentMode: GameMode,
-  targetMode: GameMode,
-  state: GameState
-): ValidationResult {
-  // 各種チェック実装
-}
+describe('GameModeSelector', () => {
+  it('should change mode correctly', async () => {
+    // テストケース実装
+  });
+  
+  it('should show confirmation dialog when needed', async () => {
+    // テストケース実装
+  });
+});
 ```
 
-# データ構造 (モード切替機能)
+### 9.2 コンポーネントテスト
 
-このファイルでは、フロントエンドで利用する型定義をまとめています。
+- モード切替UIの表示テスト
+- 各モードでの操作テスト
+- エラー表示のテスト
 
-## GameMode / GameModeUpdate
+### 9.3 統合テスト
 
-```typescript
-export enum GameMode {
-  PLAY = 'play',
-  EDIT = 'edit',
-  STUDY = 'study',
-}
+- モード間の状態維持テスト
+- データの永続化テスト
+- 実際の操作シーケンスのテスト 
 
-export interface GameModeUpdate {
-  mode: GameMode;
-}
-```
+### エラーハンドリング
+詳細は API エラー仕様書を参照
 
-## Position
+## 10. データ構造
+詳細は `docs/mode_feature/data_models.md` を参照
 
-```typescript
-export interface Position {
-  id: number;
-  game_id: number;
-  sfen: string;
-  active_player: 'black' | 'white';
-  mode: GameMode;
-  metadata: {
-    created_at: string;
-    updated_at: string;
-  };
-}
-``` 
+## 11. アニメーションとトランジション
 
-### 5.2 エラーメッセージ
-
-- モード切替エラー
-- 不正な操作
-- データ保存エラー
-- ネットワークエラー
-
-## 6. アニメーションとトランジション
-
-### 6.1 モード切替トランジション
+### 11.1 モード切替トランジション
 
 ```vue
 <transition name="mode-change">
@@ -264,9 +161,7 @@ export interface Position {
 </style>
 ```
 
-## 7. パフォーマンス最適化
-
-### 7.1 メモ化
+### 11.2 メモ化
 
 ```typescript
 // パフォーマンス重要な計算の最適化
@@ -278,58 +173,8 @@ const computedBoardState = computed(() => {
 const memoizedValidation = memoize(validatePosition);
 ```
 
-### 7.2 非同期処理
+### 11.3 非同期処理
 
 - モード切替時の重い処理の非同期化
 - 編集履歴の遅延保存
 - UIのプログレス表示
-
-## 8. テスト仕様
-
-### 8.1 ユニットテスト
-
-```typescript
-describe('GameModeSelector', () => {
-  it('should change mode correctly', async () => {
-    // テストケース実装
-  });
-  
-  it('should show confirmation dialog when needed', async () => {
-    // テストケース実装
-  });
-});
-```
-
-### 8.2 コンポーネントテスト
-
-- モード切替UIの表示テスト
-- 各モードでの操作テスト
-- エラー表示のテスト
-
-### 8.3 統合テスト
-
-- モード間の状態維持テスト
-- データの永続化テスト
-- 実際の操作シーケンスのテスト 
-
-### UI要素
-
-### 状態管理
-
-```typescript
-interface TakeBackState {
-  isRequesting: boolean;
-  currentRequest?: {
-    requestId: string;
-    moveNumber: number;
-    timeoutAt: string;
-  };
-  remainingTakeBacks: number;
-}
-```
-
-### エラーハンドリング
-
-- ネットワークエラー: 再試行オプション付きエラーメッセージ
-- タイムアウト: 自動拒否として処理
-- 不正な操作: エラーメッセージと無効な操作を防止
