@@ -587,6 +587,130 @@
         }
       }
     },
+    "/api/v1/games/:id/resign": {
+      "post": {
+        "summary": "投了を行う",
+        "tags": [
+          "Games"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Game ID",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "投了が成功すること",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "success",
+                        "failed"
+                      ]
+                    },
+                    "game_status": {
+                      "type": "string",
+                      "enum": [
+                        "finished"
+                      ]
+                    },
+                    "winner": {
+                      "type": "string"
+                    },
+                    "ended_at": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "game_status",
+                    "winner",
+                    "ended_at"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未認証ユーザーはアクセスできないこと",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "対局参加者以外は投了できないこと",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "既に終了した対局では投了できないこと",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "message"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/games/{game_id}/boards/{board_id}/move": {
       "patch": {
         "summary": "駒の移動API",

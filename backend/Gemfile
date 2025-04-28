@@ -36,6 +36,11 @@ gem 'rswag'
 
 gem 'guard'
 gem 'guard-rspec'
+
+gem 'devise', '~> 4.9.3'
+gem 'devise_token_auth', '~> 1.2.2'
+gem 'orm_adapter', '~> 0.5.0'
+
 # Use Active Storage variants [https://guides.rubyonrails.org/active_storage_overview.html#transforming-images]
 # gem "image_processing", "~> 1.2"
 

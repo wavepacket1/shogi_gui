@@ -46,12 +46,13 @@
       </button>
     </div>
     
-    <div class="moves-container">
+    <div class="moves-container" ref="movesContainerRef">
       <div 
         v-for="(history, index) in boardHistories" 
         :key="index"
         :class="['move-item', { 'active': currentMoveIndex === index }]"
         @click="navigateToMove(index)"
+        :ref="index === currentMoveIndex ? 'activeMove' : undefined"
       >
         <span class="move-number">{{ index }}.</span>
         <span class="move-notation">{{ formatMove(history) }}</span>
@@ -61,7 +62,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, computed, onMounted, watch } from 'vue';
+import { defineComponent, ref, computed, onMounted, watch, nextTick } from 'vue';
 import { useBoardStore } from '@/store';
 import { BoardHistory } from '@/store/types';
 
@@ -81,6 +82,22 @@ export default defineComponent({
     const currentMoveIndex = ref(-1);
     const loading = ref(false);
     const error = ref('');
+    const movesContainerRef = ref<HTMLElement | null>(null);
+
+    // currentMoveIndexの変更を監視してスクロール処理を行う
+    watch(currentMoveIndex, (newIndex) => {
+      if (newIndex >= 0) {
+        nextTick(() => {
+          const activeMove = document.querySelector('.move-item.active');
+          if (activeMove && movesContainerRef.value) {
+            activeMove.scrollIntoView({
+              behavior: 'smooth',
+              block: 'center'
+            });
+          }
+        });
+      }
+    });
 
     // 盤面履歴を取得
     const fetchBoardHistories = async (preserveCurrentIndex: boolean = false) => {
@@ -247,7 +264,8 @@ export default defineComponent({
       navigateToFirst,
       navigateToPrev,
       navigateToNext,
-      navigateToLast
+      navigateToLast,
+      movesContainerRef
     };
   }
 });
@@ -373,4 +391,4 @@ export default defineComponent({
   border-color: #ddd;
   color: #999;
 }
-</style> 
+</style>

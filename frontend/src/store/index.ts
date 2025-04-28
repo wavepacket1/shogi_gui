@@ -27,10 +27,10 @@ export const useBoardStore = defineStore('board', {
         currentMoveIndex: -1
     }),
     actions: {
-        async handleAsyncAction(asyncAction: () => Promise<void>, errorMessage: string = 'エラーが発生しました') {
+        async handleAsyncAction<T>(asyncAction: () => Promise<T>, errorMessage: string = 'エラーが発生しました'): Promise<T | void> {
             this.isError = false;
             try {
-                await asyncAction();
+                return await asyncAction();
             } catch (error: unknown) {
                 if(error instanceof Error) {
                     console.error(errorMessage, error.message);
@@ -308,6 +308,22 @@ export const useBoardStore = defineStore('board', {
                 return response;
             }, '分岐切り替えに失敗しました');
         },
+
+        // 投了アクション
+        async resignGame(gameId: number) {
+            return await this.handleAsyncAction(async () => {
+                const response = await api.api.v1GamesIdResignCreate(gameId);
+                
+                if (response.data.status === 'success') {
+                    // ゲームの状態を更新
+                    if (this.game) {
+                        this.game.status = response.data.game_status;
+                    }
+                }
+                
+                return response;
+            }, '投了処理に失敗しました');
+        }
     }
 });
 
