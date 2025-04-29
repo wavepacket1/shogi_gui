@@ -363,6 +363,30 @@ export default defineComponent({
     flex-direction: column;
     align-items: center;
     width: 100%;
+    min-height: 100vh;
+    background-color: #f7f3e9; /* 和紙風の色 */
+    background-image: url('data:image/svg+xml;utf8,<svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><rect width="100" height="100" fill="none"/><path d="M0 0L100 100M100 0L0 100" stroke="%23e6dfd2" stroke-width="0.5"/></svg>');
+    background-size: 20px 20px;
+    position: relative;
+    padding: 20px 0;
+}
+
+/* オプション: キャラクター用スペース */
+.wrapper::before {
+    content: "";
+    position: absolute;
+    right: 5%;
+    bottom: 5%;
+    width: 150px;
+    height: 300px;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: bottom right;
+    /* キャラクター画像があれば以下のようにURL指定できます */
+    /* background-image: url('/path/to/character.png'); */
+    opacity: 0.9;
+    pointer-events: none;
+    z-index: 1;
 }
 
 .shogi-container {
@@ -376,6 +400,8 @@ export default defineComponent({
     max-width: 1200px;
     margin: 0 auto;
     padding: 0 15px;
+    position: relative;
+    z-index: 2;
 }
 
 .board-column {
@@ -385,6 +411,11 @@ export default defineComponent({
     width: 100%;
     max-width: 500px;
     flex-shrink: 0;
+    background-color: #fcf8f0;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(79, 55, 30, 0.15);
+    padding: 15px;
+    border: 1px solid rgba(188, 166, 129, 0.3);
 }
 
 .board-area {
@@ -396,7 +427,7 @@ export default defineComponent({
 
 .game-info {
     text-align: center;
-    margin-bottom: 10px;
+    margin-bottom: 15px;
     display: flex;
     flex-direction: column;
     gap: 8px;
@@ -428,23 +459,37 @@ export default defineComponent({
     flex-wrap: wrap;
     justify-content: center;
     width: 100%;
+    padding: 5px 0;
 }
 
 .game-info button, .game-info :deep(button) {
     padding: 6px 12px;
     border: none;
     border-radius: 4px;
-    background: #007acc;
+    background: linear-gradient(to bottom, #b0856c, #8c6954);
     color: #fff;
     cursor: pointer;
     min-width: 80px;
     font-size: 14px;
     text-align: center;
+    box-shadow: 0 2px 4px rgba(79, 55, 30, 0.2);
+    transition: all 0.2s ease;
+}
+
+.game-info button:hover, .game-info :deep(button):hover {
+    background: linear-gradient(to bottom, #c49580, #9d7762);
+    transform: translateY(-1px);
+    box-shadow: 0 3px 6px rgba(79, 55, 30, 0.25);
 }
 
 .info {
     font-size: 14px;
     text-align: left;
+    color: #5a4534;
+    font-weight: 500;
+    background-color: rgba(255, 255, 255, 0.6);
+    padding: 4px 8px;
+    border-radius: 4px;
 }
 
 /* 履歴パネル用のスタイル */
@@ -457,9 +502,10 @@ export default defineComponent({
     overflow: hidden;
     align-self: flex-start;
     margin-top: 75px; /* game-infoの高さに合わせる */
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    background-color: #fcf8f0;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(79, 55, 30, 0.15);
+    border: 1px solid rgba(188, 166, 129, 0.3);
 }
 
 /* MoveHistoryPanelに影響を与えるスタイルを深い選択子で追加 */
@@ -536,5 +582,42 @@ export default defineComponent({
         width: 100%;
         margin: 2px 0;
     }
+}
+
+/* 将棋盤のスタイル調整 */
+.board-area :deep(.shogi-board) {
+    border: 3px solid #855a3d;
+    box-shadow: 0 6px 20px rgba(79, 55, 30, 0.25);
+    background-color: #e8d0a9;
+    background-image: 
+        linear-gradient(90deg, rgba(188, 157, 113, 0.12) 1px, transparent 1px),
+        linear-gradient(rgba(188, 157, 113, 0.12) 1px, transparent 1px);
+    background-size: 10% 10%;
+    padding: 2px;
+    border-radius: 3px;
+}
+
+.board-area :deep(.cell) {
+    background-color: #e8d0a9;
+    border: 1px solid rgba(150, 120, 90, 0.25);
+    box-sizing: border-box;
+    transition: all 0.15s ease;
+    box-shadow: inset 0 0 1px rgba(120, 100, 70, 0.1);
+}
+
+.board-area :deep(.cell.selected) {
+    background-color: rgba(219, 172, 96, 0.5) !important;
+    box-shadow: inset 0 0 5px rgba(180, 130, 70, 0.5) !important;
+}
+
+.board-area :deep(.cell:hover) {
+    background-color: rgba(219, 186, 138, 0.4);
+}
+
+/* 駒自体のスタイル */
+.board-area :deep(.piece) {
+    color: #2d1e0f;
+    text-shadow: 0 1px 1px rgba(255, 245, 225, 0.7);
+    font-weight: bold;
 }
 </style>
