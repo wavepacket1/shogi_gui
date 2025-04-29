@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'rails_helper'
+require 'rswag/specs'
 
 RSpec.configure do |config|
   config.swagger_root = Rails.root.join('swagger').to_s

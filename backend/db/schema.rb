@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2025_04_13_074719) do
+ActiveRecord::Schema[7.0].define(version: 2025_04_14_010000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -34,12 +34,26 @@ ActiveRecord::Schema[7.0].define(version: 2025_04_13_074719) do
     t.index ["game_id"], name: "index_boards_on_game_id"
   end
 
+  create_table "comments", force: :cascade do |t|
+    t.bigint "board_history_id", null: false
+    t.text "content", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["board_history_id"], name: "idx_comments_board_history"
+    t.index ["board_history_id"], name: "idx_comments_board_history_id"
+  end
+
   create_table "games", force: :cascade do |t|
     t.string "status"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "winner"
     t.datetime "ended_at"
+    t.string "mode", default: "play", null: false
+    t.bigint "black_player_id"
+    t.bigint "white_player_id"
+    t.index ["black_player_id"], name: "index_games_on_black_player_id"
+    t.index ["white_player_id"], name: "index_games_on_white_player_id"
   end
 
   create_table "pieces", force: :cascade do |t|
@@ -81,5 +95,8 @@ ActiveRecord::Schema[7.0].define(version: 2025_04_13_074719) do
 
   add_foreign_key "board_histories", "games"
   add_foreign_key "boards", "games"
+  add_foreign_key "comments", "board_histories"
+  add_foreign_key "games", "users", column: "black_player_id"
+  add_foreign_key "games", "users", column: "white_player_id"
   add_foreign_key "pieces", "boards"
 end

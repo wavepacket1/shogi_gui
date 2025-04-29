@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>編集モード UI モックアップ</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: sans-serif;
+      /* ヘッダー行(h2)と左パネルで全画面を構成 */
+      display: grid;
+      grid-template-rows: auto 1fr;
+      height: 100vh;
+    }
+    .left-panel {
+      display: flex;
+      flex-direction: column;
+      padding: 16px;
+      gap: 8px;
+      /* グリッドセルいっぱいに広げる */
+      height: 100%;
+      box-sizing: border-box;
+      /* 子要素の min-height を制限して flex:1 が効くように */
+      min-height: 0;
+    }
+    #board {
+      flex: 1;
+      width: 100%;
+      background: #fff;
+      border: 1px solid #ccc;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      color: #999;
+      /* flex 子要素として min-height をリセット */
+      min-height: 0;
+    }
+    .button { padding: 6px 12px; border: none; border-radius: 4px; background: #007acc; color: #fff; cursor: pointer; }
+    /* 持ち駒表示 */
+    .captured-gote, .captured-sente {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin: 8px 0;
+    }
+    .captured-gote > div, .captured-sente > div {
+      background: #fff;
+      padding: 4px 8px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+    /* モード切替タブ */
+    header {
+      background: #f5f5f5;
+      padding: 8px 16px;
+      display: flex;
+      gap: 16px;
+    }
+    header .tab {
+      padding: 6px 12px;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+    header .tab.active {
+      background: #007acc;
+      color: #fff;
+    }
+    /* メインレイアウト: 対局/編集モード共通 */
+    main {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 0;
+      padding: 0;
+      background: #fafafa;
+      height: 100%;
+    }
+  </style>
+</head>
+<body>
+  <!-- モード切替タブ -->
+  <header>
+    <div class="tab">対局モード</div>
+    <div class="tab active">編集モード</div>
+    <div class="tab">検討モード</div>
+  </header>
+  <main>
+    <div class="left-panel">
+      <!-- コントロールパネル: 手番変更 -->
+      <div class="control-panel" style="padding:8px 16px; display:flex; gap:8px; align-items:center;">
+        <button class="button">手番変更</button>
+      </div>
+      <!-- 手番表示 -->
+      <div class="info" style="padding:0 16px; font-size:14px;">手番: 先手</div>
+      <!-- 後手持ち駒: ボード上部 -->
+      <div class="captured-gote">
+        <div>後手持ち駒: 香1, 銀1</div>
+      </div>
+      <!-- 編集用盤面 -->
+      <section id="board">編集可能な将棋盤</section>
+      <!-- 先手持ち駒: ボード下部 -->
+      <div class="captured-sente">
+        <div>先手持ち駒: 歩2, 桂1</div>
+      </div>
+    </div>
+    <!-- 編集モードでは棋譜パネル非表示 -->
+    <section id="history" style="visibility:hidden"></section>
+  </main>
+</body>
+</html> 

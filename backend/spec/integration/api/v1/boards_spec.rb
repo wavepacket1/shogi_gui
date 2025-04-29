@@ -1,4 +1,3 @@
-
 require 'swagger_helper'
 
 RSpec.describe 'api/v1/boards', type: :request do
@@ -16,7 +15,10 @@ RSpec.describe 'api/v1/boards', type: :request do
                     },
                     required: ['sfen', 'legal_flag']
 
-                let(:id) { Board.create(name: 'Game 1', active_player: 'b').id }
+                let(:game) { create(:game, status: 'active', mode: 'play') }
+                let(:board) { create(:board, game: game, sfen: Board.default_sfen) }
+                let(:id) { board.id }
+                
                 run_test!
             end
 
