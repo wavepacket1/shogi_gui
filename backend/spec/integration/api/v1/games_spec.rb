@@ -10,8 +10,7 @@ describe 'Games API' do
       parameter name: :game, in: :body, schema: {
         type: :object,
         properties: {
-          status: { type: :string, enum: ['active', 'finished', 'pause'] },
-          mode: { type: :string, enum: ['play', 'edit', 'study'] }
+          status: { type: :string, enum: ['active', 'finished', 'pause'] }
         },
         required: ['status']
       }
@@ -25,7 +24,7 @@ describe 'Games API' do
           },
           required: ['game_id', 'status', 'board_id']
 
-        let(:game) { { status: 'active', mode: 'play' } }
+        let(:game) { { status: 'active' } }
         run_test!
       end
 
@@ -53,13 +52,14 @@ describe 'Games API' do
       response '200', 'nyugyoku declared' do 
         schema type: :object,
           properties: {
-            status: { type: :string, enum: ['success', 'failed'] }
-          }
+            status: { type: :string, enum: ['success', 'failed'] },
+            game_id: { type: :integer },
+            board_id: { type: :integer }
+          },
+          required: ['game_id', 'status', 'board_id']
         
-        let(:game) { create(:game, status: 'active', mode: 'play') }
-        let(:board) { create(:board, game: game, sfen: Board.default_sfen) }
-        let(:game_id) { game.id }
-        let(:board_id) { board.id }
+        let(:game_id) { Game.create(status: 'active').id }
+        let(:board_id) { Board.create(game_id:).id }
         run_test!
       end
 
@@ -71,16 +71,14 @@ describe 'Games API' do
           },
           required: ['status', 'message']
         
-        let(:game_id) { Game.maximum(:id).to_i + 1 }
-        let(:board_id) { 1 }
+        let(:id) { Game.maximum(:id).to_i + 1 }
         run_test!
       end
     end
   end
 
-  # 投了関連のテストは他の改修が必要なためスキップ
-  path '/api/v1/games/{id}/resign' do
-    post '投了を行う', :skip => '投了機能は別途改修が必要なため' do
+  path '/api/v1/games/:id/resign' do
+    post '投了を行う' do
       tags 'Games'
       consumes 'application/json'
       produces 'application/json'
@@ -97,9 +95,7 @@ describe 'Games API' do
           },
           required: ['status', 'game_status', 'winner', 'ended_at']
 
-        let(:game) { create(:game, status: 'active', mode: 'play') }
-        let(:board) { create(:board, game: game, sfen: Board.default_sfen) }
-        let(:id) { game.id }
+        let(:id) { create(:game, status: 'active').id }
         run_test!
       end
 
@@ -111,8 +107,7 @@ describe 'Games API' do
           },
           required: ['status', 'message']
 
-        let(:game) { create(:game, status: 'active', mode: 'play') }
-        let(:id) { game.id }
+        let(:id) { create(:game, status: 'active').id }
         run_test!
       end
 
@@ -124,8 +119,7 @@ describe 'Games API' do
           },
           required: ['status', 'message']
 
-        let(:game) { create(:game, status: 'active', mode: 'play') }
-        let(:id) { game.id }
+        let(:id) { create(:game, status: 'active').id }
         run_test!
       end
 
@@ -137,53 +131,7 @@ describe 'Games API' do
           },
           required: ['status', 'message']
 
-        let(:game) { create(:game, status: 'finished', mode: 'play') }
-        let(:id) { game.id }
-        run_test!
-      end
-    end
-  end
-
-  path '/api/v1/games/{id}/mode' do
-    post 'ゲームモードを変更する' do
-      tags 'Games'
-      consumes 'application/json'
-      produces 'application/json'
-      
-      parameter name: :id, in: :path, type: :integer, description: 'Game ID'
-      parameter name: :mode, in: :query, type: :string, 
-                description: '設定するモード', required: true,
-                schema: { type: :string, enum: ['play', 'edit', 'study'] }
-      
-      response '200', 'モードが変更されました' do
-        schema type: :object,
-          properties: {
-            game_id: { type: :integer },
-            mode: { type: :string, enum: ['play', 'edit', 'study'] },
-            status: { type: :string },
-            updated_at: { type: :string, format: 'date-time' }
-          },
-          required: ['game_id', 'mode', 'status', 'updated_at']
-          
-        let(:game) { create(:game, status: 'active', mode: 'play') }
-        let(:id) { game.id }
-        let(:mode) { 'edit' }
-        
-        run_test!
-      end
-      
-      response '404', 'ゲームが見つかりません', skip: true do
-        schema type: :object,
-          properties: {
-            error: { type: :string }
-          },
-          required: ['error']
-          
-        # ゲームIDを動的に生成して確実に存在しないIDを使用
-        let(:nonexistent_id) { Game.maximum(:id).to_i + 999 }
-        let(:id) { nonexistent_id }
-        let(:mode) { 'edit' }
-        
+        let(:id) { create(:game, status: 'finished').id }
         run_test!
       end
     end

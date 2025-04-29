@@ -3,7 +3,7 @@
 module Api
   module V1
     class GamesController < BaseController
-      before_action :set_game, only: [:resign, :mode]
+      before_action :set_game, only: [:resign]
 
       def create
         @game = Game.new(game_params)
@@ -115,31 +115,6 @@ module Api
         }, status: :internal_server_error
       end
 
-      def mode
-        if params[:mode].blank?
-          render json: { error: 'モードが指定されていません' }, status: :bad_request
-          return
-        end
-
-        unless ['play', 'edit', 'study'].include?(params[:mode])
-          render json: { error: '無効なモードです' }, status: :bad_request
-          return
-        end
-
-        if @game.update(mode: params[:mode])
-          render json: {
-            game_id: @game.id,
-            mode: @game.mode,
-            status: @game.status,
-            updated_at: @game.updated_at
-          }
-        else
-          render json: { error: @game.errors.full_messages.join(', ') }, status: :unprocessable_entity
-        end
-      rescue ActiveRecord::RecordNotFound
-        render json: { error: 'ゲームが見つかりません' }, status: :not_found
-      end
-
       private
 
       def set_game
@@ -147,7 +122,7 @@ module Api
       end
 
       def game_params
-        params.require(:game).permit(:status, :mode)
+        params.require(:game).permit(:status)
       end
     end
   end

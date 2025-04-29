@@ -1,14 +1,15 @@
 import { defineStore } from 'pinia';
 import { Api } from '@/services/api/api';
 import { parseSFEN } from '@/utils/sfenParser';
-import  *  as Types from '@/store/types';
+import type { BoardState, GameModeResponse } from '@/store/types';
+import * as Types from '@/store/types';
 
 const api = new Api({
     baseUrl: 'http://localhost:3000'
 });
 
 export const useBoardStore = defineStore('board', {
-    state: (): Types.BoardState => ({
+    state: (): BoardState => ({
         shogiData: initializeShogiData(),
         stepNumber: 0,
         activePlayer: null,
@@ -24,7 +25,12 @@ export const useBoardStore = defineStore('board', {
         boardHistories: [],
         currentBranch: 'main',
         branches: ['main'],
-        currentMoveIndex: -1
+        currentMoveIndex: -1,
+        mode: 'play',
+        preservedState: null,
+        takeBackEnabled: true,
+        maxTakeBacks: 3,
+        takeBackTimeout: 30
     }),
     actions: {
         async handleAsyncAction<T>(asyncAction: () => Promise<T>, errorMessage: string = 'エラーが発生しました'): Promise<T | void> {
@@ -323,7 +329,30 @@ export const useBoardStore = defineStore('board', {
                 
                 return response;
             }, '投了処理に失敗しました');
-        }
+        },
+
+        // モード設定取得
+        async fetchModeSettings(gameId: number) {
+            const resp = await api.api.v1GamesIdModeGet(gameId);
+            const d = resp.data as GameModeResponse;
+            this.mode            = d.mode;
+            this.preservedState  = d.preserved_state;
+            this.takeBackEnabled = d.take_back_enabled;
+            this.maxTakeBacks    = d.max_take_backs;
+            this.takeBackTimeout = d.take_back_timeout;
+        },
+
+        // モード切替
+        async switchMode(gameId: number, mode: 'play'|'edit'|'study') {
+            const resp = await api.api.v1GamesIdSwitchModeCreate(gameId, { mode });
+            const d = resp.data as { mode: 'play'|'edit'|'study' };
+            this.mode = d.mode;
+            // play に戻ったときは保存済み履歴を復元
+            if (d.mode === 'play' && this.preservedState) {
+                this.boardHistories = this.preservedState as Types.BoardHistory[];
+                this.currentMoveIndex = this.boardHistories.length - 1;
+            }
+        },
     }
 });
 

@@ -49,6 +49,11 @@
         :is-open="showPromotionModal"
         @promote="handlePromotion"
     />
+
+    <ModeControlPanel v-if="boardStore.game" class="mb-4" />
+    <!-- モードバナー表示 -->
+    <div v-if="boardStore.mode === 'edit'" class="mode-banner">編集モード中</div>
+    <div v-if="boardStore.mode === 'study'" class="mode-banner">検討モード中</div>
 </template>
 
 <script lang="ts">
@@ -59,6 +64,7 @@ import ShogiBoardGrid from './ShogiBoardGrid.vue';
 import PromotionModal from './PromotionModal.vue';
 import MoveHistoryPanel from './MoveHistoryPanel.vue';
 import ResignButton from '@/components/game/ResignButton.vue';
+import ModeControlPanel from './ModeControlPanel.vue';
 
 export default defineComponent({
     name: 'ShogiBoard',
@@ -68,6 +74,7 @@ export default defineComponent({
         PromotionModal,
         MoveHistoryPanel,
         ResignButton,
+        ModeControlPanel,
     },
     setup() {
         const boardStore = useBoardStore();
@@ -76,6 +83,7 @@ export default defineComponent({
         const showPromotionModal = ref(false);
         const pendingMove = ref<{x: number, y: number} | null>(null);
         const selectedHandPiece = ref<string | undefined>(undefined);
+        const isPlayMode = computed(() => boardStore.mode === 'play');
 
         const getStepNumber = computed(() => boardStore.stepNumber);
 
@@ -172,6 +180,7 @@ export default defineComponent({
         };
 
         const handlePieceClick = (piece: string) => {
+            if (!isPlayMode.value) return;
             // 先手の場合は大文字の駒のみ、後手の場合は小文字の駒のみ選択可能
             const isUpperCase = piece === piece.toUpperCase();
             if ((boardStore.activePlayer === 'b' && !isUpperCase) || 
@@ -192,6 +201,7 @@ export default defineComponent({
         };
 
         const handleCellClick = async (x: number, y: number) => {
+            if (!isPlayMode.value) return;
             try {
                 if (!boardStore.game?.id || !boardStore.board_id) {
                     await initializeGame();
@@ -348,6 +358,7 @@ export default defineComponent({
             startGame,
             canResign,
             handleResignComplete,
+            isPlayMode,
         };
     },
 });
@@ -388,5 +399,13 @@ export default defineComponent({
     height: 400px;
     margin: 0;
     order: 3;
+}
+
+/* モードバナー用スタイル */
+.mode-banner {
+    text-align: center;
+    padding: 4px;
+    background-color: #f0f0f0;
+    margin-bottom: 8px;
 }
 </style>

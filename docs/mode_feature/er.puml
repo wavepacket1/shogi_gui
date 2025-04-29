@@ -26,17 +26,7 @@ entity "board_histories" {
   updated_at : datetime
 }
 
-entity "comments" {
-  + id : integer <<PK>>
-  --
-  # board_history_id : integer <<FK>>
-  content : text
-  created_at : datetime
-  updated_at : datetime
-}
-
 games ||--o{ board_histories
-board_histories ||--o{ comments
 
 note bottom of games
   mode in ('play', 'edit', 'study')
@@ -46,10 +36,6 @@ end note
 note bottom of board_histories
   複数の分岐をサポート
   編集履歴を保持
-end note
-
-note bottom of comments
-  指し手ごとのコメントを保持
 end note
 
 @enduml

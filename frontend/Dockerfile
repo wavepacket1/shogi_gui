@@ -11,8 +11,6 @@ RUN npm install
 
 # その他のファイルをコピー
 COPY . .
-RUN apt-get update -qq && apt-get install -y dos2unix
-RUN dos2unix start.sh
 
 # ポートの公開
 EXPOSE 5173
