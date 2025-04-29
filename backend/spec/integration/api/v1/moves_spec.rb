@@ -43,8 +43,10 @@ RSpec.describe 'API::V1::Moves', type: :request do
                         }
                     }
                 
-                let(:game_id) { 1 }
-                let(:board_id) { 123 }
+                let(:game) { create(:game, status: 'active', mode: 'play') }
+                let(:board) { create(:board, game: game, sfen: Board.default_sfen) }
+                let(:game_id) { game.id }
+                let(:board_id) { board.id }
                 let(:move) { { move: '7g7f' }}
 
                 run_test!
@@ -59,8 +61,10 @@ RSpec.describe 'API::V1::Moves', type: :request do
                         sfen: { type: :string, example: 'lnsgkgsnl/1r5b1/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL b - 0' }
                     }
 
-                let(:game_id) { 1 }
-                let(:board_id) { 123 }
+                let(:game) { create(:game, status: 'active', mode: 'play') }
+                let(:board) { create(:board, game: game, sfen: Board.default_sfen) }
+                let(:game_id) { game.id }
+                let(:board_id) { board.id }
                 let(:move) { { move: 'invalid_move' }}
 
                 run_test!

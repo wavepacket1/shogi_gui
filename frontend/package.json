@@ -6,15 +6,19 @@
   "scripts": {
     "dev": "node server.mjs",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "playwright test",
+    "test:ui": "playwright test --ui"
   },
   "dependencies": {
-    "vue": "^3.2.47",
-    "pinia": "^2.0.32"
+    "pinia": "^2.0.32",
+    "vue": "^3.2.47"
   },
   "devDependencies": {
-    "vite": "^4.4.0",
+    "@playwright/test": "^1.52.0",
+    "@types/node": "^22.15.3",
     "@vitejs/plugin-vue": "^4.0.0",
-    "typescript": "^4.9.5"
+    "typescript": "^4.9.5",
+    "vite": "^4.4.0"
   }
 }

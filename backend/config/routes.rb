@@ -14,6 +14,7 @@ Rails.application.routes.draw do
       resources :games, only: [:create, :show] do
         member do
           post :resign
+          post :mode
         end
       end
 
@@ -25,6 +26,10 @@ Rails.application.routes.draw do
       get '/games/:game_id/board_histories/branches', to: 'board_histories#branches'
       post '/games/:game_id/navigate_to/:move_number', to: 'board_histories#navigate_to'
       post '/games/:game_id/switch_branch/:branch_name', to: 'board_histories#switch_branch'
+      post '/games/:game_id/moves/:move_number/comments', to: 'comments#create'
+      get '/games/:game_id/moves/:move_number/comments', to: 'comments#index'
+      patch '/games/:game_id/moves/:move_number/comments/:id', to: 'comments#update'
+      delete '/games/:game_id/moves/:move_number/comments/:id', to: 'comments#destroy'
     end
   end
 end
