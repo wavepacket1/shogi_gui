@@ -180,6 +180,4 @@ class BoardHistory < ApplicationRecord
       else piece_type
       end
     end
-
-    has_many :comments, dependent: :destroy
   end

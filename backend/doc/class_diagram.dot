@@ -1,0 +1,72 @@
+digraph G {
+  node [shape=box];
+  rankdir=TB;
+  splines=ortho;
+  nodesep=0.5;
+  ranksep=0.5;
+  "Game" [
+    label="Game"
+  ];
+  "Move" [
+    label="Move"
+  ];
+  "Board" [
+    label="Board"
+  ];
+  "Piece" [
+    label="Piece"
+  ];
+  "Pieces::B" [
+    label="B"
+  ];
+  "Pieces::G" [
+    label="G"
+  ];
+  "Pieces::K" [
+    label="K"
+  ];
+  "Pieces::L" [
+    label="L"
+  ];
+  "Pieces::N" [
+    label="N"
+  ];
+  "Pieces::P" [
+    label="P"
+  ];
+  "Pieces::R" [
+    label="R"
+  ];
+  "Pieces::S" [
+    label="S"
+  ];
+  "Validator" [
+    label="Validator"
+  ];
+  "ApplicationRecord" [
+    label="ApplicationRecord"
+  ];
+  "Parser::SfenParser" [
+    label="SfenParser"
+  ];
+  "ApplicationRecord" -> "Game" [
+    arrowhead=empty,
+    penwidth=2
+  ];
+  "ApplicationRecord" -> "Move" [
+    arrowhead=empty,
+    penwidth=2
+  ];
+  "ApplicationRecord" -> "Board" [
+    arrowhead=empty,
+    penwidth=2
+  ];
+  "ApplicationRecord" -> "Piece" [
+    arrowhead=empty,
+    penwidth=2
+  ];
+  "ActiveRecord::Base" -> "ApplicationRecord" [
+    arrowhead=empty,
+    penwidth=2
+  ];
+}

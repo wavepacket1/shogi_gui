@@ -3,6 +3,7 @@ description:
 globs: 
 alwaysApply: true
 ---
+
 ---
 description: Apply this rule to the entire repository
 globs: 
@@ -129,12 +130,3 @@ backend\db\schema.rb
 @todo.md
 
 以上の指示に従い、確実で質の高い実装を行います。指示された範囲内でのみ処理を行い、不要な追加実装は行いません。不明点や重要な判断が必要な場合は、必ず確認を取ります。
-
----
-# 追加ルール: system_spec.mdの優先
-description: system_spec.md の内容を最優先し、他の設計書はその仕様に準拠すること
-globs:
-  - "docs/mode_feature/**"
-alwaysApply: true
----
-設計書を参照・作成する際は、必ず当該機能の system_spec（例: `docs/<機能名>/system_spec/system_spec.md`）の内容を最優先で遵守し、他の設計書はすべてこの仕様に沿う形で修正・作成してください。
