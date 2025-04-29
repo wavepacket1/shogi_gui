@@ -42,7 +42,7 @@
                 </div>
             </div>
             
-            <!-- 棋譜パネルを追加 -->
+            <!-- 棋譜パネルを将棋盤の右側に配置 -->
             <div v-if="boardStore.game" class="move-history-container">
                 <MoveHistoryPanel :game-id="boardStore.game.id" />
             </div>
@@ -369,12 +369,13 @@ export default defineComponent({
     display: flex;
     flex-direction: row;
     align-items: flex-start;
-    justify-content: center;
-    gap: 20px;
+    justify-content: flex-start;
+    gap: 30px;
     flex-wrap: wrap;
     width: 100%;
     max-width: 1200px;
     margin: 0 auto;
+    padding: 0 15px;
 }
 
 .board-column {
@@ -383,6 +384,7 @@ export default defineComponent({
     align-items: center;
     width: 100%;
     max-width: 500px;
+    flex-shrink: 0;
 }
 
 .board-area {
@@ -447,15 +449,59 @@ export default defineComponent({
 
 /* 履歴パネル用のスタイル */
 .move-history-container {
-    width: 100%;
-    max-width: 300px;
-    height: auto;
+    flex: 0 0 auto;
+    width: 280px;
+    height: 400px;
     display: flex;
     flex-direction: column;
-    align-self: stretch;
+    overflow: hidden;
+    align-self: flex-start;
+    margin-top: 75px; /* game-infoの高さに合わせる */
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* MoveHistoryPanelに影響を与えるスタイルを深い選択子で追加 */
+.move-history-container :deep(.move-history-panel) {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    border: none;
+    box-shadow: none;
+}
+
+.move-history-container :deep(.panel-header) {
+    padding: 6px 10px;
+}
+
+.move-history-container :deep(.move-notation) {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.move-history-container :deep(.moves-container) {
+    padding: 6px;
+}
+
+.move-history-container :deep(.move-item) {
+    padding: 4px 6px;
+    margin-bottom: 3px;
 }
 
 /* レスポンシブ対応 */
+@media (max-width: 992px) {
+    .shogi-container {
+        justify-content: center;
+    }
+    
+    .move-history-container {
+        width: 320px;
+        margin-top: 20px;
+    }
+}
+
 @media (max-width: 768px) {
     .shogi-container {
         flex-direction: column;
@@ -468,6 +514,8 @@ export default defineComponent({
     
     .move-history-container {
         max-width: 100%;
+        min-width: unset;
+        width: 100%;
         height: 300px;
         margin-top: 20px;
     }
