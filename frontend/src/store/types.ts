@@ -3,10 +3,17 @@ export enum Player {
     White = 'w'
 }
 
+export enum GameMode {
+    PLAY = 'play',
+    EDIT = 'edit',
+    STUDY = 'study'
+}
+
 export interface Game {
     id: number;
     name?: string;
     status: string;
+    mode?: GameMode;
     board_id: number;
 }
 
