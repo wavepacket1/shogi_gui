@@ -7,17 +7,27 @@ RSpec.describe 'Comments API', type: :request do
     post 'コメントを追加する' do
       tags 'Comments'
       produces 'application/json'
-      parameter name: :game_id, in: :path, type: :integer
-      parameter name: :move_number, in: :path, type: :integer
+      consumes 'application/json'
+      parameter name: :game_id, in: :path, type: :integer, description: 'ゲームID'
+      parameter name: :move_number, in: :path, type: :integer, description: '手数'
       parameter name: :comment, in: :body, schema: {
         type: :object,
         properties: {
-          content: { type: :string }
+          content: { type: :string, description: 'コメント内容', example: 'このあたりの手が難しい' }
         },
         required: ['content']
       }
 
       response '201', 'コメント作成成功' do
+        schema type: :object,
+               properties: {
+                 id: { type: :integer, example: 42 },
+                 content: { type: :string, example: 'テストコメント' },
+                 board_history_id: { type: :integer, example: 123 },
+                 created_at: { type: :string, format: 'date-time', example: '2025-04-29T10:00:00.000Z' },
+                 updated_at: { type: :string, format: 'date-time', example: '2025-04-29T10:00:00.000Z' }
+               }
+
         let(:game) { create(:game, status: 'active') }
         let(:game_id) { game.id }
         let(:move_number) { 0 }
@@ -35,6 +45,11 @@ RSpec.describe 'Comments API', type: :request do
       end
 
       response '404', '局面が見つからない' do
+        schema type: :object,
+               properties: {
+                 error: { type: :string, example: '指定された局面が見つかりません' }
+               }
+
         let(:game_id) { 0 }
         let(:move_number) { 0 }
         let(:comment) { { content: 'テストコメント' } }
@@ -43,6 +58,11 @@ RSpec.describe 'Comments API', type: :request do
       end
 
       response '422', 'バリデーションエラー' do
+        schema type: :object,
+               properties: {
+                 error: { type: :string, example: 'コメント内容を入力してください' }
+               }
+
         let(:game) { create(:game, status: 'active') }
         let(:game_id) { game.id }
         let(:move_number) { 0 }
@@ -60,10 +80,22 @@ RSpec.describe 'Comments API', type: :request do
     get 'コメント一覧を取得する' do
       tags 'Comments'
       produces 'application/json'
-      parameter name: :game_id, in: :path, type: :integer
-      parameter name: :move_number, in: :path, type: :integer
+      parameter name: :game_id, in: :path, type: :integer, description: 'ゲームID'
+      parameter name: :move_number, in: :path, type: :integer, description: '手数'
 
       response '200', 'コメント一覧取得成功' do
+        schema type: :array,
+               items: {
+                 type: :object,
+                 properties: {
+                   id: { type: :integer, example: 42 },
+                   content: { type: :string, example: 'テストコメント' },
+                   board_history_id: { type: :integer, example: 123 },
+                   created_at: { type: :string, format: 'date-time', example: '2025-04-29T10:00:00.000Z' },
+                   updated_at: { type: :string, format: 'date-time', example: '2025-04-29T10:00:00.000Z' }
+                 }
+               }
+
         let(:game) { create(:game, status: 'active') }
         let(:game_id) { game.id }
         let(:move_number) { 0 }
@@ -84,6 +116,11 @@ RSpec.describe 'Comments API', type: :request do
       end
 
       response '404', '局面が見つからない' do
+        schema type: :object,
+               properties: {
+                 error: { type: :string, example: '指定された局面が見つかりません' }
+               }
+
         let(:game_id) { 0 }
         let(:move_number) { 0 }
 
@@ -96,25 +133,35 @@ RSpec.describe 'Comments API', type: :request do
     patch 'コメントを更新する' do
       tags 'Comments'
       produces 'application/json'
-      parameter name: :game_id, in: :path, type: :integer
-      parameter name: :move_number, in: :path, type: :integer
-      parameter name: :id, in: :path, type: :integer
+      consumes 'application/json'
+      parameter name: :game_id, in: :path, type: :integer, description: 'ゲームID'
+      parameter name: :move_number, in: :path, type: :integer, description: '手数'
+      parameter name: :id, in: :path, type: :integer, description: 'コメントID'
       parameter name: :comment, in: :body, schema: {
         type: :object,
         properties: {
-          content: { type: :string }
+          content: { type: :string, description: '更新後のコメント内容', example: '修正後のコメント' }
         },
         required: ['content']
       }
 
       response '200', 'コメント更新成功' do
+        schema type: :object,
+               properties: {
+                 id: { type: :integer, example: 42 },
+                 content: { type: :string, example: '更新後のコメント' },
+                 board_history_id: { type: :integer, example: 123 },
+                 created_at: { type: :string, format: 'date-time', example: '2025-04-29T10:00:00.000Z' },
+                 updated_at: { type: :string, format: 'date-time', example: '2025-04-29T10:00:00.000Z' }
+               }
+
         let(:game) { create(:game, status: 'active') }
         let(:game_id) { game.id }
         let(:move_number) { 0 }
         let(:board_history) { create(:board_history, game: game, move_number: move_number) }
-        let(:comment) { create(:comment, board_history: board_history, content: '元のコメント') }
-        let(:id) { comment.id }
-        let(:comment_params) { { content: '更新後のコメント' } }
+        let(:comment_obj) { create(:comment, board_history: board_history, content: '元のコメント') }
+        let(:id) { comment_obj.id }
+        let(:comment) { { content: '更新後のコメント' } }
 
         before do
           board_history # レコードを作成
@@ -127,12 +174,17 @@ RSpec.describe 'Comments API', type: :request do
       end
 
       response '404', 'コメントが見つからない' do
+        schema type: :object,
+               properties: {
+                 error: { type: :string, example: 'コメントが見つかりません' }
+               }
+
         let(:game) { create(:game, status: 'active') }
         let(:game_id) { game.id }
         let(:move_number) { 0 }
         let(:board_history) { create(:board_history, game: game, move_number: move_number) }
         let(:id) { 0 }
-        let(:comment_params) { { content: '更新後のコメント' } }
+        let(:comment) { { content: '更新後のコメント' } }
 
         before do
           board_history # レコードを作成
@@ -145,30 +197,41 @@ RSpec.describe 'Comments API', type: :request do
     delete 'コメントを削除する' do
       tags 'Comments'
       produces 'application/json'
-      parameter name: :game_id, in: :path, type: :integer
-      parameter name: :move_number, in: :path, type: :integer
-      parameter name: :id, in: :path, type: :integer
+      parameter name: :game_id, in: :path, type: :integer, description: 'ゲームID'
+      parameter name: :move_number, in: :path, type: :integer, description: '手数'
+      parameter name: :id, in: :path, type: :integer, description: 'コメントID'
 
       response '200', 'コメント削除成功' do
+        schema type: :object,
+               properties: {
+                 message: { type: :string, example: 'コメントを削除しました' }
+               }
+
         let(:game) { create(:game, status: 'active') }
         let(:game_id) { game.id }
         let(:move_number) { 0 }
         let(:board_history) { create(:board_history, game: game, move_number: move_number) }
-        let(:comment) { create(:comment, board_history: board_history, content: '削除するコメント') }
-        let(:id) { comment.id }
+        let(:comment_obj) { create(:comment, board_history: board_history, content: '削除対象のコメント') }
+        let(:id) { comment_obj.id }
 
         before do
           board_history # レコードを作成
+          comment_obj   # コメントを作成
         end
 
         run_test! do |response|
           data = JSON.parse(response.body)
           expect(data['message']).to eq('コメントを削除しました')
-          expect(Comment.find_by(id: id)).to be_nil
+          expect(Comment.exists?(id)).to be false
         end
       end
 
       response '404', 'コメントが見つからない' do
+        schema type: :object,
+               properties: {
+                 error: { type: :string, example: 'コメントが見つかりません' }
+               }
+
         let(:game) { create(:game, status: 'active') }
         let(:game_id) { game.id }
         let(:move_number) { 0 }

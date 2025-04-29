@@ -147,7 +147,7 @@ module Api
       end
 
       def game_params
-        params.require(:game).permit(:status)
+        params.require(:game).permit(:status, :mode)
       end
     end
   end

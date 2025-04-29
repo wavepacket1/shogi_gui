@@ -50,6 +50,10 @@ ActiveRecord::Schema[7.0].define(version: 2025_04_14_010000) do
     t.string "winner"
     t.datetime "ended_at"
     t.string "mode", default: "play", null: false
+    t.bigint "black_player_id"
+    t.bigint "white_player_id"
+    t.index ["black_player_id"], name: "index_games_on_black_player_id"
+    t.index ["white_player_id"], name: "index_games_on_white_player_id"
   end
 
   create_table "pieces", force: :cascade do |t|
@@ -92,5 +96,7 @@ ActiveRecord::Schema[7.0].define(version: 2025_04_14_010000) do
   add_foreign_key "board_histories", "games"
   add_foreign_key "boards", "games"
   add_foreign_key "comments", "board_histories"
+  add_foreign_key "games", "users", column: "black_player_id"
+  add_foreign_key "games", "users", column: "white_player_id"
   add_foreign_key "pieces", "boards"
 end
