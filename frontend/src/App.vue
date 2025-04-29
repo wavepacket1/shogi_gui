@@ -1,7 +1,9 @@
 <template>
   <div id="app">
-    <!-- <MenuBar /> -->
-    <ShogiBoard />
+    <MenuBar />
+    <div class="main-content">
+      <ShogiBoard />
+    </div>
   </div>
 </template>
 
@@ -15,16 +17,20 @@ export default defineComponent({
   components: {
     ShogiBoard,
     MenuBar,
-  },
+  }
 });
 </script>
 
 <style>
 #app {
   text-align: center;
-  margin-top: 50px;
   user-select: none;        
   -webkit-user-select: none;
+}
+
+.main-content {
+  margin-top: 60px; /* MenuBarの高さ + 余白 */
+  padding: 20px;
 }
 
 .game-controls {

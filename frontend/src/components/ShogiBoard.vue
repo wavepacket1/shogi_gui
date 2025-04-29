@@ -1,54 +1,58 @@
 <template>
-    <div class="game-info">
-        <button @click="startGame">対局開始</button> 
-        <button @click="entering_king_declaration">入玉宣言</button>
-        <ResignButton
-            v-if="boardStore.game?.id"
-            :game-id="boardStore.game.id"
-            :disabled="!canResign"
-            @resign-complete="handleResignComplete"
-            class="mr-2"
+    <div class="wrapper">
+        <div class="shogi-container">
+            <div class="board-column">
+                <div class="game-info">
+                    <div class="control-panel">
+                        <button @click="startGame">対局開始</button> 
+                        <button @click="entering_king_declaration">入玉宣言</button>
+                        <ResignButton
+                            v-if="boardStore.game?.id"
+                            :game-id="boardStore.game.id"
+                            :disabled="!canResign"
+                            @resign-complete="handleResignComplete"
+                        />
+                    </div>
+                    <div class="info">手数: {{ getStepNumber }} &nbsp;|&nbsp; 手番: {{ getOwner }}</div>
+                    <div>{{ getGameState }}</div>
+                </div>
+
+                <div class="board-area">
+                    <PiecesInHand 
+                        class="pieces-in-hand-top" 
+                        :pieces="piecesInHandW"
+                        :isGote="true"
+                        :selectedPiece="selectedHandPiece"
+                        @piece-click="handlePieceClick"
+                    />
+
+                    <ShogiBoardGrid 
+                        :board="boardStore.shogiData.board"
+                        :selectedCell="boardStore.selectedCell"
+                        @cell-click="handleCellClick"
+                    />
+
+                    <PiecesInHand 
+                        class="pieces-in-hand-bottom" 
+                        :pieces="piecesInHandB"
+                        :isGote="false"
+                        :selectedPiece="selectedHandPiece"
+                        @piece-click="handlePieceClick"
+                    />
+                </div>
+            </div>
+            
+            <!-- 棋譜パネルを追加 -->
+            <div v-if="boardStore.game" class="move-history-container">
+                <MoveHistoryPanel :game-id="boardStore.game.id" />
+            </div>
+        </div>
+
+        <PromotionModal 
+            :is-open="showPromotionModal"
+            @promote="handlePromotion"
         />
-        <div>手数 {{ getStepNumber }}</div>
-        <div>手番 {{ getOwner }}</div>
-        <div>{{ getGameState }}</div>
     </div>
-
-    <div class="shogi-container">
-        <div class="board-area">
-            <PiecesInHand 
-                class="pieces-in-hand-top" 
-                :pieces="piecesInHandW"
-                :isGote="true"
-                :selectedPiece="selectedHandPiece"
-                @piece-click="handlePieceClick"
-            />
-
-            <ShogiBoardGrid 
-                :board="boardStore.shogiData.board"
-                :selectedCell="boardStore.selectedCell"
-                @cell-click="handleCellClick"
-            />
-
-            <PiecesInHand 
-                class="pieces-in-hand-bottom" 
-                :pieces="piecesInHandB"
-                :isGote="false"
-                :selectedPiece="selectedHandPiece"
-                @piece-click="handlePieceClick"
-            />
-        </div>
-        
-        <!-- 棋譜パネルを追加 -->
-        <div v-if="boardStore.game" class="move-history-container">
-            <MoveHistoryPanel :game-id="boardStore.game.id" />
-        </div>
-    </div>
-
-    <PromotionModal 
-        :is-open="showPromotionModal"
-        @promote="handlePromotion"
-    />
 </template>
 
 <script lang="ts">
@@ -354,6 +358,13 @@ export default defineComponent({
 </script>
 
 <style scoped>
+.wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+}
+
 .shogi-container {
     display: flex;
     flex-direction: row;
@@ -361,32 +372,121 @@ export default defineComponent({
     justify-content: center;
     gap: 20px;
     flex-wrap: wrap;
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.board-column {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    max-width: 500px;
 }
 
 .board-area {
     display: flex;
     flex-direction: column;
     align-items: center;
-}
-
-.pieces-in-hand-top {
-    order: 0;
-}
-
-.pieces-in-hand-bottom {
-    order: 2;
+    width: 100%;
 }
 
 .game-info {
     text-align: center;
     margin-bottom: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: center;
+    width: 100%;
+}
+
+.pieces-in-hand-top {
+    order: 0;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.pieces-in-hand-bottom {
+    order: 2;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.control-panel {
+    display: flex;
+    flex-direction: row;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: center;
+    width: 100%;
+}
+
+.game-info button, .game-info :deep(button) {
+    padding: 6px 12px;
+    border: none;
+    border-radius: 4px;
+    background: #007acc;
+    color: #fff;
+    cursor: pointer;
+    min-width: 80px;
+    font-size: 14px;
+    text-align: center;
+}
+
+.info {
+    font-size: 14px;
+    text-align: left;
 }
 
 /* 履歴パネル用のスタイル */
 .move-history-container {
-    width: 200px;
-    height: 400px;
-    margin: 0;
-    order: 3;
+    width: 100%;
+    max-width: 300px;
+    height: auto;
+    display: flex;
+    flex-direction: column;
+    align-self: stretch;
+}
+
+/* レスポンシブ対応 */
+@media (max-width: 768px) {
+    .shogi-container {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .board-column, .board-area {
+        max-width: 100%;
+    }
+    
+    .move-history-container {
+        max-width: 100%;
+        height: 300px;
+        margin-top: 20px;
+    }
+    
+    .game-info button {
+        font-size: 12px;
+        padding: 5px 10px;
+    }
+}
+
+@media (max-width: 480px) {
+    .control-panel {
+        flex-direction: column;
+        gap: 5px;
+    }
+    
+    .game-info button {
+        width: 100%;
+        margin: 2px 0;
+    }
 }
 </style>

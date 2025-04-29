@@ -42,16 +42,22 @@ export interface FullRequestParams extends Omit<RequestInit, "body"> {
   cancelToken?: CancelToken;
 }
 
-export type RequestParams = Omit<FullRequestParams, "body" | "method" | "query" | "path">;
+export type RequestParams = Omit<
+  FullRequestParams,
+  "body" | "method" | "query" | "path"
+>;
 
 export interface ApiConfig<SecurityDataType = unknown> {
   baseUrl?: string;
   baseApiParams?: Omit<RequestParams, "baseUrl" | "cancelToken" | "signal">;
-  securityWorker?: (securityData: SecurityDataType | null) => Promise<RequestParams | void> | RequestParams | void;
+  securityWorker?: (
+    securityData: SecurityDataType | null,
+  ) => Promise<RequestParams | void> | RequestParams | void;
   customFetch?: typeof fetch;
 }
 
-export interface HttpResponse<D extends unknown, E extends unknown = unknown> extends Response {
+export interface HttpResponse<D extends unknown, E extends unknown = unknown>
+  extends Response {
   data: D;
   error: E;
 }
@@ -70,7 +76,8 @@ export class HttpClient<SecurityDataType = unknown> {
   private securityData: SecurityDataType | null = null;
   private securityWorker?: ApiConfig<SecurityDataType>["securityWorker"];
   private abortControllers = new Map<CancelToken, AbortController>();
-  private customFetch = (...fetchParams: Parameters<typeof fetch>) => fetch(...fetchParams);
+  private customFetch = (...fetchParams: Parameters<typeof fetch>) =>
+    fetch(...fetchParams);
 
   private baseApiParams: RequestParams = {
     credentials: "same-origin",
@@ -103,9 +110,15 @@ export class HttpClient<SecurityDataType = unknown> {
 
   protected toQueryString(rawQuery?: QueryParamsType): string {
     const query = rawQuery || {};
-    const keys = Object.keys(query).filter((key) => "undefined" !== typeof query[key]);
+    const keys = Object.keys(query).filter(
+      (key) => "undefined" !== typeof query[key],
+    );
     return keys
-      .map((key) => (Array.isArray(query[key]) ? this.addArrayQueryParam(query, key) : this.addQueryParam(query, key)))
+      .map((key) =>
+        Array.isArray(query[key])
+          ? this.addArrayQueryParam(query, key)
+          : this.addQueryParam(query, key),
+      )
       .join("&");
   }
 
@@ -116,8 +129,13 @@ export class HttpClient<SecurityDataType = unknown> {
 
   private contentFormatters: Record<ContentType, (input: any) => any> = {
     [ContentType.Json]: (input: any) =>
-      input !== null && (typeof input === "object" || typeof input === "string") ? JSON.stringify(input) : input,
-    [ContentType.Text]: (input: any) => (input !== null && typeof input !== "string" ? JSON.stringify(input) : input),
+      input !== null && (typeof input === "object" || typeof input === "string")
+        ? JSON.stringify(input)
+        : input,
+    [ContentType.Text]: (input: any) =>
+      input !== null && typeof input !== "string"
+        ? JSON.stringify(input)
+        : input,
     [ContentType.FormData]: (input: any) =>
       Object.keys(input || {}).reduce((formData, key) => {
         const property = input[key];
@@ -134,7 +152,10 @@ export class HttpClient<SecurityDataType = unknown> {
     [ContentType.UrlEncoded]: (input: any) => this.toQueryString(input),
   };
 
-  protected mergeRequestParams(params1: RequestParams, params2?: RequestParams): RequestParams {
+  protected mergeRequestParams(
+    params1: RequestParams,
+    params2?: RequestParams,
+  ): RequestParams {
     return {
       ...this.baseApiParams,
       ...params1,
@@ -147,7 +168,9 @@ export class HttpClient<SecurityDataType = unknown> {
     };
   }
 
-  protected createAbortSignal = (cancelToken: CancelToken): AbortSignal | undefined => {
+  protected createAbortSignal = (
+    cancelToken: CancelToken,
+  ): AbortSignal | undefined => {
     if (this.abortControllers.has(cancelToken)) {
       const abortController = this.abortControllers.get(cancelToken);
       if (abortController) {
@@ -191,15 +214,26 @@ export class HttpClient<SecurityDataType = unknown> {
     const payloadFormatter = this.contentFormatters[type || ContentType.Json];
     const responseFormat = format || requestParams.format;
 
-    return this.customFetch(`${baseUrl || this.baseUrl || ""}${path}${queryString ? `?${queryString}` : ""}`, {
-      ...requestParams,
-      headers: {
-        ...(requestParams.headers || {}),
-        ...(type && type !== ContentType.FormData ? { "Content-Type": type } : {}),
+    return this.customFetch(
+      `${baseUrl || this.baseUrl || ""}${path}${queryString ? `?${queryString}` : ""}`,
+      {
+        ...requestParams,
+        headers: {
+          ...(requestParams.headers || {}),
+          ...(type && type !== ContentType.FormData
+            ? { "Content-Type": type }
+            : {}),
+        },
+        signal:
+          (cancelToken
+            ? this.createAbortSignal(cancelToken)
+            : requestParams.signal) || null,
+        body:
+          typeof body === "undefined" || body === null
+            ? null
+            : payloadFormatter(body),
       },
-      signal: (cancelToken ? this.createAbortSignal(cancelToken) : requestParams.signal) || null,
-      body: typeof body === "undefined" || body === null ? null : payloadFormatter(body),
-    }).then(async (response) => {
+    ).then(async (response) => {
       const r = response.clone() as HttpResponse<T, E>;
       r.data = null as unknown as T;
       r.error = null as unknown as E;
@@ -237,7 +271,9 @@ export class HttpClient<SecurityDataType = unknown> {
  *
  * 将棋アプリケーションのAPI仕様
  */
-export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDataType> {
+export class Api<
+  SecurityDataType extends unknown,
+> extends HttpClient<SecurityDataType> {
   api = {
     /**
      * No description
@@ -291,7 +327,10 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @summary 分岐リストの取得
      * @request GET:/api/v1/games/{game_id}/board_histories/branches
      */
-    v1GamesBoardHistoriesBranchesList: (gameId: number, params: RequestParams = {}) =>
+    v1GamesBoardHistoriesBranchesList: (
+      gameId: number,
+      params: RequestParams = {},
+    ) =>
       this.request<
         {
           branches?: string[];
@@ -355,7 +394,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @summary 分岐切り替え
      * @request POST:/api/v1/games/{game_id}/switch_branch/{branch_name}
      */
-    v1GamesSwitchBranchCreate: (gameId: number, branchName: string, params: RequestParams = {}) =>
+    v1GamesSwitchBranchCreate: (
+      gameId: number,
+      branchName: string,
+      params: RequestParams = {},
+    ) =>
       this.request<
         {
           game_id?: number;
@@ -464,7 +507,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @summary 入玉宣言を行う
      * @request POST:/api/v1/games/{game_id}/boards/{board_id}/nyugyoku_declaration
      */
-    v1GamesBoardsNyugyokuDeclarationCreate: (gameId: number, boardId: number, params: RequestParams = {}) =>
+    v1GamesBoardsNyugyokuDeclarationCreate: (
+      gameId: number,
+      boardId: number,
+      params: RequestParams = {},
+    ) =>
       this.request<
         {
           status: "success" | "failed";
@@ -578,6 +625,235 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
         path: `/api/v1/games/${gameId}/boards/${boardId}/move`,
         method: "PATCH",
         query: query,
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Comments
+     * @name V1GamesMovesCommentsCreate
+     * @summary コメントを追加する
+     * @request POST:/api/v1/games/{game_id}/moves/{move_number}/comments
+     */
+    v1GamesMovesCommentsCreate: (
+      gameId: number,
+      moveNumber: number,
+      data: {
+        /**
+         * コメント内容
+         * @example "このあたりの手が難しい"
+         */
+        content: string;
+      },
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        {
+          /** @example 42 */
+          id?: number;
+          /** @example "テストコメント" */
+          content?: string;
+          /** @example 123 */
+          board_history_id?: number;
+          /**
+           * @format date-time
+           * @example "2025-04-29T10:00:00.000Z"
+           */
+          created_at?: string;
+          /**
+           * @format date-time
+           * @example "2025-04-29T10:00:00.000Z"
+           */
+          updated_at?: string;
+        },
+        | {
+            /** @example "指定された局面が見つかりません" */
+            error?: string;
+          }
+        | {
+            /** @example "コメント内容を入力してください" */
+            error?: string;
+          }
+      >({
+        path: `/api/v1/games/${gameId}/moves/${moveNumber}/comments`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Comments
+     * @name V1GamesMovesCommentsList
+     * @summary コメント一覧を取得する
+     * @request GET:/api/v1/games/{game_id}/moves/{move_number}/comments
+     */
+    v1GamesMovesCommentsList: (
+      gameId: number,
+      moveNumber: number,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        {
+          /** @example 42 */
+          id?: number;
+          /** @example "テストコメント" */
+          content?: string;
+          /** @example 123 */
+          board_history_id?: number;
+          /**
+           * @format date-time
+           * @example "2025-04-29T10:00:00.000Z"
+           */
+          created_at?: string;
+          /**
+           * @format date-time
+           * @example "2025-04-29T10:00:00.000Z"
+           */
+          updated_at?: string;
+        }[],
+        {
+          /** @example "指定された局面が見つかりません" */
+          error?: string;
+        }
+      >({
+        path: `/api/v1/games/${gameId}/moves/${moveNumber}/comments`,
+        method: "GET",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Comments
+     * @name V1GamesMovesCommentsPartialUpdate
+     * @summary コメントを更新する
+     * @request PATCH:/api/v1/games/{game_id}/moves/{move_number}/comments/{id}
+     */
+    v1GamesMovesCommentsPartialUpdate: (
+      gameId: number,
+      moveNumber: number,
+      id: number,
+      data: {
+        /**
+         * 更新後のコメント内容
+         * @example "修正後のコメント"
+         */
+        content: string;
+      },
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        {
+          /** @example 42 */
+          id?: number;
+          /** @example "更新後のコメント" */
+          content?: string;
+          /** @example 123 */
+          board_history_id?: number;
+          /**
+           * @format date-time
+           * @example "2025-04-29T10:00:00.000Z"
+           */
+          created_at?: string;
+          /**
+           * @format date-time
+           * @example "2025-04-29T10:00:00.000Z"
+           */
+          updated_at?: string;
+        },
+        {
+          /** @example "コメントが見つかりません" */
+          error?: string;
+        }
+      >({
+        path: `/api/v1/games/${gameId}/moves/${moveNumber}/comments/${id}`,
+        method: "PATCH",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Comments
+     * @name V1GamesMovesCommentsDelete
+     * @summary コメントを削除する
+     * @request DELETE:/api/v1/games/{game_id}/moves/{move_number}/comments/{id}
+     */
+    v1GamesMovesCommentsDelete: (
+      gameId: number,
+      moveNumber: number,
+      id: number,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        {
+          /** @example "コメントを削除しました" */
+          message?: string;
+        },
+        {
+          /** @example "コメントが見つかりません" */
+          error?: string;
+        }
+      >({
+        path: `/api/v1/games/${gameId}/moves/${moveNumber}/comments/${id}`,
+        method: "DELETE",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Games
+     * @name V1GamesModeCreate
+     * @summary ゲームモードを変更する
+     * @request POST:/api/v1/games/{id}/mode
+     */
+    v1GamesModeCreate: (
+      id: number,
+      data: {
+        /** 変更後のゲームモード */
+        mode: "play" | "edit" | "study";
+      },
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        {
+          /** @example 123 */
+          game_id?: number;
+          /** @example "edit" */
+          mode?: "play" | "edit" | "study";
+          /** @example "active" */
+          status?: string;
+          /**
+           * @format date-time
+           * @example "2025-04-29T10:00:00.000Z"
+           */
+          updated_at?: string;
+        },
+        | {
+            /** @example "無効なモードです" */
+            error?: string;
+          }
+        | {
+            /** @example "ゲームが見つかりません" */
+            error?: string;
+          }
+      >({
+        path: `/api/v1/games/${id}/mode`,
+        method: "POST",
         body: data,
         type: ContentType.Json,
         format: "json",
