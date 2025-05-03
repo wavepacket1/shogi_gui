@@ -17,12 +17,19 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0  # 全履歴をフェッチして正確なコミット情報を取得
 
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v2
 
     - name: Build and run tests with docker-compose
       run: |
+        # Dockerイメージをビルド
         docker-compose build
+        
+        # データベースをセットアップ
         docker-compose run --rm backend bin/rails db:create db:schema:load
+        
+        # テストを実行
         docker-compose run --rm -e RAILS_ENV=test backend bundle exec rspec 
