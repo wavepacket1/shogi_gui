@@ -6,8 +6,8 @@ WORKDIR /app
 # package.jsonとpackage-lock.jsonをコピー
 COPY package*.json ./
 
-# 依存関係のインストール
-RUN npm install
+# 依存関係のインストール（クリーンインストール）
+RUN npm ci --legacy-peer-deps || npm install --no-package-lock
 
 # その他のファイルをコピー
 COPY . .

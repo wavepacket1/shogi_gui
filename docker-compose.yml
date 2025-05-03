@@ -32,6 +32,10 @@ services:
       - ./backend/swagger:/app/backend/swagger
     ports:
       - "5173:5173"
+    environment:
+      - NODE_ENV=development
+      - NODE_OPTIONS=--max-old-space-size=4096
+      - NPM_CONFIG_LEGACY_PEER_DEPS=true
     depends_on:
       - backend
 volumes:
