@@ -1,6 +1,7 @@
 name: Rails RSpec Tests (Direct)
 
 on:
+  workflow_dispatch:  # 手動実行を最初に配置
   push:
     branches: [ main, master ]
     paths:
@@ -11,7 +12,6 @@ on:
     paths:
       - 'backend/**'
       - '.github/workflows/rspec_direct.yml'
-  workflow_dispatch:
 
 jobs:
   test:
