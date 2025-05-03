@@ -1,14 +1,12 @@
 name: Rails RSpec Tests (Direct)
 
 on:
-  workflow_dispatch:  # 手動実行を最初に配置
+  workflow_dispatch:  # 手動実行トリガー
   push:
-    branches: [ main, master, feature/add_mode ]
     paths-ignore:
       - 'frontend/**'
       - '**.md'
   pull_request:
-    branches: [ main, master ]
     paths-ignore:
       - 'frontend/**'
       - '**.md'
