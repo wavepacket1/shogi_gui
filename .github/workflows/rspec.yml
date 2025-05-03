@@ -41,12 +41,22 @@ jobs:
 
     - name: Debug DB migration files
       run: |
-        cd backend
-        ls -la db/migrate/
+        ls -la
+        if [ -d "backend" ]; then
+          cd backend
+          ls -la db/migrate/
+        else
+          echo "Backend directory not found in current location"
+          ls -la
+        fi
 
     - name: Run tests
       run: |
-        cd /home/runner/work/shogi_app/shogi_app
+        # 現在のディレクトリを確認（デバッグ用）
+        pwd
+        ls -la
+        
+        # リポジトリのルートディレクトリから操作
         docker compose -f docker-compose.yml build
         docker compose -f docker-compose.yml run --rm backend bundle exec rails db:drop db:create db:schema:load
         docker compose -f docker-compose.yml run --rm backend bundle exec rspec
