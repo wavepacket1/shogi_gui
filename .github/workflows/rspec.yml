@@ -1,16 +1,17 @@
 name: Rails RSpec Tests
 
 on:
+  workflow_dispatch:  # 手動実行トリガーを追加
   push:
-    branches: [ main, master ]
-    paths:
-      - 'backend/**'
-      - '.github/workflows/rspec.yml'
+    branches: [ main, master, feature/add_mode ]
+    paths-ignore:
+      - 'frontend/**'
+      - '**.md'
   pull_request:
     branches: [ main, master ]
-    paths:
-      - 'backend/**'
-      - '.github/workflows/rspec.yml'
+    paths-ignore:
+      - 'frontend/**'
+      - '**.md'
 
 jobs:
   test:
