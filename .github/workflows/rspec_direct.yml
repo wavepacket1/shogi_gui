@@ -1,0 +1,69 @@
+name: Rails RSpec Tests (Direct)
+
+on:
+  push:
+    branches: [ main, master ]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/rspec_direct.yml'
+  pull_request:
+    branches: [ main, master ]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/rspec_direct.yml'
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: shogi_app_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Ruby
+      uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: 3.2.2
+        bundler-cache: true
+        working-directory: ./backend
+
+    - name: Install dependencies
+      run: |
+        cd backend
+        bundle install
+
+    - name: Set up database
+      env:
+        RAILS_ENV: test
+        DB_HOST: localhost
+        DB_USERNAME: postgres
+        DB_PASSWORD: password
+      run: |
+        cd backend
+        bin/rails db:create
+        bin/rails db:schema:load
+
+    - name: Run tests
+      env:
+        RAILS_ENV: test
+        DB_HOST: localhost
+        DB_USERNAME: postgres
+        DB_PASSWORD: password
+      run: |
+        cd backend
+        bundle exec rspec 

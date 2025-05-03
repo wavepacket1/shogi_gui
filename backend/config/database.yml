@@ -1,21 +1,25 @@
 default: &default
   adapter: postgresql
   encoding: unicode
-  host: db
-  username: postgres
-  password: postgres
   pool: 5
 
 development:
   <<: *default
+  host: <%= ENV.fetch('DB_HOST', 'db') %>
+  username: <%= ENV.fetch('DB_USERNAME', 'postgres') %>
+  password: <%= ENV.fetch('DB_PASSWORD', 'postgres') %>
   database: shogi_app_development
 
 test:
   <<: *default
+  host: <%= ENV.fetch('DB_HOST', 'db') %>
+  username: <%= ENV.fetch('DB_USERNAME', 'postgres') %>
+  password: <%= ENV.fetch('DB_PASSWORD', 'postgres') %>
   database: shogi_app_test
+  url: <%= ENV['DATABASE_URL'] %>
 
 production:
   <<: *default
   database: shogi_app_production
-  username: shogi_app
-  password: <%= ENV['SHOGIAPP_DATABASE_PASSWORD'] %>
+  username: <%= ENV.fetch('DB_USERNAME', 'shogi_app') %>
+  password: <%= ENV.fetch('DB_PASSWORD', ENV['SHOGIAPP_DATABASE_PASSWORD']) %>
