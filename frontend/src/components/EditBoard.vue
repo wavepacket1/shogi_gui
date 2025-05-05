@@ -49,19 +49,45 @@ const handleCellClick = (row: number, col: number) => {
   // 持ち駒が選択されている場合
   if (selectedHandPiece.value) {
     const targetCell = boardStore.board[row][col];
+    const piece = selectedHandPiece.value;
     
-    // マスが空いている場合のみ配置
-    if (targetCell === null) {
-      const piece = selectedHandPiece.value;
-      // 駒を配置
-      boardStore.board[row][col] = piece;
-      // 持ち駒を減らす
-      boardStore.usePieceFromHand(piece);
-      // 選択状態をクリア
-      selectedHandPiece.value = null;
+    // 移動先に既に駒がある場合は駒台に追加
+    if (targetCell !== null) {
+      console.log('移動先に駒があります。駒台に追加します:', targetCell);
       
-      console.log(`駒を配置: ${piece} at ${row}-${col}`);
+      // 駒が成っている場合は、成っていない状態に戻す
+      let baseForm: NonNullPieceType = targetCell as NonNullPieceType;
+      
+      if (typeof targetCell === 'string' && targetCell.startsWith('+')) {
+        // 成り駒の場合、成っていない駒に戻す
+        // "+P" -> "P", "+p" -> "p" のように変換
+        const baseChar = targetCell.charAt(1);
+        baseForm = baseChar as NonNullPieceType;
+      }
+      
+      // 駒の所有権を反対にする（相手の駒として持ち駒に追加）
+      if (typeof baseForm === 'string') {
+        // 大文字(先手)の駒は小文字(後手)に、小文字の駒は大文字に変換
+        const isUpperCase = baseForm === baseForm.toUpperCase();
+        const ownedPiece = isUpperCase ? 
+          baseForm.toLowerCase() as NonNullPieceType : 
+          baseForm.toUpperCase() as NonNullPieceType;
+          
+        // 持ち駒を増やす
+        boardStore.piecesInHand[ownedPiece] = (boardStore.piecesInHand[ownedPiece] || 0) + 1;
+        console.log(`持ち駒に追加: ${ownedPiece}`, boardStore.piecesInHand);
+      }
     }
+    
+    // 駒を配置
+    boardStore.board[row][col] = piece;
+    // 持ち駒を減らす
+    boardStore.usePieceFromHand(piece);
+    // 選択状態をクリア
+    selectedHandPiece.value = null;
+    
+    console.log(`駒を配置: ${piece} at ${row}-${col}`);
+    boardStore.unsavedChanges = true;
   }
 };
 
@@ -165,16 +191,19 @@ const onRightClick = (event: MouseEvent, row: number, col: number): void => {
   event.preventDefault(); // コンテキストメニューを表示しない
   const piece = boardStore.getPieceAt(row, col);
   
-  if (piece && boardStore.canPromote(piece)) {
-    boardStore.togglePromotion(row, col);
+  if (piece) {
+    // 右クリックで駒を削除して駒台に移動
+    boardStore.removePiece(row, col);
   }
 };
 
 // ダブルクリックイベントハンドラ
 const onDoubleClick = (row: number, col: number): void => {
   const piece = boardStore.getPieceAt(row, col);
+  
   if (piece) {
-    boardStore.removePiece(row, col);
+    console.log('ダブルクリックで成り/不成りを切り替えます:', { row, col, piece });
+    boardStore.togglePromotion(row, col);
   }
 };
 
@@ -199,8 +228,9 @@ let touchTimer: number | null = null;
 const touchStart = (row: number, col: number): void => {
   touchTimer = window.setTimeout(() => {
     const piece = boardStore.getPieceAt(row, col);
-    if (piece && boardStore.canPromote(piece)) {
-      boardStore.togglePromotion(row, col);
+    if (piece) {
+      console.log('長押しで駒を削除します:', { row, col, piece });
+      boardStore.removePiece(row, col);
     }
   }, 500); // 500ms長押しで発動
 };
@@ -341,6 +371,8 @@ onBeforeUnmount(() => {
         </div>
       </div>
     </div>
+    
+    <div class="pieces-label">持ち駒</div>
   </div>
 </template>
 
@@ -352,6 +384,13 @@ onBeforeUnmount(() => {
   padding: 20px;
   max-width: 600px;
   margin: 0 auto;
+}
+
+.pieces-label {
+  margin-top: 10px;
+  font-weight: bold;
+  font-size: 16px;
+  color: #4A3728;
 }
 
 .board-controls {
@@ -563,38 +602,48 @@ button:disabled {
   background: 
     repeating-linear-gradient(
       -65deg,
-      #C87878 0px,
-      #C87878 4px,
-      #B76868 4px,
-      #B76868 8px
+      #C4A36B 0px,
+      #C4A36B 4px,
+      #B49355 4px,
+      #B49355 8px
     ),
     linear-gradient(
       155deg,
-      #D48888 0%,
-      #B76868 45%,
-      #A75858 80%,
-      #964848 100%
+      #D4B37B 0%,
+      #B49355 45%,
+      #A48345 80%,
+      #937235 100%
     );
   background-blend-mode: soft-light;
+  box-shadow: 
+    0 2px 4px rgba(0, 0, 0, 0.1),
+    inset 0 1px 3px rgba(255, 255, 255, 0.6);
+}
+
+.piece-shape.b-promoted .piece-symbol {
+  transform: scaleY(1.3);
 }
 
 .piece-shape.w-promoted {
   background: 
     repeating-linear-gradient(
       -65deg,
-      #C87878 0px,
-      #C87878 4px,
-      #B76868 4px,
-      #B76868 8px
+      #C4A36B 0px,
+      #C4A36B 4px,
+      #B49355 4px,
+      #B49355 8px
     ),
     linear-gradient(
       155deg,
-      #D48888 0%,
-      #B76868 45%,
-      #A75858 80%,
-      #964848 100%
+      #D4B37B 0%,
+      #B49355 45%,
+      #A48345 80%,
+      #937235 100%
     );
   background-blend-mode: soft-light;
+  box-shadow: 
+    0 2px 4px rgba(0, 0, 0, 0.1),
+    inset 0 1px 3px rgba(255, 255, 255, 0.6);
   transform: rotate(180deg);
 }
 
