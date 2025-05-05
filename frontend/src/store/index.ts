@@ -2,10 +2,23 @@ import { defineStore } from 'pinia';
 import { Api } from '@/services/api/api';
 import { parseSFEN } from '@/utils/sfenParser';
 import  *  as Types from '@/store/types';
+import { createPinia } from 'pinia';
+import { NonNullPieceType } from '@/types/shogi';
 
 const api = new Api({
     baseUrl: 'http://localhost:3000'
 });
+
+const pinia = createPinia();
+
+// Shogiゲームデータの初期化
+export const initialShogiData = {
+  board: Array(9).fill(null).map(() => Array(9).fill(null)),
+  currentSide: 'b' as const,
+  gameId: null,
+  unsavedChanges: false,
+  piecesInHand: {} as Record<NonNullPieceType, number>
+};
 
 export const useBoardStore = defineStore('board', {
     state: (): Types.BoardState => ({
@@ -332,3 +345,5 @@ const initializeShogiData = (): Types.ShogiData => ({
     piecesInHand: {},
     sfen: ''
 });
+
+export default pinia;

@@ -1,5 +1,84 @@
 class Validator
     class << self
+        # 基本的なSFEN形式チェック（編集モード用）
+        def basic_valid?(sfen)
+            # 最低限のSFEN形式チェック
+            # フォーマット: [盤面] [手番] [持ち駒] [手数]
+            parts = sfen.split(' ')
+            return false unless parts.length == 4
+            
+            # 盤面のフォーマットチェック
+            board_str = parts[0]
+            rows = board_str.split('/')
+            return false unless rows.length == 9
+            
+            # 手番のチェック
+            side = parts[1]
+            return false unless ['b', 'w'].include?(side)
+            
+            # 持ち駒と手数のフォーマットチェック（簡易版）
+            return false unless parts[2] =~ /^(-|[PLNSGBRKplnsgbrk][0-9]*)*$/
+            return false unless parts[3] =~ /^[0-9]+$/
+            
+            true
+        end
+
+        # 厳密なSFEN形式とルールのチェック（通常対局モード用）
+        def valid?(sfen)
+            return false unless basic_valid?(sfen)
+            
+            # SFENをパースして盤面などを取得
+            parsed_data = Parser::SfenParser.parse(sfen)
+            board_array, hands, side = parsed_data.values_at(:board_array, :hand, :side)
+            
+            # 各陣営の玉が1つずつあるかチェック
+            black_king_count = 0
+            white_king_count = 0
+            
+            board_array.each do |row|
+                row.each do |piece|
+                    black_king_count += 1 if piece == 'K'
+                    white_king_count += 1 if piece == 'k'
+                end
+            end
+            
+            return false unless black_king_count == 1 && white_king_count == 1
+            
+            # 二歩（各段に同じ陣営の歩が2つ以上ないか）をチェック
+            (0..8).each do |col|
+                black_pawn_count = 0
+                white_pawn_count = 0
+                
+                board_array.each do |row|
+                    black_pawn_count += 1 if row[col] == 'P'
+                    white_pawn_count += 1 if row[col] == 'p'
+                end
+                
+                return false if black_pawn_count >= 2 || white_pawn_count >= 2
+            end
+            
+            # 行き場のない駒（最奥の段の歩や香、最奥および一つ手前の段の桂）をチェック
+            board_array.each_with_index do |row, row_idx|
+                row.each_with_index do |piece, col_idx|
+                    next if piece.nil?
+                    
+                    case piece
+                    when 'P', 'L'
+                        return false if row_idx == 0
+                    when 'N'
+                        return false if row_idx <= 1
+                    when 'p', 'l'
+                        return false if row_idx == 8
+                    when 'n'
+                        return false if row_idx >= 7
+                    end
+                end
+            end
+            
+            # すべてのチェックを通過
+            true
+        end
+
         # 合法手かどうかを判定する
         def legal?(parsed_data, move_info, game)
             board_array, hands, side = parsed_data.values_at(:board_array, :hand, :side)
