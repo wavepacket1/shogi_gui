@@ -51,9 +51,9 @@ ActiveRecord::Schema[7.0].define(version: 2025_05_05_080241) do
     t.datetime "updated_at", null: false
     t.string "winner"
     t.datetime "ended_at"
+    t.string "mode", default: "play", null: false
     t.bigint "black_player_id"
     t.bigint "white_player_id"
-    t.string "mode", default: "play", null: false
     t.index ["black_player_id"], name: "index_games_on_black_player_id"
     t.index ["white_player_id"], name: "index_games_on_white_player_id"
   end
