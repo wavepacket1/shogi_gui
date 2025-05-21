@@ -192,8 +192,10 @@ const onRightClick = (event: MouseEvent, row: number, col: number): void => {
   const piece = boardStore.getPieceAt(row, col);
   
   if (piece) {
-    // 右クリックで駒を削除して駒台に移動
+    // 右クリックで駒を盤面から取り除き、持ち駒に追加
+    // これにより盤面から持ち駒への移動が可能になる
     boardStore.removePiece(row, col);
+    console.log('右クリックで駒を持ち駒に移動しました:', piece);
   }
 };
 
@@ -354,6 +356,13 @@ onBeforeUnmount(() => {
             </div>
           </div>
         </div>
+      </div>
+      
+      <!-- 操作説明 -->
+      <div class="operation-help">
+        <p>ダブルクリック：駒の成り/不成りを切り替え</p>
+        <p>右クリック：駒を盤面から持ち駒に移動</p>
+        <p>長押し：モバイルデバイスで駒を持ち駒に移動</p>
       </div>
       
       <!-- 先手の駒台 -->
@@ -657,5 +666,20 @@ button:disabled {
 
 .shogi-cell:active {
   cursor: grabbing;
+}
+
+.operation-help {
+  padding: 10px;
+  margin: 10px 0;
+  background-color: #f8f8f8;
+  border-radius: 5px;
+  font-size: 14px;
+  line-height: 1.4;
+  color: #333;
+  border: 1px solid #ddd;
+}
+
+.operation-help p {
+  margin: 5px 0;
 }
 </style> 
