@@ -38,41 +38,41 @@ const whitePieces = computed(() => {
 // 各駒の操作回数を追跡するためのマップ
 const pieceClickCount = ref<Map<string, number>>(new Map());
 
-// 駒の状態変更を行う関数
-const cyclePieceState = (piece: NonNullPieceType): NonNullPieceType => {
-  // 初期状態の判定
+// 駒の状態変更を行う関数（成り不成反転と向き反転を交互に実行）
+const cyclePieceState = (piece: NonNullPieceType, clickCount: number): NonNullPieceType => {
+  // 基本形を取得（成りや向きを除いた駒の種類）
   const isPromoted = piece.startsWith('+');
+  const baseType = isPromoted ? piece.charAt(1) : piece;
+  const baseTypeUpper = baseType.toUpperCase();
+  
+  // 現在の駒の状態を判定
   const isGote = isPromoted ? 
     piece.charAt(1) === piece.charAt(1).toLowerCase() : 
     piece === piece.toLowerCase();
   
-  // 基本形を取得（成りや向きを除いた駒の種類）
-  const baseType = isPromoted ? piece.charAt(1) : piece;
-  const baseTypeUpper = baseType.toUpperCase();
+  // クリック回数に応じて操作を決定
+  const isPromotionToggle = clickCount % 2 === 1; // 奇数回は成り不成反転
+  const isDirectionToggle = clickCount % 2 === 0; // 偶数回は向き反転
   
-  // 4つの状態を定義
-  const states = [
-    baseTypeUpper,                    // 0: 先手の基本形
-    `+${baseTypeUpper}`,             // 1: 先手の成駒
-    `+${baseTypeUpper.toLowerCase()}`, // 2: 後手の成駒
-    baseTypeUpper.toLowerCase()       // 3: 後手の基本形
-  ];
-  
-  // 現在の状態を特定
-  let currentStateIndex = 0;
-  if (piece === baseTypeUpper) {
-    currentStateIndex = 0; // 先手の基本形
-  } else if (piece === `+${baseTypeUpper}`) {
-    currentStateIndex = 1; // 先手の成駒
-  } else if (piece === `+${baseTypeUpper.toLowerCase()}`) {
-    currentStateIndex = 2; // 後手の成駒
-  } else if (piece === baseTypeUpper.toLowerCase()) {
-    currentStateIndex = 3; // 後手の基本形
+  if (isPromotionToggle) {
+    // 成り不成の反転
+    if (isPromoted) {
+      // 成駒 → 基本形（向きは維持）
+      return isGote ? baseType.toLowerCase() as NonNullPieceType : baseType.toUpperCase() as NonNullPieceType;
+    } else {
+      // 基本形 → 成駒（向きは維持）
+      return isGote ? `+${baseType.toLowerCase()}` as NonNullPieceType : `+${baseType.toUpperCase()}` as NonNullPieceType;
+    }
+  } else {
+    // 向きの反転
+    if (isPromoted) {
+      // 成駒の向き反転
+      return isGote ? `+${baseTypeUpper}` as NonNullPieceType : `+${baseTypeUpper.toLowerCase()}` as NonNullPieceType;
+    } else {
+      // 基本形の向き反転
+      return isGote ? baseTypeUpper as NonNullPieceType : baseTypeUpper.toLowerCase() as NonNullPieceType;
+    }
   }
-  
-  // 次の状態に進む（4で1周する）
-  const nextStateIndex = (currentStateIndex + 1) % 4;
-  return states[nextStateIndex] as NonNullPieceType;
 };
 
 // 駒台の駒をクリックした時の処理
@@ -453,15 +453,16 @@ const handleCellClick = (row: number, col: number) => {
       pieceClickCount.value.set(positionKey, newCount);
       
       // 駒の状態を次の状態に変更
-      const newPiece = cyclePieceState(piece as NonNullPieceType);
+      const newPiece = cyclePieceState(piece as NonNullPieceType, newCount);
       
       // 盤面を更新
       boardStore.board[row][col] = newPiece;
       boardStore.unsavedChanges = true;
       
       // 操作内容をログ出力
-      const operations = ['成る', '向きを変える', '成不成を反転', '向きを戻す'];
-      console.log(`操作: ${operations[newCount]} (${piece} → ${newPiece})`);
+      const operations = ['成り不成を反転', '向きを変える'];
+      const operationIndex = newCount % 2;
+      console.log(`操作: ${operations[operationIndex]} (${piece} → ${newPiece})`);
     }
   }
 };
@@ -687,7 +688,7 @@ watch([dragPreviewVisible], () => {
       <!-- 操作説明 -->
       <div class="operation-guide">
         <p>右クリック: 盤上の駒を持ち駒に戻す</p>
-        <p>クリック: 駒の状態変更（成る→向き変更→成不成反転→向き戻し）</p>
+        <p>クリック: 駒の状態変更（成り不成反転 ↔ 向き反転を繰り返し）</p>
         <p>持ち駒クリック→マスクリック: 持ち駒を盤上に配置</p>
       </div>
     </div>
