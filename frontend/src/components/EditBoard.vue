@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount, computed } from 'vue';
+import { ref, onMounted, onBeforeUnmount, computed, watch } from 'vue';
 import { useBoardEditStore } from '@/store/board';
 import { PieceType, NonNullPieceType, DraggingPiece, Position, MoveInfo } from '@/types/shogi';
 import { pieceMapper } from '@/utils/pieceMapper';
@@ -14,10 +14,11 @@ const blackPieces = computed(() => {
   const result: Record<string, number> = {};
   // 大文字の駒（先手）を抽出
   for (const [piece, count] of Object.entries(boardStore.piecesInHand)) {
-    if (piece === piece.toUpperCase() && !piece.startsWith('+')) {
+    if (piece === piece.toUpperCase() && !piece.startsWith('+') && count > 0) {
       result[piece] = count;
     }
   }
+  console.log('計算された先手の持ち駒:', result);
   return result;
 });
 
@@ -26,10 +27,11 @@ const whitePieces = computed(() => {
   const result: Record<string, number> = {};
   // 小文字の駒（後手）を抽出
   for (const [piece, count] of Object.entries(boardStore.piecesInHand)) {
-    if (piece === piece.toLowerCase() && !piece.startsWith('+')) {
+    if (piece === piece.toLowerCase() && !piece.startsWith('+') && count > 0) {
       result[piece] = count;
     }
   }
+  console.log('計算された後手の持ち駒:', result);
   return result;
 });
 
@@ -44,83 +46,157 @@ const handleHandPieceClick = (piece: string) => {
   console.log(`持ち駒を選択: ${piece}`);
 };
 
-// マスをクリックした時の処理
-const handleCellClick = (row: number, col: number) => {
-  // 持ち駒が選択されている場合
-  if (selectedHandPiece.value) {
-    const targetCell = boardStore.board[row][col];
-    const piece = selectedHandPiece.value;
+// ドラッグ中の表示用の要素
+const dragPreview = ref<HTMLElement | null>(null);
+const dragPreviewVisible = ref(false);
+const dragPreviewPiece = ref<PieceType | null>(null);
+const dragPreviewIsGote = ref(false);
+const draggingPiece = ref<DraggingPiece | null>(null);
+
+// ドラッグ開始時にカスタムドラッグプレビューを表示
+const showDragPreview = (piece: PieceType, isGote: boolean, event?: DragEvent): void => {
+  // ドラッグプレビューの内容を設定
+  if (dragPreview.value && event) {
+    // 盤上の駒と完全に同じデザインを適用
+    const isPiecePromoted = typeof piece === 'string' && piece.startsWith('+');
     
-    // 移動先に既に駒がある場合は駒台に追加
-    if (targetCell !== null) {
-      console.log('移動先に駒があります。駒台に追加します:', targetCell);
-      
-      // 駒が成っている場合は、成っていない状態に戻す
-      let baseForm: NonNullPieceType = targetCell as NonNullPieceType;
-      
-      if (typeof targetCell === 'string' && targetCell.startsWith('+')) {
-        // 成り駒の場合、成っていない駒に戻す
-        // "+P" -> "P", "+p" -> "p" のように変換
-        const baseChar = targetCell.charAt(1);
-        baseForm = baseChar as NonNullPieceType;
-      }
-      
-      // 駒の所有権を反対にする（相手の駒として持ち駒に追加）
-      if (typeof baseForm === 'string') {
-        // 大文字(先手)の駒は小文字(後手)に、小文字の駒は大文字に変換
-        const isUpperCase = baseForm === baseForm.toUpperCase();
-        const ownedPiece = isUpperCase ? 
-          baseForm.toLowerCase() as NonNullPieceType : 
-          baseForm.toUpperCase() as NonNullPieceType;
-          
-        // 持ち駒を増やす
-        boardStore.piecesInHand[ownedPiece] = (boardStore.piecesInHand[ownedPiece] || 0) + 1;
-        console.log(`持ち駒に追加: ${ownedPiece}`, boardStore.piecesInHand);
-      }
-    }
+    // クラスを計算
+    const pieceClasses = [
+      isGote ? 'w' : 'b',
+      isGote && isPiecePromoted ? 'w-promoted' : '',
+      !isGote && isPiecePromoted ? 'b-promoted' : ''
+    ].filter(Boolean).join(' ');
     
-    // 駒を配置
-    boardStore.board[row][col] = piece;
-    // 持ち駒を減らす
-    boardStore.usePieceFromHand(piece);
-    // 選択状態をクリア
-    selectedHandPiece.value = null;
+    // フルサイズの駒形状を維持するために明示的なスタイルを設定
+    dragPreview.value.innerHTML = `
+      <div class="piece-container">
+        <div class="piece-shape ${pieceClasses}">
+          <div class="piece-symbol">${getPieceDisplay(piece)}</div>
+        </div>
+      </div>
+    `;
     
-    console.log(`駒を配置: ${piece} at ${row}-${col}`);
-    boardStore.unsavedChanges = true;
+    // 初期位置を設定
+    const x = event.clientX - 22.5;
+    const y = event.clientY - 22.5;
+    
+    dragPreview.value.style.display = 'block';
+    dragPreview.value.style.left = `${x}px`;
+    dragPreview.value.style.top = `${y}px`;
+    
+    // 値を保存
+    dragPreviewPiece.value = piece;
+    dragPreviewIsGote.value = isGote;
+    dragPreviewVisible.value = true;
   }
 };
 
-// ドラッグ中の駒情報
-const draggingPiece = ref<DraggingPiece | null>(null);
+// ドラッグ終了時にカスタムドラッグプレビューを非表示
+const hideDragPreview = (): void => {
+  if (dragPreview.value) {
+    dragPreview.value.style.display = 'none';
+  }
+  dragPreviewVisible.value = false;
+};
+
+// 全体のドラッグオーバーイベントを監視
+const onDocumentDragOver = (event: DragEvent): void => {
+  if (dragPreviewVisible.value && dragPreview.value) {
+    // カーソル位置に合わせて要素を移動
+    const x = event.clientX - 22.5;
+    const y = event.clientY - 22.5;
+    
+    dragPreview.value.style.left = `${x}px`;
+    dragPreview.value.style.top = `${y}px`;
+  }
+};
+
+// 持ち駒のドラッグ開始処理
+const onHandPieceDragStart = (event: DragEvent, piece: string) => {
+  if (!event.dataTransfer) return;
+  
+  // 持ち駒の数が0より大きいかチェック
+  if (!boardStore.piecesInHand[piece as NonNullPieceType] || 
+      boardStore.piecesInHand[piece as NonNullPieceType] <= 0) {
+    event.preventDefault();
+    return;
+  }
+  
+  // 駒を選択状態にする
+  selectedHandPiece.value = piece as NonNullPieceType;
+  
+  // ドラッグデータをセット
+  const data = JSON.stringify({ piece, fromHand: true });
+  event.dataTransfer.setData('text/plain', data);
+  
+  // 後手の駒かどうか判定
+  const isGote = piece === piece.toLowerCase();
+  
+  // カスタムドラッグプレビューを表示
+  showDragPreview(piece as NonNullPieceType, isGote, event);
+  
+  // ドラッグゴーストを透明に
+  const canvas = document.createElement('canvas');
+  canvas.width = 1;
+  canvas.height = 1;
+  const ctx = canvas.getContext('2d');
+  if (ctx) {
+    ctx.clearRect(0, 0, 1, 1);
+  }
+  document.body.appendChild(canvas);
+  
+  event.dataTransfer.setDragImage(canvas, 0, 0);
+  
+  setTimeout(() => {
+    document.body.removeChild(canvas);
+  }, 100);
+  
+  event.dataTransfer.effectAllowed = 'move';
+};
 
 // ドラッグ開始時のイベントハンドラ
 const onDragStart = (event: DragEvent, piece: PieceType, row: number, col: number): void => {
   if (!event.dataTransfer) return;
+  
+  // 駒の向きの判定
+  const isGote = typeof piece === 'string' && (
+    (piece === piece.toLowerCase() && !piece.startsWith('+')) || 
+    (piece.startsWith('+') && piece[1] === piece[1].toLowerCase())
+  );
   
   // デバッグ情報
   console.log('ドラッグ開始時の駒情報:', { 
     piece, 
     row, 
     col,
-    isUpperCase: typeof piece === 'string' && 
-                ((piece === piece.toUpperCase() && !piece.startsWith('+')) || 
-                (piece.startsWith('+') && piece[1] === piece[1].toUpperCase()))
+    isGote
   });
   
   // 駒の情報を保存
   draggingPiece.value = { piece, row, col };
   
   // HTML5ドラッグ&ドロップAPIのデータ設定
-  const data = JSON.stringify({ piece, row, col });
+  const data = JSON.stringify({ piece, row, col, isGote });
   event.dataTransfer.setData('text/plain', data);
   
-  // ドラッグ中の視覚的な表示を設定
-  const dragElement = event.target as HTMLElement;
-  if (dragElement) {
-    // ドラッグ画像を設定して見た目を維持
-    event.dataTransfer.setDragImage(dragElement, 15, 15);
+  // カスタムドラッグプレビューを表示
+  showDragPreview(piece, isGote, event);
+  
+  // ドラッグゴーストを透明に
+  const canvas = document.createElement('canvas');
+  canvas.width = 1;
+  canvas.height = 1;
+  const ctx = canvas.getContext('2d');
+  if (ctx) {
+    ctx.clearRect(0, 0, 1, 1);
   }
+  document.body.appendChild(canvas);
+  
+  event.dataTransfer.setDragImage(canvas, 0, 0);
+  
+  setTimeout(() => {
+    document.body.removeChild(canvas);
+  }, 100);
   
   // 操作を移動に限定
   event.dataTransfer.effectAllowed = 'move';
@@ -135,29 +211,68 @@ const onDragOver = (event: DragEvent): void => {
 const onDrop = (event: DragEvent, toRow: number, toCol: number): void => {
   event.preventDefault();
   
+  // カスタムドラッグプレビューを非表示
+  hideDragPreview();
+  
   try {
-    // dataTransferからデータを取得（優先）
+    // dataTransferからデータを取得
     const dataTransferText = event.dataTransfer?.getData('text/plain');
     
     if (dataTransferText) {
       const parsedData = JSON.parse(dataTransferText);
-      const { piece, row, col } = parsedData;
       
-      console.log('ドロップ時のデータから取得:', { piece, row, col });
-      
-      // 同じ場所にドロップした場合は何もしない
-      if (row === toRow && col === toCol) {
-        return;
+      // 持ち駒からのドラッグの場合
+      if (parsedData.fromHand) {
+        const { piece } = parsedData;
+        console.log('持ち駒からドロップ:', { piece, toRow, toCol });
+        
+        // 移動先に既に駒がある場合の処理
+        const targetCell = boardStore.board[toRow][toCol];
+        if (targetCell !== null) {
+          // 駒が成っている場合は、成っていない状態に戻す
+          let baseForm: NonNullPieceType = targetCell as NonNullPieceType;
+          
+          if (typeof targetCell === 'string' && targetCell.startsWith('+')) {
+            const baseChar = targetCell.charAt(1);
+            baseForm = baseChar as NonNullPieceType;
+          }
+          
+          // 駒の所有権を反対にして持ち駒に追加
+          if (typeof baseForm === 'string') {
+            const isUpperCase = baseForm === baseForm.toUpperCase();
+            const ownedPiece = isUpperCase ? 
+              baseForm.toLowerCase() as NonNullPieceType : 
+              baseForm.toUpperCase() as NonNullPieceType;
+              
+            boardStore.piecesInHand[ownedPiece] = (boardStore.piecesInHand[ownedPiece] || 0) + 1;
+          }
+        }
+        
+        // 持ち駒を盤面に配置
+        boardStore.board[toRow][toCol] = piece as NonNullPieceType;
+        // 持ち駒を減らす
+        boardStore.usePieceFromHand(piece as NonNullPieceType);
+        boardStore.unsavedChanges = true;
+      } else {
+        // 盤上の駒からのドラッグの場合
+        const { piece, row, col } = parsedData;
+        
+        console.log('盤上の駒からドロップ:', { piece, row, col, toRow, toCol });
+        
+        // 同じ場所にドロップした場合は何もしない
+        if (row === toRow && col === toCol) {
+          return;
+        }
+        
+        // 移動を実行
+        boardStore.movePiece({
+          from: { row, col },
+          to: { row: toRow, col: toCol },
+          piece
+        });
       }
-      
-      // 移動を実行
-      boardStore.movePiece({
-        from: { row, col },
-        to: { row: toRow, col: toCol },
-        piece
-      });
     } else if (draggingPiece.value) {
-      // フォールバック: draggingPiece.valueからの利用（通常はこちらは使用されない）
+      // フォールバック: draggingPiece.valueからの利用
       const { piece, row, col } = draggingPiece.value;
       
       if (piece === null) return;
@@ -183,6 +298,7 @@ const onDrop = (event: DragEvent, toRow: number, toCol: number): void => {
   } finally {
     // 常に状態をクリア
     draggingPiece.value = null;
+    selectedHandPiece.value = null;
   }
 };
 
@@ -192,10 +308,27 @@ const onRightClick = (event: MouseEvent, row: number, col: number): void => {
   const piece = boardStore.getPieceAt(row, col);
   
   if (piece) {
-    // 右クリックで駒を盤面から取り除き、持ち駒に追加
-    // これにより盤面から持ち駒への移動が可能になる
+    // 駒が成っている場合は、成っていない状態に戻す
+    let baseForm: NonNullPieceType = piece as NonNullPieceType;
+    
+    if (typeof piece === 'string' && piece.startsWith('+')) {
+      // 成り駒の場合、成っていない駒に戻す
+      // "+P" -> "P", "+p" -> "p" のように変換
+      const baseChar = piece.charAt(1);
+      baseForm = baseChar as NonNullPieceType;
+    }
+    
+    // 駒の所有権を維持したまま持ち駒に追加
+    if (typeof baseForm === 'string') {
+      // 持ち駒を増やす
+      boardStore.piecesInHand[baseForm] = (boardStore.piecesInHand[baseForm] || 0) + 1;
+      console.log(`持ち駒に追加: ${baseForm}`, boardStore.piecesInHand);
+    }
+    
+    // 盤面から駒を削除
     boardStore.removePiece(row, col);
     console.log('右クリックで駒を持ち駒に移動しました:', piece);
+    boardStore.unsavedChanges = true;
   }
 };
 
@@ -265,9 +398,74 @@ const beforeUnloadHandler = (event: BeforeUnloadEvent) => {
   }
 };
 
+// マスをクリックした時の処理
+const handleCellClick = (row: number, col: number) => {
+  // 持ち駒が選択されている場合
+  if (selectedHandPiece.value) {
+    const targetCell = boardStore.board[row][col];
+    const piece = selectedHandPiece.value;
+    
+    // 移動先に既に駒がある場合は駒台に追加
+    if (targetCell !== null) {
+      console.log('移動先に駒があります。駒台に追加します:', targetCell);
+      
+      // 駒が成っている場合は、成っていない状態に戻す
+      let baseForm: NonNullPieceType = targetCell as NonNullPieceType;
+      
+      if (typeof targetCell === 'string' && targetCell.startsWith('+')) {
+        // 成り駒の場合、成っていない駒に戻す
+        // "+P" -> "P", "+p" -> "p" のように変換
+        const baseChar = targetCell.charAt(1);
+        baseForm = baseChar as NonNullPieceType;
+      }
+      
+      // 駒の所有権を反対にする（相手の駒として持ち駒に追加）
+      if (typeof baseForm === 'string') {
+        // 大文字(先手)の駒は小文字(後手)に、小文字の駒は大文字に変換
+        const isUpperCase = baseForm === baseForm.toUpperCase();
+        const ownedPiece = isUpperCase ? 
+          baseForm.toLowerCase() as NonNullPieceType : 
+          baseForm.toUpperCase() as NonNullPieceType;
+          
+        // 持ち駒を増やす
+        boardStore.piecesInHand[ownedPiece] = (boardStore.piecesInHand[ownedPiece] || 0) + 1;
+        console.log(`持ち駒に追加: ${ownedPiece}`, boardStore.piecesInHand);
+      }
+    }
+    
+    // 駒を配置
+    boardStore.board[row][col] = piece;
+    // 持ち駒を減らす
+    boardStore.usePieceFromHand(piece);
+    // 選択状態をクリア
+    selectedHandPiece.value = null;
+    
+    console.log(`駒を配置: ${piece} at ${row}-${col}`);
+    boardStore.unsavedChanges = true;
+  }
+};
+
 // ライフサイクルフック
 onMounted(() => {
   window.addEventListener('beforeunload', beforeUnloadHandler);
+  
+  // カスタムドラッグプレビュー要素を作成
+  const previewElement = document.createElement('div');
+  previewElement.className = 'drag-preview';
+  previewElement.style.position = 'fixed';
+  previewElement.style.zIndex = '9999';
+  previewElement.style.pointerEvents = 'none';
+  previewElement.style.display = 'none';
+  previewElement.style.left = '0';
+  previewElement.style.top = '0';
+  document.body.appendChild(previewElement);
+  dragPreview.value = previewElement;
+  
+  // 全体のドラッグオーバーイベントを監視
+  document.addEventListener('dragover', onDocumentDragOver);
+  
+  // ドラッグ終了イベントのグローバル監視
+  window.addEventListener('dragend', hideDragPreview);
   
   // ゲームIDの設定（実際のアプリではルートパラメータなどから取得）
   const urlParams = new URLSearchParams(window.location.search);
@@ -282,6 +480,26 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   window.removeEventListener('beforeunload', beforeUnloadHandler);
+  window.removeEventListener('dragend', hideDragPreview);
+  document.removeEventListener('dragover', onDocumentDragOver);
+  
+  // カスタムドラッグプレビュー要素を削除
+  if (dragPreview.value) {
+    document.body.removeChild(dragPreview.value);
+  }
+});
+
+// ドラッグプレビューの内容を監視して更新
+watch([dragPreviewVisible], () => {
+  if (!dragPreview.value) return;
+  
+  if (dragPreviewVisible.value) {
+    // ドラッグプレビューを表示
+    dragPreview.value.style.display = 'block';
+  } else {
+    // ドラッグプレビューを非表示
+    dragPreview.value.style.display = 'none';
+  }
 });
 </script>
 
@@ -289,11 +507,11 @@ onBeforeUnmount(() => {
   <div class="edit-board-container">
     <div class="board-controls">
       <div class="current-side">
-        現在: {{ boardStore.currentSide === 'b' ? '先手配置モード' : '後手配置モード' }}
+        現在: {{ boardStore.currentSide === 'b' ? '先手' : '後手' }}
       </div>
       
       <button @click="toggleSide" class="toggle-side-btn">
-        {{ boardStore.currentSide === 'b' ? '後手に切り替え' : '先手に切り替え' }}
+        手番切り替え
       </button>
       
       <button @click="saveBoard" class="save-btn" :disabled="!boardStore.gameId">
@@ -309,10 +527,12 @@ onBeforeUnmount(() => {
           :key="piece" 
           class="piece-container"
           @click="handleHandPieceClick(piece)"
+          draggable="true"
+          @dragstart="onHandPieceDragStart($event, piece)"
         >
-          <div class="piece-shape" :class="{ 'w': true }">
+          <div class="piece-shape" :class="{ 'w': true, 'selected': selectedHandPiece === piece }">
             <div class="piece-symbol">{{ getPieceDisplay(piece) }}</div>
-            <div class="piece-count" v-if="count > 0">{{ count }}</div>
+            <div class="piece-count" v-if="count > 1">{{ count }}</div>
           </div>
         </div>
       </div>
@@ -358,13 +578,6 @@ onBeforeUnmount(() => {
         </div>
       </div>
       
-      <!-- 操作説明 -->
-      <div class="operation-help">
-        <p>ダブルクリック：駒の成り/不成りを切り替え</p>
-        <p>右クリック：駒を盤面から持ち駒に移動</p>
-        <p>長押し：モバイルデバイスで駒を持ち駒に移動</p>
-      </div>
-      
       <!-- 先手の駒台 -->
       <div class="pieces-in-hand">
         <div 
@@ -372,16 +585,23 @@ onBeforeUnmount(() => {
           :key="piece" 
           class="piece-container"
           @click="handleHandPieceClick(piece)"
+          draggable="true"
+          @dragstart="onHandPieceDragStart($event, piece)"
         >
-          <div class="piece-shape" :class="{ 'b': true }">
+          <div class="piece-shape" :class="{ 'b': true, 'selected': selectedHandPiece === piece }">
             <div class="piece-symbol">{{ getPieceDisplay(piece) }}</div>
-            <div class="piece-count" v-if="count > 0">{{ count }}</div>
+            <div class="piece-count" v-if="count > 1">{{ count }}</div>
           </div>
         </div>
       </div>
+      
+      <!-- 操作説明 -->
+      <div class="operation-guide">
+        <p>右クリック: 盤上の駒を持ち駒に戻す</p>
+        <p>ダブルクリック: 成り・向きの変更</p>
+        <p>持ち駒クリック→マスクリック: 持ち駒を盤上に配置</p>
+      </div>
     </div>
-    
-    <div class="pieces-label">持ち駒</div>
   </div>
 </template>
 
@@ -471,8 +691,13 @@ button:disabled {
 }
 
 .piece-container {
-  perspective: 600px;
   cursor: pointer;
+  margin: 0 2px;
+  position: relative;
+}
+
+.selected {
+  box-shadow: 0 0 5px 2px rgba(255, 215, 0, 0.8);
 }
 
 .piece-count {
@@ -550,8 +775,10 @@ button:disabled {
       );
   background-blend-mode: soft-light;
   box-shadow: 
-      0 2px 4px rgba(0, 0, 0, 0.1),
+      0 2px 4px rgba(0, 0, 0, 0.2),
       inset 0 1px 3px rgba(255, 255, 255, 0.6);
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+  opacity: 0.95;
   transform: rotate(0deg);
 }
 
@@ -625,7 +852,7 @@ button:disabled {
     );
   background-blend-mode: soft-light;
   box-shadow: 
-    0 2px 4px rgba(0, 0, 0, 0.1),
+    0 2px 4px rgba(0, 0, 0, 0.2),
     inset 0 1px 3px rgba(255, 255, 255, 0.6);
 }
 
@@ -651,7 +878,7 @@ button:disabled {
     );
   background-blend-mode: soft-light;
   box-shadow: 
-    0 2px 4px rgba(0, 0, 0, 0.1),
+    0 2px 4px rgba(0, 0, 0, 0.2),
     inset 0 1px 3px rgba(255, 255, 255, 0.6);
   transform: rotate(180deg);
 }
@@ -668,18 +895,232 @@ button:disabled {
   cursor: grabbing;
 }
 
-.operation-help {
-  padding: 10px;
-  margin: 10px 0;
-  background-color: #f8f8f8;
-  border-radius: 5px;
-  font-size: 14px;
-  line-height: 1.4;
-  color: #333;
-  border: 1px solid #ddd;
+.operation-guide {
+  margin-top: 10px;
+  font-size: 0.8rem;
+  color: #666;
 }
 
-.operation-help p {
+.operation-guide p {
   margin: 5px 0;
+}
+
+/* ドラッグ中の駒の外観を調整 */
+[draggable="true"] {
+  user-select: none;
+  -webkit-user-drag: element;
+}
+
+/* 後手の駒の回転スタイル強化 */
+.piece-shape.w {
+  transform: rotate(180deg) !important;
+}
+
+/* 後手の駒のドラッグ中も向きを維持する */
+.piece-shape.w .piece-symbol {
+  transform: scaleY(1.3) !important;
+  transform-origin: center;
+}
+
+/* ドラッグ中のゴースト要素が見えないようにする */
+::-webkit-drag, [draggable="true"] {
+  -webkit-user-drag: element;
+}
+
+/* グローバルスタイル - ドラッグ中の後手の駒の向きを修正 */
+:global(.gote-drag-image) {
+  transform: rotate(180deg) !important;
+}
+
+:global(.gote-drag-image .piece-shape) {
+  transform: rotate(180deg) !important;
+}
+
+:global(.gote-drag-image .piece-symbol) {
+  transform: scaleY(1.3) !important;
+}
+
+/* 後手の駒の向きをドラッグ中も維持 */
+.w [draggable="true"] {
+  transform: rotate(180deg) !important;
+}
+
+/* 駒のドラッグ時のゴースト画像スタイル */
+.ghost-piece {
+  position: absolute;
+  z-index: 9999;
+  opacity: 0.85;
+  pointer-events: none;
+  will-change: transform;
+  transition: none;
+}
+
+/* 成り駒のスタイル */
+.piece-shape.b-promoted {
+  /* ... existing styles ... */
+}
+
+/* ... rest of existing styles ... */
+
+/* ドラッグプレビューのスタイル */
+:global(.drag-preview) {
+  position: fixed;
+  z-index: 9999;
+  pointer-events: none;
+  display: block;
+  width: 45px;
+  height: 45px;
+  /* translateを使用しないのでwill-changeプロパティは不要 */
+}
+
+:global(.drag-preview .piece-container) {
+  width: 45px;
+  height: 45px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+:global(.drag-preview .piece-shape) {
+  cursor: grab;
+  width: 30px;
+  height: 45px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  transition: none;
+  clip-path: polygon(
+      50% 0%,
+      100% 35%,
+      100% 100%,
+      0% 100%,
+      0% 35%
+  );
+  background: 
+      repeating-linear-gradient(
+          -65deg,
+          #C4A36B 0px,
+          #C4A36B 4px,
+          #B49355 4px,
+          #B49355 8px
+      ),
+      linear-gradient(
+          155deg,
+          #D4B37B 0%,
+          #B49355 45%,
+          #A48345 80%,
+          #937235 100%
+      );
+  background-blend-mode: soft-light;
+  box-shadow: 
+      0 2px 4px rgba(0, 0, 0, 0.2),
+      inset 0 1px 3px rgba(255, 255, 255, 0.6);
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+  opacity: 0.95;
+  transform: rotate(0deg);
+}
+
+:global(.drag-preview .piece-shape::before) {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+      linear-gradient(
+          155deg,
+          rgba(255, 255, 255, 0.7) 0%,
+          rgba(255, 245, 225, 0.2) 30%,
+          rgba(255, 235, 205, 0.1) 70%,
+          rgba(0, 0, 0, 0.08) 100%
+      ),
+      repeating-linear-gradient(
+          65deg,
+          transparent 0px,
+          transparent 3px,
+          rgba(255, 245, 225, 0.15) 3px,
+          rgba(255, 245, 225, 0.15) 6px
+      );
+  clip-path: inherit;
+  pointer-events: none;
+}
+
+:global(.drag-preview .piece-symbol) {
+  font-size: 16px;
+  font-weight: bold;
+  color: #000000;
+  text-shadow: 
+      0 1px 2px rgba(255, 255, 255, 0.8),
+      0 0 10px rgba(255, 255, 255, 0.4);
+  margin-top: 12px;
+  transform: scaleY(1.3);
+  writing-mode: vertical-rl;
+  text-orientation: upright;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: none;
+}
+
+:global(.drag-preview .piece-shape.w) {
+  transform: rotate(180deg) !important;
+}
+
+:global(.drag-preview .piece-shape.w .piece-symbol) {
+  transform: scaleY(1.3) !important;
+}
+
+:global(.drag-preview .piece-shape.b-promoted) {
+  background: 
+    repeating-linear-gradient(
+      -65deg,
+      #C4A36B 0px,
+      #C4A36B 4px,
+      #B49355 4px,
+      #B49355 8px
+    ),
+    linear-gradient(
+      155deg,
+      #D4B37B 0%,
+      #B49355 45%,
+      #A48345 80%,
+      #937235 100%
+    );
+  background-blend-mode: soft-light;
+  box-shadow: 
+    0 2px 4px rgba(0, 0, 0, 0.2),
+    inset 0 1px 3px rgba(255, 255, 255, 0.6);
+}
+
+:global(.drag-preview .piece-shape.w-promoted) {
+  background: 
+    repeating-linear-gradient(
+      -65deg,
+      #C4A36B 0px,
+      #C4A36B 4px,
+      #B49355 4px,
+      #B49355 8px
+    ),
+    linear-gradient(
+      155deg,
+      #D4B37B 0%,
+      #B49355 45%,
+      #A48345 80%,
+      #937235 100%
+    );
+  background-blend-mode: soft-light;
+  box-shadow: 
+    0 2px 4px rgba(0, 0, 0, 0.2),
+    inset 0 1px 3px rgba(255, 255, 255, 0.6);
+  transform: rotate(180deg);
+}
+
+:global(.drag-preview .piece-shape.w-promoted .piece-symbol) {
+  transform: scaleY(1.3);
 }
 </style> 

@@ -79,6 +79,8 @@ export const useBoardEditStore = defineStore('boardEdit', {
      */
     removePiece(row: number, col: number): void {
       const piece = this.board[row][col];
+      console.log('removePiece開始 - 元の駒:', piece, '位置:', row, col);
+      console.log('現在の持ち駒状態:', JSON.stringify(this.piecesInHand));
       
       if (piece !== null) {
         // 駒が成っている場合は、成っていない状態に戻す
@@ -89,19 +91,19 @@ export const useBoardEditStore = defineStore('boardEdit', {
           // "+P" -> "P", "+p" -> "p" のように変換
           const baseChar = piece.charAt(1);
           baseForm = baseChar as NonNullPieceType;
+          console.log('成り駒を基本形に変換:', piece, '->', baseForm);
         }
         
-        // 駒の所有権を反対にする（相手の駒として持ち駒に追加）
+        // 駒の所有権をそのまま維持して持ち駒に追加
         if (typeof baseForm === 'string') {
-          // 大文字(先手)の駒は小文字(後手)に、小文字の駒は大文字に変換
-          const isUpperCase = baseForm === baseForm.toUpperCase();
-          const ownedPiece = isUpperCase ? 
-            baseForm.toLowerCase() as NonNullPieceType : 
-            baseForm.toUpperCase() as NonNullPieceType;
+          // 所有権を維持（相手の駒台に移動せず、所有者の駒台に追加）
+          const ownedPiece = baseForm as NonNullPieceType;
             
           // 持ち駒を増やす
-          this.piecesInHand[ownedPiece] = (this.piecesInHand[ownedPiece] || 0) + 1;
-          console.log(`持ち駒に追加: ${ownedPiece}`, this.piecesInHand);
+          const beforeCount = this.piecesInHand[ownedPiece] || 0;
+          this.piecesInHand[ownedPiece] = beforeCount + 1;
+          console.log(`持ち駒に追加: ${ownedPiece} (${beforeCount} -> ${this.piecesInHand[ownedPiece]})`);
+          console.log('更新後の持ち駒状態:', JSON.stringify(this.piecesInHand));
         }
         
         // 盤面から駒を削除
