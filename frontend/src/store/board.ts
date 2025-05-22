@@ -56,13 +56,23 @@ export const useBoardEditStore = defineStore('boardEdit', {
         }
       }
       
-      // 駒をそのまま移動（所有権を維持）
-      this.board[to.row][to.col] = piece;
-      
-      // 元の位置にあった駒を消去（ドラッグ元の駒を消す）
-      if (from.row !== undefined && from.col !== undefined) {
-        this.board[from.row][from.col] = null;
-      }
+      // Vue 3のリアクティブシステムのために配列全体を再作成して移動
+      const newBoard = this.board.map((boardRow, rowIndex) => 
+        boardRow.map((cell, colIndex) => {
+          // 移動先に駒を配置
+          if (rowIndex === to.row && colIndex === to.col) {
+            return piece;
+          }
+          // 移動元の駒を削除
+          if (from.row !== undefined && from.col !== undefined && 
+              rowIndex === from.row && colIndex === from.col) {
+            return null;
+          }
+          // その他はそのまま
+          return cell;
+        })
+      );
+      this.board = newBoard;
       
       // デバッグログ
       console.log('駒移動完了', {
@@ -106,8 +116,13 @@ export const useBoardEditStore = defineStore('boardEdit', {
           console.log('更新後の持ち駒状態:', JSON.stringify(this.piecesInHand));
         }
         
-        // 盤面から駒を削除
-        this.board[row][col] = null;
+        // Vue 3のリアクティブシステムのために配列全体を再作成して駒を削除
+        const newBoard = this.board.map((boardRow, rowIndex) => 
+          rowIndex === row 
+            ? boardRow.map((cell, colIndex) => colIndex === col ? null : cell)
+            : [...boardRow]
+        );
+        this.board = newBoard;
         // 変更があったことをマーク
         this.unsavedChanges = true;
       }
@@ -128,7 +143,13 @@ export const useBoardEditStore = defineStore('boardEdit', {
       if (typeof piece === 'string' && piece.startsWith('+')) {
         const unpromoted = piece.substring(1) as NonNullPieceType; // +を除去
         console.log('成駒を不成に変更:', { from: piece, to: unpromoted });
-        this.board[row][col] = unpromoted;
+        // Vue 3のリアクティブシステムのために配列全体を再作成
+        const newBoard = this.board.map((boardRow, rowIndex) => 
+          rowIndex === row 
+            ? boardRow.map((cell, colIndex) => colIndex === col ? unpromoted : cell)
+            : [...boardRow]
+        );
+        this.board = newBoard;
         this.unsavedChanges = true;
         return;
       }
@@ -137,7 +158,13 @@ export const useBoardEditStore = defineStore('boardEdit', {
       if (typeof piece === 'string' && this.canPromote(piece)) {
         const promoted = `+${piece}` as NonNullPieceType;
         console.log('不成駒を成駒に変更:', { from: piece, to: promoted });
-        this.board[row][col] = promoted;
+        // Vue 3のリアクティブシステムのために配列全体を再作成
+        const newBoard = this.board.map((boardRow, rowIndex) => 
+          rowIndex === row 
+            ? boardRow.map((cell, colIndex) => colIndex === col ? promoted : cell)
+            : [...boardRow]
+        );
+        this.board = newBoard;
         this.unsavedChanges = true;
       } else {
         console.log('この駒は成ることができません:', piece);
@@ -190,6 +217,25 @@ export const useBoardEditStore = defineStore('boardEdit', {
       
       // 成れる駒かチェック
       return typeof piece === 'string' && promotablePieces.includes(piece);
+    },
+
+    /**
+     * 指定位置の駒の状態を変更する
+     * @param row 行インデックス
+     * @param col 列インデックス
+     * @param newPiece 新しい駒の状態
+     */
+    setPieceAt(row: number, col: number, newPiece: PieceType): void {
+      // Vue 3のリアクティブシステムのために配列全体を再作成
+      const newBoard = this.board.map((boardRow, rowIndex) => 
+        rowIndex === row 
+          ? boardRow.map((cell, colIndex) => colIndex === col ? newPiece : cell)
+          : [...boardRow]
+      );
+      this.board = newBoard;
+      this.unsavedChanges = true;
+      
+      console.log(`setPieceAt完了: [${row}, ${col}] = ${newPiece}`);
     },
     
     /**

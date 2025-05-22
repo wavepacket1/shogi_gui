@@ -266,12 +266,12 @@ const onDrop = (event: DragEvent, toRow: number, toCol: number): void => {
         const { piece } = parsedData;
         console.log('持ち駒からドロップ:', { piece, toRow, toCol });
         
-        // 移動先に既に駒がある場合の処理
+        // 移動先の駒のクリック回数をクリア
+        clearPieceClickCount(toRow, toCol);
+        
+        // 移動先に既に駒がある場合は持ち駒に追加
         const targetCell = boardStore.board[toRow][toCol];
         if (targetCell !== null) {
-          // 移動先の駒のクリック回数をクリア
-          clearPieceClickCount(toRow, toCol);
-          
           // 駒が成っている場合は、成っていない状態に戻す
           let baseForm: NonNullPieceType = targetCell as NonNullPieceType;
           
@@ -291,11 +291,10 @@ const onDrop = (event: DragEvent, toRow: number, toCol: number): void => {
           }
         }
         
-        // 持ち駒を盤面に配置
-        boardStore.board[toRow][toCol] = piece as NonNullPieceType;
+        // 持ち駒を盤面に配置（ストアのアクションを使用）
+        boardStore.setPieceAt(toRow, toCol, piece as NonNullPieceType);
         // 持ち駒を減らす
         boardStore.usePieceFromHand(piece as NonNullPieceType);
-        boardStore.unsavedChanges = true;
       } else {
         // 盤上の駒からのドラッグの場合
         const { piece, row, col } = parsedData;
@@ -364,27 +363,9 @@ const onRightClick = (event: MouseEvent, row: number, col: number): void => {
     // クリック回数をクリア
     clearPieceClickCount(row, col);
     
-    // 駒が成っている場合は、成っていない状態に戻す
-    let baseForm: NonNullPieceType = piece as NonNullPieceType;
-    
-    if (typeof piece === 'string' && piece.startsWith('+')) {
-      // 成り駒の場合、成っていない駒に戻す
-      // "+P" -> "P", "+p" -> "p" のように変換
-      const baseChar = piece.charAt(1);
-      baseForm = baseChar as NonNullPieceType;
-    }
-    
-    // 駒の所有権を維持したまま持ち駒に追加
-    if (typeof baseForm === 'string') {
-      // 持ち駒を増やす
-      boardStore.piecesInHand[baseForm] = (boardStore.piecesInHand[baseForm] || 0) + 1;
-      console.log(`持ち駒に追加: ${baseForm}`, boardStore.piecesInHand);
-    }
-    
-    // 盤面から駒を削除
+    // removePiece関数に処理を委譲（持ち駒への追加も含む）
     boardStore.removePiece(row, col);
     console.log('右クリックで駒を持ち駒に移動しました:', piece);
-    boardStore.unsavedChanges = true;
   }
 };
 
@@ -395,12 +376,12 @@ const handleCellClick = (row: number, col: number) => {
     const targetCell = boardStore.board[row][col];
     const piece = selectedHandPiece.value;
     
-    // 移動先に既に駒がある場合は駒台に追加
+    // 移動先の駒のクリック回数をクリア
+    clearPieceClickCount(row, col);
+    
+    // 移動先に既に駒がある場合は持ち駒に追加
     if (targetCell !== null) {
-      console.log('移動先に駒があります。駒台に追加します:', targetCell);
-      
-      // 移動先の駒のクリック回数をクリア
-      clearPieceClickCount(row, col);
+      console.log('移動先に駒があります。持ち駒に追加します:', targetCell);
       
       // 駒が成っている場合は、成っていない状態に戻す
       let baseForm: NonNullPieceType = targetCell as NonNullPieceType;
@@ -426,15 +407,14 @@ const handleCellClick = (row: number, col: number) => {
       }
     }
     
-    // 駒を配置
-    boardStore.board[row][col] = piece;
+    // 駒を配置（ストアのアクションを使用）
+    boardStore.setPieceAt(row, col, piece);
     // 持ち駒を減らす
     boardStore.usePieceFromHand(piece);
     // 選択状態をクリア
     selectedHandPiece.value = null;
     
     console.log(`駒を配置: ${piece} at ${row}-${col}`);
-    boardStore.unsavedChanges = true;
   } else {
     // 持ち駒が選択されていない場合は駒の状態変更
     const piece = boardStore.getPieceAt(row, col);
@@ -455,9 +435,8 @@ const handleCellClick = (row: number, col: number) => {
       // 駒の状態を次の状態に変更
       const newPiece = cyclePieceState(piece as NonNullPieceType, newCount);
       
-      // 盤面を更新
-      boardStore.board[row][col] = newPiece;
-      boardStore.unsavedChanges = true;
+      // 盤面を更新（ストアのアクションを使用）
+      boardStore.setPieceAt(row, col, newPiece);
       
       // 操作内容をログ出力
       const operations = ['成り不成を反転', '向きを変える'];
