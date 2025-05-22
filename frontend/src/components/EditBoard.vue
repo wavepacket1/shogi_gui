@@ -388,34 +388,88 @@ const onRightClick = (event: MouseEvent, row: number, col: number): void => {
   }
 };
 
-// ダブルクリックイベントハンドラ
-const onDoubleClick = (row: number, col: number): void => {
-  const piece = boardStore.getPieceAt(row, col);
-  
-  if (piece) {
-    console.log('ダブルクリックで駒の状態を変更します:', { row, col, piece });
+// マスをクリックした時の処理
+const handleCellClick = (row: number, col: number) => {
+  // 持ち駒が選択されている場合
+  if (selectedHandPiece.value) {
+    const targetCell = boardStore.board[row][col];
+    const piece = selectedHandPiece.value;
     
-    // 駒の位置をキーとして使用
-    const positionKey = `${row}-${col}`;
+    // 移動先に既に駒がある場合は駒台に追加
+    if (targetCell !== null) {
+      console.log('移動先に駒があります。駒台に追加します:', targetCell);
+      
+      // 移動先の駒のクリック回数をクリア
+      clearPieceClickCount(row, col);
+      
+      // 駒が成っている場合は、成っていない状態に戻す
+      let baseForm: NonNullPieceType = targetCell as NonNullPieceType;
+      
+      if (typeof targetCell === 'string' && targetCell.startsWith('+')) {
+        // 成り駒の場合、成っていない駒に戻す
+        // "+P" -> "P", "+p" -> "p" のように変換
+        const baseChar = targetCell.charAt(1);
+        baseForm = baseChar as NonNullPieceType;
+      }
+      
+      // 駒の所有権を反対にする（相手の駒として持ち駒に追加）
+      if (typeof baseForm === 'string') {
+        // 大文字(先手)の駒は小文字(後手)に、小文字の駒は大文字に変換
+        const isUpperCase = baseForm === baseForm.toUpperCase();
+        const ownedPiece = isUpperCase ? 
+          baseForm.toLowerCase() as NonNullPieceType : 
+          baseForm.toUpperCase() as NonNullPieceType;
+          
+        // 持ち駒を増やす
+        boardStore.piecesInHand[ownedPiece] = (boardStore.piecesInHand[ownedPiece] || 0) + 1;
+        console.log(`持ち駒に追加: ${ownedPiece}`, boardStore.piecesInHand);
+      }
+    }
     
-    // 現在のクリック回数を取得（初回は0）
-    const currentCount = pieceClickCount.value.get(positionKey) || 0;
+    // 駒を配置
+    boardStore.board[row][col] = piece;
+    // 持ち駒を減らす
+    boardStore.usePieceFromHand(piece);
+    // 選択状態をクリア
+    selectedHandPiece.value = null;
     
-    // クリック回数を増やす（4で1サイクル）
-    const newCount = (currentCount + 1) % 4;
-    pieceClickCount.value.set(positionKey, newCount);
-    
-    // 駒の状態を次の状態に変更
-    const newPiece = cyclePieceState(piece as NonNullPieceType);
-    
-    // 盤面を更新
-    boardStore.board[row][col] = newPiece;
+    console.log(`駒を配置: ${piece} at ${row}-${col}`);
     boardStore.unsavedChanges = true;
+  } else {
+    // 持ち駒が選択されていない場合は駒の状態変更
+    const piece = boardStore.getPieceAt(row, col);
     
-    // 操作内容をログ出力
-    const operations = ['成る', '向きを変える', '成不成を反転', '向きを戻す'];
-    console.log(`操作: ${operations[newCount]} (${piece} → ${newPiece})`);
+    if (piece) {
+      console.log('クリックで駒の状態を変更します:', { row, col, piece });
+      
+      // 駒の位置をキーとして使用
+      const positionKey = `${row}-${col}`;
+      
+      // 現在のクリック回数を取得（初回は0）
+      const currentCount = pieceClickCount.value.get(positionKey) || 0;
+      
+      // クリック回数を増やす（4で1サイクル）
+      const newCount = (currentCount + 1) % 4;
+      pieceClickCount.value.set(positionKey, newCount);
+      
+      // 駒の状態を次の状態に変更
+      const newPiece = cyclePieceState(piece as NonNullPieceType);
+      
+      // 盤面を更新
+      boardStore.board[row][col] = newPiece;
+      boardStore.unsavedChanges = true;
+      
+      // 操作内容をログ出力
+      const operations = ['成る', '向きを変える', '成不成を反転', '向きを戻す'];
+      console.log(`操作: ${operations[newCount]} (${piece} → ${newPiece})`);
+    }
   }
+};
+
+// ダブルクリックイベントハンドラ（無効化）
+const onDoubleClick = (row: number, col: number): void => {
+  // ダブルクリックイベントを無効化（シングルクリックのみ使用）
+  // 何もしない
 };
 
 // 駒が移動したときなどに位置キーをクリアする関数
@@ -477,56 +531,6 @@ const beforeUnloadHandler = (event: BeforeUnloadEvent) => {
     event.preventDefault();
     event.returnValue = '';
     return '変更が保存されていません。このページを離れますか？';
-  }
-};
-
-// マスをクリックした時の処理
-const handleCellClick = (row: number, col: number) => {
-  // 持ち駒が選択されている場合
-  if (selectedHandPiece.value) {
-    const targetCell = boardStore.board[row][col];
-    const piece = selectedHandPiece.value;
-    
-    // 移動先に既に駒がある場合は駒台に追加
-    if (targetCell !== null) {
-      console.log('移動先に駒があります。駒台に追加します:', targetCell);
-      
-      // 移動先の駒のクリック回数をクリア
-      clearPieceClickCount(row, col);
-      
-      // 駒が成っている場合は、成っていない状態に戻す
-      let baseForm: NonNullPieceType = targetCell as NonNullPieceType;
-      
-      if (typeof targetCell === 'string' && targetCell.startsWith('+')) {
-        // 成り駒の場合、成っていない駒に戻す
-        // "+P" -> "P", "+p" -> "p" のように変換
-        const baseChar = targetCell.charAt(1);
-        baseForm = baseChar as NonNullPieceType;
-      }
-      
-      // 駒の所有権を反対にする（相手の駒として持ち駒に追加）
-      if (typeof baseForm === 'string') {
-        // 大文字(先手)の駒は小文字(後手)に、小文字の駒は大文字に変換
-        const isUpperCase = baseForm === baseForm.toUpperCase();
-        const ownedPiece = isUpperCase ? 
-          baseForm.toLowerCase() as NonNullPieceType : 
-          baseForm.toUpperCase() as NonNullPieceType;
-          
-        // 持ち駒を増やす
-        boardStore.piecesInHand[ownedPiece] = (boardStore.piecesInHand[ownedPiece] || 0) + 1;
-        console.log(`持ち駒に追加: ${ownedPiece}`, boardStore.piecesInHand);
-      }
-    }
-    
-    // 駒を配置
-    boardStore.board[row][col] = piece;
-    // 持ち駒を減らす
-    boardStore.usePieceFromHand(piece);
-    // 選択状態をクリア
-    selectedHandPiece.value = null;
-    
-    console.log(`駒を配置: ${piece} at ${row}-${col}`);
-    boardStore.unsavedChanges = true;
   }
 };
 
@@ -683,7 +687,7 @@ watch([dragPreviewVisible], () => {
       <!-- 操作説明 -->
       <div class="operation-guide">
         <p>右クリック: 盤上の駒を持ち駒に戻す</p>
-        <p>ダブルクリック: 駒の状態変更（成る→向き変更→成不成反転→向き戻し）</p>
+        <p>クリック: 駒の状態変更（成る→向き変更→成不成反転→向き戻し）</p>
         <p>持ち駒クリック→マスクリック: 持ち駒を盤上に配置</p>
       </div>
     </div>
