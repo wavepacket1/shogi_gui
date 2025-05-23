@@ -364,9 +364,6 @@ export default defineComponent({
     align-items: center;
     width: 100%;
     min-height: 100vh;
-    background-color: #f7f3e9; /* 和紙風の色 */
-    background-image: url('data:image/svg+xml;utf8,<svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><rect width="100" height="100" fill="none"/><path d="M0 0L100 100M100 0L0 100" stroke="%23e6dfd2" stroke-width="0.5"/></svg>');
-    background-size: 20px 20px;
     position: relative;
     padding: 20px 0;
 }
@@ -411,11 +408,15 @@ export default defineComponent({
     width: 100%;
     max-width: 500px;
     flex-shrink: 0;
-    background-color: #fcf8f0;
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(79, 55, 30, 0.15);
-    padding: 15px;
-    border: 1px solid rgba(188, 166, 129, 0.3);
+    background: rgba(30, 30, 60, 0.9);
+    border-radius: 12px;
+    box-shadow: 
+        0 8px 16px rgba(0,0,0,0.3),
+        0 0 20px rgba(138, 43, 226, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    padding: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(15px);
 }
 
 .board-area {
@@ -463,33 +464,42 @@ export default defineComponent({
 }
 
 .game-info button, .game-info :deep(button) {
-    padding: 6px 12px;
+    padding: 8px 16px;
     border: none;
-    border-radius: 4px;
-    background: linear-gradient(to bottom, #b0856c, #8c6954);
-    color: #fff;
+    border-radius: 8px;
+    background: linear-gradient(145deg, #4A90E2, #357ABD);
+    color: white;
     cursor: pointer;
-    min-width: 80px;
+    min-width: 90px;
     font-size: 14px;
     text-align: center;
-    box-shadow: 0 2px 4px rgba(79, 55, 30, 0.2);
-    transition: all 0.2s ease;
+    box-shadow: 
+        0 4px 8px rgba(0,0,0,0.2),
+        0 0 15px rgba(74, 144, 226, 0.3);
+    transition: all 0.3s ease;
+    font-weight: 500;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.3);
 }
 
 .game-info button:hover, .game-info :deep(button):hover {
-    background: linear-gradient(to bottom, #c49580, #9d7762);
-    transform: translateY(-1px);
-    box-shadow: 0 3px 6px rgba(79, 55, 30, 0.25);
+    background: linear-gradient(145deg, #357ABD, #2E6BA8);
+    transform: translateY(-2px);
+    box-shadow: 
+        0 6px 12px rgba(0,0,0,0.3),
+        0 0 20px rgba(74, 144, 226, 0.5);
 }
 
 .info {
     font-size: 14px;
     text-align: left;
-    color: #5a4534;
+    color: #E8E8FF;
     font-weight: 500;
-    background-color: rgba(255, 255, 255, 0.6);
-    padding: 4px 8px;
-    border-radius: 4px;
+    background: rgba(40, 40, 80, 0.6);
+    padding: 6px 12px;
+    border-radius: 6px;
+    text-shadow: 0 0 5px rgba(255, 255, 255, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
 }
 
 /* 履歴パネル用のスタイル */
@@ -502,10 +512,14 @@ export default defineComponent({
     overflow: hidden;
     align-self: flex-start;
     margin-top: 75px; /* game-infoの高さに合わせる */
-    background-color: #fcf8f0;
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(79, 55, 30, 0.15);
-    border: 1px solid rgba(188, 166, 129, 0.3);
+    background: rgba(30, 30, 60, 0.9);
+    border-radius: 12px;
+    box-shadow: 
+        0 8px 16px rgba(0,0,0,0.3),
+        0 0 20px rgba(138, 43, 226, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(15px);
 }
 
 /* MoveHistoryPanelに影響を与えるスタイルを深い選択子で追加 */

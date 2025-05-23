@@ -273,23 +273,31 @@ export default defineComponent({
 
 <style scoped>
 .move-history-panel {
+  width: 280px;
+  height: 100%;
+  border: none;
+  border-radius: 8px;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
-  width: 100%;
-  height: 100%;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  overflow: hidden;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  background: rgba(30, 30, 60, 0.9);
+  backdrop-filter: blur(15px);
+  box-shadow: 
+    0 4px 8px rgba(0,0,0,0.2),
+    0 0 20px rgba(138, 43, 226, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .panel-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+  background: rgba(40, 40, 80, 0.8);
+  color: #E8E8FF;
   padding: 8px 12px;
-  background-color: #f5f5f5;
-  border-bottom: 1px solid #ccc;
+  text-align: center;
+  font-weight: bold;
+  font-size: 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  text-shadow: 0 0 5px rgba(255, 255, 255, 0.3);
 }
 
 .panel-header h3 {
@@ -315,26 +323,36 @@ export default defineComponent({
   flex: 1;
   overflow-y: auto;
   padding: 8px;
-  background-color: #fff;
+  background: rgba(25, 25, 50, 0.5);
 }
 
 .move-item {
-  display: flex;
   padding: 6px 8px;
-  cursor: pointer;
+  margin-bottom: 2px;
   border-radius: 4px;
-  margin-bottom: 4px;
-  transition: background-color 0.2s;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 14px;
+  color: #E8E8FF;
+  background: rgba(40, 40, 80, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  text-shadow: 0 0 3px rgba(255, 255, 255, 0.2);
 }
 
 .move-item:hover {
-  background-color: #f0f0f0;
+  background: rgba(60, 60, 120, 0.5);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  transform: translateX(2px);
 }
 
 .move-item.active {
-  background-color: #e3f2fd;
+  background: rgba(74, 144, 226, 0.6);
+  color: white;
   font-weight: bold;
-  border-left: 3px solid #1976d2;
+  box-shadow: 
+    0 2px 4px rgba(0,0,0,0.3),
+    0 0 10px rgba(74, 144, 226, 0.4);
+  border: 1px solid rgba(74, 144, 226, 0.8);
 }
 
 .move-number {
@@ -344,7 +362,8 @@ export default defineComponent({
 }
 
 .move-notation {
-  flex: 1;
+  font-family: 'Courier New', monospace;
+  font-weight: 500;
 }
 
 .navigation-controls {
@@ -390,5 +409,24 @@ export default defineComponent({
   background-color: #f5f5f5;
   border-color: #ddd;
   color: #999;
+}
+
+/* スクロールバーのスタイル */
+.moves-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.moves-container::-webkit-scrollbar-track {
+  background: rgba(40, 40, 80, 0.3);
+  border-radius: 3px;
+}
+
+.moves-container::-webkit-scrollbar-thumb {
+  background: rgba(74, 144, 226, 0.6);
+  border-radius: 3px;
+}
+
+.moves-container::-webkit-scrollbar-thumb:hover {
+  background: rgba(74, 144, 226, 0.8);
 }
 </style>

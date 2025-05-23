@@ -739,13 +739,17 @@ watch([dragPreviewVisible], () => {
   padding: 20px;
   max-width: 600px;
   margin: 0 auto;
+  min-height: 100vh;
+  position: relative;
+  overflow: hidden;
 }
 
 .pieces-label {
   margin-top: 10px;
   font-weight: bold;
   font-size: 16px;
-  color: #4A3728;
+  color: #E8E8FF; /* 宇宙背景に合わせて明るい色に */
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
 }
 
 .board-controls {
@@ -754,16 +758,22 @@ watch([dragPreviewVisible], () => {
   align-items: center;
   width: 100%;
   margin-bottom: 20px;
-  padding: 10px;
-  background-color: #f0f0f0;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  padding: 15px;
+  background: rgba(20, 20, 40, 0.9); /* 半透明の宇宙色 */
+  border-radius: 12px;
+  box-shadow: 
+    0 4px 8px rgba(0,0,0,0.3),
+    0 0 20px rgba(138, 43, 226, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .current-side {
   font-weight: bold;
   padding: 8px;
-  color: #333;
+  color: #E8E8FF;
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
 }
 
 .save-section {
@@ -775,24 +785,28 @@ watch([dragPreviewVisible], () => {
 
 .game-id-info {
   font-size: 12px;
-  color: #666;
+  color: #B8B8FF;
   text-align: center;
+  text-shadow: 0 0 5px rgba(255, 255, 255, 0.3);
 }
 
 .unsaved-indicator {
   font-size: 11px;
-  color: #e74c3c;
+  color: #FFB8B8;
   font-weight: bold;
   text-align: center;
+  text-shadow: 0 0 10px rgba(255, 100, 100, 0.5);
 }
 
 button {
-  padding: 8px 16px;
-  border-radius: 4px;
+  padding: 10px 18px;
+  border-radius: 8px;
   border: none;
   cursor: pointer;
   font-weight: bold;
-  transition: background-color 0.3s;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+  text-shadow: 0 1px 2px rgba(0,0,0,0.3);
 }
 
 button:disabled {
@@ -801,50 +815,81 @@ button:disabled {
 }
 
 .toggle-side-btn {
-  background-color: #3498db;
+  background: linear-gradient(145deg, #4A90E2, #357ABD);
   color: white;
+  box-shadow: 
+    0 4px 8px rgba(0,0,0,0.2),
+    0 0 15px rgba(74, 144, 226, 0.3);
 }
 
 .toggle-side-btn:hover {
-  background-color: #2980b9;
+  background: linear-gradient(145deg, #357ABD, #2E6BA8);
+  box-shadow: 
+    0 6px 12px rgba(0,0,0,0.3),
+    0 0 20px rgba(74, 144, 226, 0.5);
+  transform: translateY(-2px);
 }
 
 .save-btn {
-  background-color: #2ecc71;
+  background: linear-gradient(145deg, #52C41A, #389E0D);
   color: white;
+  box-shadow: 
+    0 4px 8px rgba(0,0,0,0.2),
+    0 0 15px rgba(82, 196, 26, 0.3);
 }
 
 .save-btn:hover {
-  background-color: #27ae60;
+  background: linear-gradient(145deg, #389E0D, #237804);
+  box-shadow: 
+    0 6px 12px rgba(0,0,0,0.3),
+    0 0 20px rgba(82, 196, 26, 0.5);
+  transform: translateY(-2px);
 }
 
 .board-area {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
+  gap: 15px;
+  position: relative;
+  z-index: 1;
 }
 
-/* 駒台のスタイル */
+/* 駒台のスタイル - 宇宙テーマに合わせて調整 */
 .pieces-in-hand {
   display: flex;
   justify-content: center;
   gap: 12px;
   width: 450px;
-  padding: 10px;
-  background: rgba(244, 240, 236, 0.9);
-  border-radius: 8px;
+  padding: 15px;
+  background: rgba(30, 30, 60, 0.9);
+  border-radius: 12px;
   flex-wrap: wrap;
+  box-shadow: 
+    0 4px 8px rgba(0,0,0,0.3),
+    0 0 20px rgba(138, 43, 226, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .piece-container {
   cursor: pointer;
   margin: 0 2px;
   position: relative;
+  transition: all 0.3s ease;
+}
+
+.piece-container:hover {
+  transform: translateY(-3px);
+  filter: drop-shadow(0 5px 10px rgba(255, 255, 255, 0.3));
 }
 
 .selected {
-  box-shadow: 0 0 5px 2px rgba(255, 215, 0, 0.8);
+  box-shadow: 
+    0 0 15px 3px rgba(255, 215, 0, 0.8),
+    0 0 30px 5px rgba(255, 215, 0, 0.4);
+  transform: scale(1.1);
 }
 
 .piece-count {
@@ -853,26 +898,30 @@ button:disabled {
   right: 2px;
   font-size: 10px;
   color: #000000;
-  background: rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.9);
   padding: 0px 2px;
-  border-radius: 2px;
+  border-radius: 3px;
   transform-origin: center;
-  text-shadow: 0 1px 1px rgba(255, 255, 255, 0.8);
+  text-shadow: none;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
 }
 
-/* 将棋盤のスタイリング - ShogiBoardGridのスタイルを適用 */
+/* 将棋盤のスタイリング - 宇宙背景に映えるよう調整 */
 .shogi-board {
   display: grid;
   grid-template-rows: repeat(9, 50px);
   grid-template-columns: repeat(9, 50px);
-  border: 3px solid #4A3728;
+  border: 4px solid #D4AF37;
   width: 450px;
   height: 450px;
   margin: 10px auto;
   background-color: #E8C99B;
   box-shadow: 
-      0 4px 8px rgba(0, 0, 0, 0.2),
+      0 8px 16px rgba(0, 0, 0, 0.4),
+      0 0 30px rgba(212, 175, 55, 0.3),
       inset 0 0 20px rgba(0, 0, 0, 0.1);
+  position: relative;
+  z-index: 2;
 }
 
 .shogi-row {
@@ -886,6 +935,12 @@ button:disabled {
   justify-content: center;
   position: relative;
   background-color: #E8C99B;
+  transition: all 0.2s ease;
+}
+
+.shogi-cell:hover {
+  background-color: #F0D4A8;
+  box-shadow: inset 0 0 10px rgba(255, 255, 255, 0.2);
 }
 
 .piece-shape {
@@ -897,7 +952,7 @@ button:disabled {
   align-items: center;
   justify-content: center;
   position: relative;
-  transition: none;
+  transition: all 0.3s ease;
   clip-path: polygon(
       50% 0%,
       100% 35%,
@@ -922,9 +977,10 @@ button:disabled {
       );
   background-blend-mode: soft-light;
   box-shadow: 
-      0 2px 4px rgba(0, 0, 0, 0.2),
-      inset 0 1px 3px rgba(255, 255, 255, 0.6);
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+      0 3px 6px rgba(0, 0, 0, 0.3),
+      inset 0 1px 3px rgba(255, 255, 255, 0.6),
+      0 0 10px rgba(255, 255, 255, 0.1);
+  filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.4));
   opacity: 0.95;
   transform: rotate(0deg);
 }
@@ -999,8 +1055,9 @@ button:disabled {
     );
   background-blend-mode: soft-light;
   box-shadow: 
-    0 2px 4px rgba(0, 0, 0, 0.2),
-    inset 0 1px 3px rgba(255, 255, 255, 0.6);
+    0 3px 6px rgba(0, 0, 0, 0.3),
+    inset 0 1px 3px rgba(255, 255, 255, 0.6),
+    0 0 15px rgba(255, 215, 0, 0.3);
 }
 
 .piece-shape.b-promoted .piece-symbol {
@@ -1025,8 +1082,9 @@ button:disabled {
     );
   background-blend-mode: soft-light;
   box-shadow: 
-    0 2px 4px rgba(0, 0, 0, 0.2),
-    inset 0 1px 3px rgba(255, 255, 255, 0.6);
+    0 3px 6px rgba(0, 0, 0, 0.3),
+    inset 0 1px 3px rgba(255, 255, 255, 0.6),
+    0 0 15px rgba(255, 215, 0, 0.3);
   transform: rotate(180deg);
 }
 
@@ -1035,7 +1093,12 @@ button:disabled {
 }
 
 .piece-shape:hover {
-  filter: brightness(1.1);
+  filter: brightness(1.2) drop-shadow(0 5px 10px rgba(255, 255, 255, 0.2));
+  transform: scale(1.05) rotate(0deg);
+}
+
+.piece-shape.w:hover {
+  transform: scale(1.05) rotate(180deg);
 }
 
 .shogi-cell:active {
@@ -1043,13 +1106,22 @@ button:disabled {
 }
 
 .operation-guide {
-  margin-top: 10px;
-  font-size: 0.8rem;
-  color: #666;
+  margin-top: 15px;
+  padding: 15px;
+  font-size: 0.9rem;
+  color: #E8E8FF;
+  background: rgba(30, 30, 60, 0.8);
+  border-radius: 10px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 
+    0 4px 8px rgba(0,0,0,0.2),
+    0 0 20px rgba(138, 43, 226, 0.1);
 }
 
 .operation-guide p {
-  margin: 5px 0;
+  margin: 8px 0;
+  text-shadow: 0 0 5px rgba(255, 255, 255, 0.3);
 }
 
 /* ドラッグ中の駒の外観を調整 */
@@ -1102,13 +1174,6 @@ button:disabled {
   transition: none;
 }
 
-/* 成り駒のスタイル */
-.piece-shape.b-promoted {
-  /* ... existing styles ... */
-}
-
-/* ... rest of existing styles ... */
-
 /* ドラッグプレビューのスタイル */
 :global(.drag-preview) {
   position: fixed;
@@ -1117,7 +1182,6 @@ button:disabled {
   display: block;
   width: 45px;
   height: 45px;
-  /* translateを使用しないのでwill-changeプロパティは不要 */
 }
 
 :global(.drag-preview .piece-container) {

@@ -87,47 +87,83 @@ export default defineComponent({
 
 <style scoped>
 header {
-  background: #f5f5f5;
-  padding: 8px 16px;
+  background: rgba(20, 20, 40, 0.95); /* 半透明の宇宙色 */
+  padding: 12px 20px;
   display: flex;
-  gap: 16px;
+  gap: 20px;
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   box-sizing: border-box;
   z-index: 1000;
+  backdrop-filter: blur(15px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 
+    0 4px 8px rgba(0,0,0,0.3),
+    0 0 20px rgba(138, 43, 226, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
 .tab {
-  padding: 6px 12px;
+  padding: 10px 18px;
   cursor: pointer;
-  border-radius: 4px;
-  transition: all 0.2s ease;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  font-weight: 500;
+  color: #E8E8FF;
+  text-shadow: 0 0 5px rgba(255, 255, 255, 0.3);
+  background: rgba(40, 40, 80, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
 }
 
 .tab.active {
-  background: #007acc;
-  color: #fff;
+  background: linear-gradient(145deg, #4A90E2, #357ABD);
+  color: white;
+  box-shadow: 
+    0 4px 8px rgba(0,0,0,0.3),
+    0 0 15px rgba(74, 144, 226, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+  transform: translateY(-1px);
 }
 
 .tab:hover:not(.active) {
-  background: #e0e0e0;
+  background: rgba(60, 60, 120, 0.5);
+  color: #F0F0FF;
+  box-shadow: 
+    0 4px 8px rgba(0,0,0,0.2),
+    0 0 10px rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px);
 }
 
 .error-message {
-  color: #ff5252;
-  font-size: 0.8rem;
+  color: #FFB8B8;
+  font-size: 0.9rem;
   margin-left: auto;
   align-self: center;
-  background: #ffebee;
-  padding: 2px 6px;
-  border-radius: 4px;
+  background: rgba(60, 20, 20, 0.8);
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 100, 100, 0.3);
+  text-shadow: 0 0 5px rgba(255, 100, 100, 0.5);
+  backdrop-filter: blur(10px);
+  box-shadow: 
+    0 2px 4px rgba(0,0,0,0.2),
+    0 0 10px rgba(255, 100, 100, 0.2);
 }
 
 @media (max-width: 768px) {
   header {
     flex-wrap: wrap;
+    padding: 10px 15px;
+    gap: 15px;
+  }
+  
+  .tab {
+    padding: 8px 15px;
+    font-size: 0.9rem;
   }
 }
 </style>
