@@ -2,21 +2,44 @@
   <div id="app">
     <MenuBar />
     <div class="main-content">
-      <ShogiBoard />
+      <component :is="currentComponent" />
     </div>
   </div>
 </template>
 
 <script lang="ts">
-import { defineComponent } from 'vue';
+import { defineComponent, computed } from 'vue';
 import ShogiBoard from './components/ShogiBoard.vue';
+import EditBoard from './components/EditBoard.vue';
 import MenuBar from './components/MenuBar.vue';
+import { useModeStore } from './store/mode';
+import { GameMode } from './store/types';
 
 export default defineComponent({
   name: 'App',
   components: {
     ShogiBoard,
-    MenuBar,
+    EditBoard,
+    MenuBar
+  },
+  setup() {
+    const modeStore = useModeStore();
+
+    // 現在のモードに基づいて表示するコンポーネントを決定
+    const currentComponent = computed(() => {
+      switch (modeStore.currentMode) {
+        case GameMode.EDIT:
+          return 'EditBoard';
+        case GameMode.PLAY:
+        case GameMode.STUDY:
+        default:
+          return 'ShogiBoard';
+      }
+    });
+
+    return {
+      currentComponent
+    };
   }
 });
 </script>

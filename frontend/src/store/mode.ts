@@ -16,7 +16,7 @@ export interface ModeState {
 
 export const useModeStore = defineStore('mode', {
     state: (): ModeState => ({
-        currentMode: GameMode.PLAY,
+        currentMode: GameMode.EDIT,
         isLoading: false,
         error: null
     }),

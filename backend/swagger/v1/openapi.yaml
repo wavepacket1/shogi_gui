@@ -394,6 +394,113 @@
         }
       }
     },
+    "/api/v1/boards": {
+      "post": {
+        "summary": "盤面を保存する",
+        "tags": [
+          "Boards"
+        ],
+        "description": "通常の対局、または編集モードでの盤面を保存します",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": "盤面保存成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "board": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "integer"
+                        },
+                        "game_id": {
+                          "type": "integer"
+                        },
+                        "sfen": {
+                          "type": "string"
+                        },
+                        "custom_position": {
+                          "type": "boolean",
+                          "description": "編集モードで作成されたカスタム局面かどうか"
+                        },
+                        "updated_at": {
+                          "type": "string",
+                          "format": "date-time"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "バリデーションエラー",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "example": "error"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "board"
+                ],
+                "properties": {
+                  "board": {
+                    "type": "object",
+                    "required": [
+                      "game_id",
+                      "sfen"
+                    ],
+                    "properties": {
+                      "game_id": {
+                        "type": "integer",
+                        "description": "ゲームID"
+                      },
+                      "sfen": {
+                        "type": "string",
+                        "description": "盤面情報のSFEN文字列"
+                      }
+                    }
+                  },
+                  "mode": {
+                    "type": "string",
+                    "enum": [
+                      "edit"
+                    ],
+                    "description": "編集モードを指定（editの場合は編集モードとして扱う）"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/boards/default": {
       "get": {
         "summary": "デフォルトボードの取得",
@@ -494,6 +601,14 @@
                       "finished",
                       "pause"
                     ]
+                  },
+                  "mode": {
+                    "type": "string",
+                    "enum": [
+                      "play",
+                      "edit",
+                      "study"
+                    ]
                   }
                 },
                 "required": [
@@ -545,19 +660,8 @@
                         "success",
                         "failed"
                       ]
-                    },
-                    "game_id": {
-                      "type": "integer"
-                    },
-                    "board_id": {
-                      "type": "integer"
                     }
-                  },
-                  "required": [
-                    "game_id",
-                    "status",
-                    "board_id"
-                  ]
+                  }
                 }
               }
             }
@@ -587,7 +691,7 @@
         }
       }
     },
-    "/api/v1/games/:id/resign": {
+    "/api/v1/games/{id}/resign": {
       "post": {
         "summary": "投了を行う",
         "tags": [
@@ -705,6 +809,125 @@
                     "message"
                   ]
                 }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/games/{id}/mode": {
+      "post": {
+        "summary": "ゲームモードを変更する",
+        "tags": [
+          "Games"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ゲームID",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "モード変更成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "game_id": {
+                      "type": "integer",
+                      "example": 123
+                    },
+                    "mode": {
+                      "type": "string",
+                      "enum": [
+                        "play",
+                        "edit",
+                        "study"
+                      ],
+                      "example": "edit"
+                    },
+                    "status": {
+                      "type": "string",
+                      "example": "active"
+                    },
+                    "updated_at": {
+                      "type": "string",
+                      "format": "date-time",
+                      "example": "2025-04-29T10:00:00.000Z"
+                    }
+                  },
+                  "required": [
+                    "game_id",
+                    "mode",
+                    "status",
+                    "updated_at"
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "ゲームが見つからない",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "example": "ゲームが見つかりません"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "不正なリクエスト",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "example": "無効なモードです"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "mode": {
+                    "type": "string",
+                    "enum": [
+                      "play",
+                      "edit",
+                      "study"
+                    ],
+                    "description": "変更後のゲームモード"
+                  }
+                },
+                "required": [
+                  "mode"
+                ]
               }
             }
           }
@@ -1227,116 +1450,6 @@
                     }
                   }
                 }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/games/{id}/mode": {
-      "post": {
-        "summary": "ゲームモードを変更する",
-        "tags": [
-          "Games"
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "description": "ゲームID",
-            "required": true,
-            "schema": {
-              "type": "integer"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "モード変更成功",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "game_id": {
-                      "type": "integer",
-                      "example": 123
-                    },
-                    "mode": {
-                      "type": "string",
-                      "enum": [
-                        "play",
-                        "edit",
-                        "study"
-                      ],
-                      "example": "edit"
-                    },
-                    "status": {
-                      "type": "string",
-                      "example": "active"
-                    },
-                    "updated_at": {
-                      "type": "string",
-                      "format": "date-time",
-                      "example": "2025-04-29T10:00:00.000Z"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "不正なリクエスト",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "string",
-                      "example": "無効なモードです"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "ゲームが見つからない",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "string",
-                      "example": "ゲームが見つかりません"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "mode": {
-                    "type": "string",
-                    "enum": [
-                      "play",
-                      "edit",
-                      "study"
-                    ],
-                    "description": "変更後のゲームモード"
-                  }
-                },
-                "required": [
-                  "mode"
-                ]
               }
             }
           }
