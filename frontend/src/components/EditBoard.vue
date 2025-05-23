@@ -361,12 +361,38 @@ const onRightClick = (event: MouseEvent, row: number, col: number): void => {
   const piece = boardStore.getPieceAt(row, col);
   
   if (piece) {
+    console.log('右クリックで駒を持ち駒に移動します:', { piece, row, col, currentSide: boardStore.currentSide });
+    
     // クリック回数をクリア
     clearPieceClickCount(row, col);
     
-    // removePiece関数に処理を委譲（持ち駒への追加も含む）
-    boardStore.removePiece(row, col);
-    console.log('右クリックで駒を持ち駒に移動しました:', piece);
+    // 駒が成っている場合は、成っていない状態に戻す
+    let baseForm: NonNullPieceType = piece as NonNullPieceType;
+    
+    if (typeof piece === 'string' && piece.startsWith('+')) {
+      // 成り駒の場合、成っていない駒に戻す
+      // "+P" -> "P", "+p" -> "p" のように変換
+      const baseChar = piece.charAt(1);
+      baseForm = baseChar as NonNullPieceType;
+      console.log('成り駒を基本形に変換:', piece, '->', baseForm);
+    }
+    
+    // 元の駒の所有権に基づいて適切な駒台に追加
+    // 大文字の駒は先手、小文字の駒は後手の駒台に追加
+    const isOriginallyBlack = baseForm === baseForm.toUpperCase();
+    const ownedPiece = isOriginallyBlack ? 
+      baseForm.toUpperCase() as NonNullPieceType : 
+      baseForm.toLowerCase() as NonNullPieceType;
+    
+    console.log('駒台に追加する駒:', ownedPiece, '(元の所有権:', isOriginallyBlack ? '先手' : '後手', ')');
+    
+    // 持ち駒を増やす
+    boardStore.piecesInHand[ownedPiece] = (boardStore.piecesInHand[ownedPiece] || 0) + 1;
+    
+    // 盤面から駒を削除
+    boardStore.setPieceAt(row, col, null);
+    
+    console.log('右クリックで駒を持ち駒に移動しました:', ownedPiece, '持ち駒状態:', boardStore.piecesInHand);
   }
 };
 

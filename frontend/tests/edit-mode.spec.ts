@@ -80,9 +80,17 @@ test.describe('編集モード', () => {
   });
 
   test('右クリックで駒を持ち駒に移動できる', async ({ page }) => {
+    // コンソールログを監視
+    page.on('console', msg => {
+      console.log('Browser console:', msg.text());
+    });
+    
     // 初期の持ち駒数を確認
     const initialHandPieceCount = await page.locator('.pieces-in-hand .piece-container').count();
+    const initialBlackPieces = await page.locator('.pieces-in-hand').last().locator('.piece-container').count();
+    const initialWhitePieces = await page.locator('.pieces-in-hand').first().locator('.piece-container').count();
     console.log('Initial hand piece count:', initialHandPieceCount);
+    console.log('初期 - 先手持ち駒:', initialBlackPieces, '後手持ち駒:', initialWhitePieces);
     
     // 盤上の駒を右クリック
     const pieceCell = page.locator('.shogi-cell').filter({
@@ -93,7 +101,8 @@ test.describe('編集モード', () => {
     
     // 駒の種類を記録
     const pieceType = await pieceCell.locator('.piece-shape').getAttribute('data-piece');
-    console.log('Right-clicking piece:', pieceType);
+    const pieceOwner = await pieceCell.locator('.piece-shape').getAttribute('data-owner');
+    console.log('Right-clicking piece:', pieceType, 'Owner:', pieceOwner);
     
     // 右クリックで駒を持ち駒に移動
     await pieceCell.click({ button: 'right' });
@@ -101,7 +110,14 @@ test.describe('編集モード', () => {
     
     // 持ち駒が増えたかチェック
     const afterRightClickCount = await page.locator('.pieces-in-hand .piece-container').count();
+    const afterBlackPieces = await page.locator('.pieces-in-hand').last().locator('.piece-container').count();
+    const afterWhitePieces = await page.locator('.pieces-in-hand').first().locator('.piece-container').count();
     console.log('After right click count:', afterRightClickCount);
+    console.log('右クリック後 - 先手持ち駒:', afterBlackPieces, '後手持ち駒:', afterWhitePieces);
+    
+    const blackIncreased = afterBlackPieces > initialBlackPieces;
+    const whiteIncreased = afterWhitePieces > initialWhitePieces;
+    console.log('先手駒台に追加:', blackIncreased, '後手駒台に追加:', whiteIncreased);
     
     // 持ち駒エリアに駒が追加されることを確認
     expect(afterRightClickCount).toBeGreaterThan(initialHandPieceCount);
@@ -423,5 +439,46 @@ test.describe('編集モード', () => {
     await page.setViewportSize({ width: 1280, height: 720 });
     
     console.log('✅ Mobile simulation test completed');
+  });
+
+  test('先手の駒を右クリックして先手の駒台に追加されることを確認', async ({ page }) => {
+    // コンソールログを監視
+    page.on('console', msg => {
+      console.log('Browser console:', msg.text());
+    });
+    
+    // 初期の持ち駒数を確認
+    const initialBlackPieces = await page.locator('.pieces-in-hand').last().locator('.piece-container').count();
+    const initialWhitePieces = await page.locator('.pieces-in-hand').first().locator('.piece-container').count();
+    console.log('初期 - 先手持ち駒:', initialBlackPieces, '後手持ち駒:', initialWhitePieces);
+    
+    // 先手の駒（大文字）を探す
+    const blackPieceCell = page.locator('.shogi-cell').filter({
+      has: page.locator('.piece-shape[data-owner="先手"]')
+    }).first();
+    
+    await expect(blackPieceCell).toBeVisible();
+    
+    // 駒の種類を記録
+    const pieceType = await blackPieceCell.locator('.piece-shape').getAttribute('data-piece');
+    const pieceOwner = await blackPieceCell.locator('.piece-shape').getAttribute('data-owner');
+    console.log('Right-clicking black piece:', pieceType, 'Owner:', pieceOwner);
+    
+    // 右クリックで駒を持ち駒に移動
+    await blackPieceCell.click({ button: 'right' });
+    await page.waitForTimeout(2000);
+    
+    // 持ち駒が増えたかチェック
+    const afterBlackPieces = await page.locator('.pieces-in-hand').last().locator('.piece-container').count();
+    const afterWhitePieces = await page.locator('.pieces-in-hand').first().locator('.piece-container').count();
+    console.log('右クリック後 - 先手持ち駒:', afterBlackPieces, '後手持ち駒:', afterWhitePieces);
+    
+    const blackIncreased = afterBlackPieces > initialBlackPieces;
+    const whiteIncreased = afterWhitePieces > initialWhitePieces;
+    console.log('先手駒台に追加:', blackIncreased, '後手駒台に追加:', whiteIncreased);
+    
+    // 先手の駒は先手の駒台に追加される
+    expect(blackIncreased).toBe(true);
+    expect(whiteIncreased).toBe(false);
   });
 }); 
