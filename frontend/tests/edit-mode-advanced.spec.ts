@@ -88,7 +88,7 @@ test.describe('編集モード（高度なテスト）', () => {
         await page.waitForTimeout(100);
       }
     }
-    
+
     const endTime = Date.now();
     const duration = endTime - startTime;
     
