@@ -10,6 +10,9 @@ import {
   NonNullPieceType
 } from '../types/shogi';
 
+// axiosのデフォルト設定
+axios.defaults.baseURL = 'http://localhost:3000';
+
 export const useBoardEditStore = defineStore('boardEdit', {
   state: (): BoardState => ({
     board: Array(9).fill(null).map(() => Array(9).fill(null)), // 9x9の将棋盤
@@ -297,6 +300,14 @@ export const useBoardEditStore = defineStore('boardEdit', {
       }
       
       try {
+        console.log('保存リクエスト送信中...', {
+          board: {
+            game_id: this.gameId,
+            sfen: this.toSfen()
+          },
+          mode: 'edit'
+        });
+        
         const response = await axios.post('/api/v1/boards', {
           board: {
             game_id: this.gameId,
@@ -305,13 +316,27 @@ export const useBoardEditStore = defineStore('boardEdit', {
           mode: 'edit'
         });
         
+        console.log('保存レスポンス:', response);
+        
         if (response.status === 201) {
           this.unsavedChanges = false;
+          console.log('盤面の保存が完了しました');
           return response.data;
+        } else {
+          throw new Error(`予期しないレスポンス: ${response.status}`);
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('盤面の保存に失敗しました', error);
-        throw error;
+        
+        // エラーの詳細情報を提供
+        if (error.response) {
+          console.error('エラーレスポンス:', error.response.data);
+          throw new Error(`サーバーエラー (${error.response.status}): ${error.response.data.message || 'データベースへの保存に失敗しました'}`);
+        } else if (error.request) {
+          throw new Error('サーバーとの通信に失敗しました');
+        } else {
+          throw new Error(`保存エラー: ${error.message}`);
+        }
       }
     },
     

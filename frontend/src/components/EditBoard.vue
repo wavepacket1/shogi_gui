@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount, computed, watch } from 'vue';
 import { useBoardEditStore } from '@/store/board';
+import { useBoardStore } from '@/store';
 import { PieceType, NonNullPieceType, DraggingPiece, Position, MoveInfo } from '@/types/shogi';
 import { pieceMapper } from '@/utils/pieceMapper';
 
@@ -466,11 +467,32 @@ const toggleSide = (): void => {
 // 盤面保存関数
 const saveBoard = async (): Promise<void> => {
   try {
+    // ゲームIDが設定されていない場合の処理
+    if (!boardStore.gameId) {
+      const mainBoardStore = useBoardStore();
+      
+      // メインストアからゲームIDを取得
+      if (mainBoardStore.game?.id) {
+        boardStore.setGameId(mainBoardStore.game.id);
+      } else {
+        // 新規ゲームを作成
+        await mainBoardStore.createGame();
+        if (mainBoardStore.game?.id) {
+          boardStore.setGameId(mainBoardStore.game.id);
+        } else {
+          throw new Error('ゲームの作成に失敗しました');
+        }
+      }
+    }
+    
+    console.log('盤面を保存しています... (ゲームID:', boardStore.gameId, ')');
     await boardStore.saveBoard();
     alert('盤面を保存しました');
+    console.log('盤面の保存が完了しました');
   } catch (error) {
-    alert('保存に失敗しました');
-    console.error(error);
+    console.error('保存エラー:', error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    alert(`保存に失敗しました: ${errorMessage}`);
   }
 };
 
@@ -515,7 +537,7 @@ const beforeUnloadHandler = (event: BeforeUnloadEvent) => {
 };
 
 // ライフサイクルフック
-onMounted(() => {
+onMounted(async () => {
   window.addEventListener('beforeunload', beforeUnloadHandler);
   
   // カスタムドラッグプレビュー要素を作成
@@ -536,11 +558,33 @@ onMounted(() => {
   // ドラッグ終了イベントのグローバル監視
   window.addEventListener('dragend', hideDragPreview);
   
-  // ゲームIDの設定（実際のアプリではルートパラメータなどから取得）
+  // ゲームIDの設定
+  const mainBoardStore = useBoardStore();
+  
+  // メインボードストアにゲームが存在しない場合は新規作成
+  if (!mainBoardStore.game?.id) {
+    console.log('ゲームが存在しないため、新規作成します...');
+    try {
+      await mainBoardStore.createGame();
+      console.log('新規ゲームを作成しました:', mainBoardStore.game?.id);
+    } catch (error) {
+      console.error('ゲーム作成に失敗しました:', error);
+    }
+  }
+  
+  // 編集用ストアにゲームIDを設定
+  if (mainBoardStore.game?.id) {
+    boardStore.setGameId(mainBoardStore.game.id);
+    console.log('編集モードにゲームIDを設定しました:', mainBoardStore.game.id);
+  }
+  
+  // URLパラメータからのゲームID取得（オプション）
   const urlParams = new URLSearchParams(window.location.search);
-  const gameId = urlParams.get('gameId');
-  if (gameId) {
-    boardStore.setGameId(parseInt(gameId));
+  const gameIdFromUrl = urlParams.get('gameId');
+  if (gameIdFromUrl) {
+    const gameId = parseInt(gameIdFromUrl);
+    boardStore.setGameId(gameId);
+    console.log('URLからゲームIDを設定しました:', gameId);
   }
   
   // 空の盤面で初期化
@@ -583,9 +627,22 @@ watch([dragPreviewVisible], () => {
         手番切り替え
       </button>
       
-      <button @click="saveBoard" class="save-btn" :disabled="!boardStore.gameId">
-        保存
-      </button>
+      <div class="save-section">
+        <button 
+          @click="saveBoard" 
+          class="save-btn" 
+          :disabled="!boardStore.gameId"
+          :title="boardStore.gameId ? '盤面を保存' : 'ゲームIDが設定されていません'"
+        >
+          {{ boardStore.gameId ? '保存' : 'ゲーム作成中...' }}
+        </button>
+        <div v-if="boardStore.gameId" class="game-id-info">
+          ゲームID: {{ boardStore.gameId }}
+        </div>
+        <div v-if="boardStore.unsavedChanges" class="unsaved-indicator">
+          未保存の変更あり
+        </div>
+      </div>
     </div>
     
     <div class="board-area">
@@ -694,6 +751,7 @@ watch([dragPreviewVisible], () => {
 .board-controls {
   display: flex;
   justify-content: space-between;
+  align-items: center;
   width: 100%;
   margin-bottom: 20px;
   padding: 10px;
@@ -706,6 +764,26 @@ watch([dragPreviewVisible], () => {
   font-weight: bold;
   padding: 8px;
   color: #333;
+}
+
+.save-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.game-id-info {
+  font-size: 12px;
+  color: #666;
+  text-align: center;
+}
+
+.unsaved-indicator {
+  font-size: 11px;
+  color: #e74c3c;
+  font-weight: bold;
+  text-align: center;
 }
 
 button {

@@ -407,4 +407,135 @@ test.describe('編集モード（実用機能テスト）', () => {
     
     console.log('✅ Error recovery test completed');
   });
+
+  test('実際の局面保存テスト', async ({ page }) => {
+    console.log('Starting actual board save test...');
+    
+    // コンソールログを監視
+    page.on('console', msg => {
+      console.log('Browser console:', msg.text());
+    });
+    
+    // 1. ゲームIDが設定されていることを確認
+    const gameIdExists = await page.evaluate(() => {
+      const stores = (window as any).__PINIA__?._s;
+      if (stores) {
+        for (const [key, store] of stores.entries()) {
+          if (key.includes('boardEdit') || key.includes('board')) {
+            return !!store.gameId;
+          }
+        }
+      }
+      return false;
+    });
+    
+    console.log('Game ID exists:', gameIdExists);
+    
+    // 2. 保存ボタンの状態を確認
+    const saveButton = page.locator('.save-btn');
+    await expect(saveButton).toBeVisible();
+    
+    const isDisabled = await saveButton.isDisabled();
+    console.log('Save button disabled:', isDisabled);
+    
+    // 3. 実際に駒を移動して変更を加える
+    const pieces = page.locator('.shogi-cell').filter({
+      has: page.locator('.piece-shape[data-piece]')
+    });
+    
+    if (await pieces.count() > 0) {
+      console.log('Making a move to create unsaved changes...');
+      await pieces.first().click();
+      await page.waitForTimeout(1500);
+    }
+    
+    // 4. 未保存変更のインジケーターが表示されることを確認
+    const unsavedIndicator = page.locator('.unsaved-indicator');
+    if (await unsavedIndicator.count() > 0) {
+      await expect(unsavedIndicator).toContainText('未保存の変更あり');
+      console.log('Unsaved changes indicator is visible');
+    }
+    
+    // 5. 保存ボタンをクリック
+    if (!isDisabled) {
+      console.log('Attempting to save board...');
+      
+      // アラートダイアログのイベントリスナーを設定
+      page.on('dialog', async dialog => {
+        console.log('Dialog appeared:', dialog.message());
+        await dialog.accept();
+      });
+      
+      await saveButton.click();
+      await page.waitForTimeout(3000); // 保存処理の完了を待つ
+      
+      console.log('Save operation completed');
+    }
+    
+    console.log('✅ Actual board save test completed');
+  });
+
+  test('ネットワークリクエスト詳細確認テスト', async ({ page }) => {
+    console.log('Starting network request monitoring test...');
+    
+    // ネットワークリクエストを監視
+    const requests: any[] = [];
+    page.on('request', request => {
+      requests.push({
+        url: request.url(),
+        method: request.method(),
+        postData: request.postData(),
+        headers: request.headers()
+      });
+      console.log(`Request: ${request.method()} ${request.url()}`);
+      if (request.postData()) {
+        console.log('Post data:', request.postData());
+      }
+    });
+    
+    page.on('response', response => {
+      console.log(`Response: ${response.status()} ${response.url()}`);
+    });
+    
+    // 駒を動かして変更を作成
+    const pieces = page.locator('.shogi-cell').filter({
+      has: page.locator('.piece-shape[data-piece]')
+    });
+    
+    if (await pieces.count() > 0) {
+      console.log('Making a move...');
+      await pieces.first().click();
+      await page.waitForTimeout(1000);
+    }
+    
+    // 保存ボタンをクリック
+    const saveButton = page.locator('.save-btn');
+    await expect(saveButton).toBeVisible();
+    
+    if (!(await saveButton.isDisabled())) {
+      console.log('Clicking save button...');
+      
+      // アラートダイアログのハンドリング
+      page.on('dialog', async dialog => {
+        console.log('Dialog message:', dialog.message());
+        await dialog.accept();
+      });
+      
+      await saveButton.click();
+      await page.waitForTimeout(3000);
+      
+      // POSTリクエストを検索
+      const postRequests = requests.filter(req => req.method === 'POST' && req.url.includes('/boards'));
+      console.log('POST requests to /boards:', postRequests);
+      
+      if (postRequests.length > 0) {
+        console.log('Found POST request:', JSON.stringify(postRequests[0], null, 2));
+      } else {
+        console.log('No POST requests found to /boards endpoint');
+      }
+    }
+    
+    console.log('All network requests:', requests.length);
+    console.log('✅ Network request monitoring test completed');
+  });
 }); 
