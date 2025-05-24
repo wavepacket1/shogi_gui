@@ -295,13 +295,13 @@ module Api
         }, status: :not_found
       end
 
-      # 自動分岐名生成
+      # 自動分岐名生成（仕様書に合わせてid-1形式に変更）
       def generate_branch_name(game)
         existing_branches = game.board_histories.pluck(:branch).uniq
         counter = 1
         
         loop do
-          candidate = "branch-#{counter}"
+          candidate = "id-#{counter}"
           return candidate unless existing_branches.include?(candidate)
           counter += 1
         end

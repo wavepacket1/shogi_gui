@@ -9,12 +9,7 @@
           <button class="close-btn" @click="closeDeleteDialog">×</button>
         </div>
         
-        <div class="dialog-body">
-          <p>分岐「<strong>{{ branchToDelete }}</strong>」を削除しますか？</p>
-          <p class="warning">
-            ⚠️ この操作は元に戻せません。分岐に含まれる全ての手順とコメントが削除されます。
-          </p>
-        </div>
+                <div class="dialog-body">          <p>分岐「<strong>{{ branchToDelete }}</strong>」を削除しますか？</p>        </div>
         
         <div class="dialog-footer">
           <button 
