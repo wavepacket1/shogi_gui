@@ -7,22 +7,28 @@ test('基本的なUI表示のテスト', async ({ page }) => {
   // ページのタイトルを確認
   await expect(page).toHaveTitle(/Vite \+ Vue \+ TS/);
 
-  // 「対局開始」ボタンの存在を確認
-  const startButton = page.locator('button:has-text("対局開始")');
-  await expect(startButton).toBeVisible();
+  // メニューバーのタブボタンの存在を確認
+  const playModeTab = page.locator('.tab:has-text("対局モード")');
+  await expect(playModeTab).toBeVisible();
   
-  // 「入玉宣言」ボタンの存在を確認
-  const nyugyokuButton = page.locator('button:has-text("入玉宣言")');
-  await expect(nyugyokuButton).toBeVisible();
+  const editModeTab = page.locator('.tab:has-text("編集モード")');
+  await expect(editModeTab).toBeVisible();
   
-  // ボタンがクリック可能であることを検証
-  await expect(startButton).toBeEnabled();
+  const studyModeTab = page.locator('.tab:has-text("検討モード")');
+  await expect(studyModeTab).toBeVisible();
   
-  // 対局開始ボタンをクリックする動作のテスト
-  // 実際の動作はアプリケーションによって異なるため、必要に応じて調整
-  console.log('対局開始ボタンをクリックします...');
-  await startButton.click();
+  // タブがクリック可能であることを検証
+  await expect(playModeTab).toBeEnabled();
+  await expect(editModeTab).toBeEnabled();
+  await expect(studyModeTab).toBeEnabled();
+  
+  // 対局モードタブをクリックする動作のテスト
+  console.log('対局モードタブをクリックします...');
+  await playModeTab.click();
+  
+  // クリック後、対局モードタブがアクティブになることを確認
+  await expect(playModeTab).toHaveClass(/active/);
   
   // クリック後のスクリーンショットを撮影
-  await page.screenshot({ path: 'after-click.png', fullPage: true });
+  await page.screenshot({ path: 'frontend/tests/screenshots/basic-ui-after-click.png', fullPage: true });
 }); 

@@ -10,6 +10,7 @@
 <script lang="ts">
 import { defineComponent, computed } from 'vue';
 import ShogiBoard from './components/ShogiBoard.vue';
+import StudyBoard from './components/StudyBoard.vue';
 import EditBoard from './components/EditBoard.vue';
 import MenuBar from './components/MenuBar.vue';
 import { useModeStore } from './store/mode';
@@ -19,6 +20,7 @@ export default defineComponent({
   name: 'App',
   components: {
     ShogiBoard,
+    StudyBoard,
     EditBoard,
     MenuBar
   },
@@ -30,8 +32,9 @@ export default defineComponent({
       switch (modeStore.currentMode) {
         case GameMode.EDIT:
           return 'EditBoard';
-        case GameMode.PLAY:
         case GameMode.STUDY:
+          return 'StudyBoard';
+        case GameMode.PLAY:
         default:
           return 'ShogiBoard';
       }

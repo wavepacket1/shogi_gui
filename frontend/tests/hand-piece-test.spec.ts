@@ -2,10 +2,20 @@ import { test, expect } from '@playwright/test';
 
 test.describe('持ち駒テスト', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('http://localhost:5173');
+    await page.goto('/');
+    
+    // ページが読み込まれるまで待機
+    await page.waitForSelector('#app');
+    await page.waitForTimeout(2000);
+    
+    // MenuBarが存在することを確認
+    await page.waitForSelector('header', { timeout: 5000 });
     
     // 編集モードに切り替え
-    await page.click('.tab:has-text("編集モード")');
+    const editModeTab = page.locator('.tab').filter({ hasText: '編集モード' });
+    await expect(editModeTab).toBeVisible();
+    await editModeTab.click();
+    
     await page.waitForSelector('.edit-board-container', { timeout: 10000 });
     await page.waitForTimeout(2000);
   });

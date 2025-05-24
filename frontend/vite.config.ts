@@ -20,6 +20,13 @@ export default defineConfig({
     host: true, // コンテナ外からのアクセスを許可
     hmr: {
       host: 'localhost'
+    },
+    proxy: {
+      '/api': {
+        target: 'http://localhost:3000',
+        changeOrigin: true,
+        secure: false
+      }
     }
   }
 })

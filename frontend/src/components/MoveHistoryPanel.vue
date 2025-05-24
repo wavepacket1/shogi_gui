@@ -9,6 +9,19 @@
         </select>
       </div>
     </div>
+
+    <!-- 検討モード時のみ分岐管理UIを表示 -->
+    <BranchManager
+      v-if="mode === 'study'"
+      :game-id="gameId"
+      :current-branch="currentBranch"
+      :current-move-number="currentMoveIndex"
+      :branches="branches"
+      @branch-changed="onBranchChanged"
+      @branch-created="onBranchCreated"
+      @branch-deleted="onBranchDeleted"
+      @refresh-branches="fetchBranches"
+    />
     
     <!-- 棋譜操作ボタンを追加 -->
     <div class="navigation-controls">
@@ -54,8 +67,19 @@
         @click="navigateToMove(index)"
         :ref="index === currentMoveIndex ? 'activeMove' : undefined"
       >
-        <span class="move-number">{{ index }}.</span>
-        <span class="move-notation">{{ formatMove(history) }}</span>
+        <div class="move-content">
+          <span class="move-number">{{ index }}.</span>
+          <span class="move-notation">{{ formatMove(history) }}</span>
+        </div>
+        
+        <!-- 検討モードの場合のみコメント機能を表示 -->
+        <div v-if="mode === 'study' && showComments" class="comment-section">
+          <CommentEditor
+            :game-id="gameId"
+            :move-number="history.move_number"
+            :board-history-id="history.id"
+          />
+        </div>
       </div>
     </div>
   </div>
@@ -65,16 +89,42 @@
 import { defineComponent, ref, computed, onMounted, watch, nextTick } from 'vue';
 import { useBoardStore } from '@/store';
 import { BoardHistory } from '@/store/types';
+import CommentEditor from './CommentEditor.vue';
+import BranchManager from './BranchManager.vue';
+import type { GameMode } from '@/types/shogi';
+
+export interface MoveHistoryPanelProps {
+  gameId: number;
+  mode: GameMode;
+  allowEdit?: boolean;
+  showComments?: boolean;
+}
 
 export default defineComponent({
   name: 'MoveHistoryPanel',
+  components: {
+    CommentEditor,
+    BranchManager
+  },
   props: {
     gameId: {
       type: Number,
       required: true
+    },
+    mode: {
+      type: String as () => GameMode,
+      default: 'play'
+    },
+    allowEdit: {
+      type: Boolean,
+      default: false
+    },
+    showComments: {
+      type: Boolean,
+      default: true
     }
   },
-  setup(props) {
+  setup(props: MoveHistoryPanelProps) {
     const boardStore = useBoardStore();
     const boardHistories = ref<BoardHistory[]>([]);
     const branches = ref<string[]>(['main']);
@@ -191,6 +241,20 @@ export default defineComponent({
       }
     };
 
+    // 分岐管理イベント処理
+    const onBranchChanged = async (branchName: string) => {
+      currentBranch.value = branchName;
+      await fetchBoardHistories();
+    };
+
+    const onBranchCreated = (branchName: string) => {
+      console.log(`新しい分岐が作成されました: ${branchName}`);
+    };
+
+    const onBranchDeleted = (branchName: string) => {
+      console.log(`分岐が削除されました: ${branchName}`);
+    };
+
     // 指し手の表示形式をフォーマット
     const formatMove = (history: BoardHistory): string => {
       // 初期局面の処理
@@ -260,6 +324,10 @@ export default defineComponent({
       error,
       navigateToMove,
       onBranchChange,
+      onBranchChanged,
+      onBranchCreated,
+      onBranchDeleted,
+      fetchBranches,
       formatMove,
       navigateToFirst,
       navigateToPrev,
@@ -337,6 +405,9 @@ export default defineComponent({
   background: rgba(40, 40, 80, 0.3);
   border: 1px solid rgba(255, 255, 255, 0.05);
   text-shadow: 0 0 3px rgba(255, 255, 255, 0.2);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .move-item:hover {
@@ -364,6 +435,15 @@ export default defineComponent({
 .move-notation {
   font-family: 'Courier New', monospace;
   font-weight: 500;
+}
+
+.move-content {
+  display: flex;
+  align-items: center;
+}
+
+.comment-section {
+  margin-top: 4px;
 }
 
 .navigation-controls {

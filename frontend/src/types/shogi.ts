@@ -12,6 +12,9 @@ export type NonNullPieceType = Exclude<PieceType, null>;
 // プレイヤー側の型定義
 export type PlayerSide = 'b' | 'w'; // b=先手(black), w=後手(white)
 
+// ゲームモードの型定義
+export type GameMode = 'play' | 'edit' | 'study';
+
 // 位置の型定義
 export interface Position {
   row: number;
@@ -39,6 +42,34 @@ export interface DraggingPiece {
   piece: PieceType;
   row: number;
   col: number;
+}
+
+// コメント情報の型定義（検討モード用）
+export interface Comment {
+  id: number;
+  board_history_id: number;
+  content: string;
+  created_at: string;
+  updated_at: string;
+}
+
+// 検討モード状態の型定義
+export interface StudyState {
+  comments: Record<string | number, Comment[]>; // board_history_id -> comments[]
+  editingCommentId: number | null;
+  autoSaveTimer: ReturnType<typeof setTimeout> | null;
+  currentGameId: number | null;
+  currentMoveNumber: number | null;
+  currentBranch: string;
+  isLoadingComments: boolean;
+}
+
+// MoveHistoryPanel用のプロパティ型定義
+export interface MoveHistoryPanelProps {
+  gameId: number;
+  mode: GameMode;
+  allowEdit?: boolean;
+  showComments?: boolean;
 }
 
 // 成れる駒の判定用マップ

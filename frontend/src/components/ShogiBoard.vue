@@ -44,7 +44,10 @@
             
             <!-- 棋譜パネルを将棋盤の右側に配置 -->
             <div v-if="boardStore.game" class="move-history-container">
-                <MoveHistoryPanel :game-id="boardStore.game.id" />
+                <MoveHistoryPanel 
+                    :game-id="boardStore.game.id" 
+                    :mode="currentMode"
+                />
             </div>
         </div>
 
@@ -58,6 +61,7 @@
 <script lang="ts">
 import { defineComponent, ref, onMounted, computed } from 'vue';
 import { useBoardStore } from '@/store';
+import { useModeStore } from '@/store/mode';
 import PiecesInHand from './PiecesInHand.vue';
 import ShogiBoardGrid from './ShogiBoardGrid.vue';
 import PromotionModal from './PromotionModal.vue';
@@ -75,12 +79,17 @@ export default defineComponent({
     },
     setup() {
         const boardStore = useBoardStore();
+        const modeStore = useModeStore();
         const isLoading = ref(true);
         const errorMessage = ref('');
         const showPromotionModal = ref(false);
         const pendingMove = ref<{x: number, y: number} | null>(null);
         const selectedHandPiece = ref<string | undefined>(undefined);
 
+        const currentMode = computed(() => {
+            // GameModeをstringに変換
+            return modeStore.currentMode.toLowerCase() as 'play' | 'edit' | 'study';
+        });
         const getStepNumber = computed(() => boardStore.stepNumber);
 
         const getOwner = computed(() => (boardStore.activePlayer === 'b' ? '先手' : '後手'));
@@ -339,6 +348,7 @@ export default defineComponent({
             }),
             isLoading,
             errorMessage,
+            currentMode,
             getStepNumber,
             handleCellClick,
             getOwner,

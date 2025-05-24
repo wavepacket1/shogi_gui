@@ -26,6 +26,12 @@ Rails.application.routes.draw do
       get '/games/:game_id/board_histories/branches', to: 'board_histories#branches'
       post '/games/:game_id/navigate_to/:move_number', to: 'board_histories#navigate_to'
       post '/games/:game_id/switch_branch/:branch_name', to: 'board_histories#switch_branch'
+      
+      # 分岐管理のルート
+      post '/games/:game_id/board_histories/:move_number/branches', to: 'board_histories#create_branch'
+      delete '/games/:game_id/branches/:branch_name', to: 'board_histories#delete_branch'
+      
+      # コメント関連のルート
       post '/games/:game_id/moves/:move_number/comments', to: 'comments#create'
       get '/games/:game_id/moves/:move_number/comments', to: 'comments#index'
       patch '/games/:game_id/moves/:move_number/comments/:id', to: 'comments#update'
