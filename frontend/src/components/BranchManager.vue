@@ -431,7 +431,7 @@ onMounted(() => {
 }
 
 .dialog {
-  background: white;
+  background: rgba(30, 30, 60, 0.95);
   border-radius: 8px;
   min-width: 400px;
   max-width: 500px;
@@ -568,7 +568,7 @@ onMounted(() => {
 .warning {
   color: #f57c00;
   font-size: 13px;
-  background: #fff3e0;
+      background: rgba(40, 40, 80, 0.6);
   padding: 8px;
   border-radius: 4px;
   border-left: 4px solid #f57c00;

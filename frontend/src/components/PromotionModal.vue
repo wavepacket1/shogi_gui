@@ -40,18 +40,14 @@ export default defineComponent({
 }
 
 .modal-content {
-    background: #fff;
+    background: rgba(30, 30, 60, 0.95);
     padding: 20px;
     border-radius: 8px;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
     text-align: center;
 }
 
-h3 {
-    margin: 0 0 20px 0;
-    color: #333;
-    font-size: 18px;
-}
+h3 {    margin: 0 0 20px 0;    color: rgba(232, 232, 255, 0.95);    font-size: 18px;    text-shadow: 0 0 5px rgba(255, 255, 255, 0.3);}
 
 .button-group {
     display: flex;

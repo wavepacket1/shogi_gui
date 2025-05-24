@@ -12,26 +12,41 @@ export const useStudyModeStore = defineStore('studyMode', {
     isLoadingComments: false,
   }),
 
-    getters: {
-      getCommentsForMove: (state) => {
-        return (boardHistoryId: string | number): Comment[] => {
-          return state.comments[boardHistoryId] || []
-        }
-      },
-
-      hasComments: (state) => {
-        return (boardHistoryId: string | number): boolean => {
-          const comments = state.comments[boardHistoryId]
-          return comments && comments.length > 0
-        }
-      },
-
-      isEditing: (state) => {
-        return (commentId: number): boolean => {
-          return state.editingCommentId === commentId
-        }
+  getters: {
+    getCommentsForMove: (state) => {
+      return (boardHistoryId: string | number): Comment[] => {
+        // 数値キーと文字列キーの両方を確認
+        const numKey = typeof boardHistoryId === 'string' ? parseInt(boardHistoryId) : boardHistoryId
+        const strKey = String(boardHistoryId)
+        
+        // 重複を避けるため、まず元のキーで検索、なければ数値キー、最後に文字列キー
+        const comments = state.comments[boardHistoryId] || state.comments[numKey] || state.comments[strKey] || []
+        
+        // さらに安全のため、IDの重複を除去
+        const uniqueComments = comments.filter((comment, index, arr) => 
+          arr.findIndex(c => c.id === comment.id) === index
+        )
+        
+        return uniqueComments
       }
     },
+
+    hasComments: (state) => {
+      return (boardHistoryId: string | number): boolean => {
+        // 数値キーと文字列キーの両方を確認
+        const numKey = typeof boardHistoryId === 'string' ? parseInt(boardHistoryId) : boardHistoryId
+        const strKey = String(boardHistoryId)
+        const comments = state.comments[boardHistoryId] || state.comments[numKey] || state.comments[strKey]
+        return comments && comments.length > 0
+      }
+    },
+
+    isEditing: (state) => {
+      return (commentId: number): boolean => {
+        return state.editingCommentId === commentId
+      }
+    }
+  },
 
   actions: {
     // 基本設定
@@ -69,7 +84,13 @@ export const useStudyModeStore = defineStore('studyMode', {
         } else {
           boardHistoryId = `${gameId}-${moveNumber}-${branch}`
         }
-        this.comments[boardHistoryId] = comments
+        
+        // 数値キーと文字列キーの両方で格納
+        const numKey = typeof boardHistoryId === 'string' ? parseInt(boardHistoryId) : boardHistoryId
+        const strKey = String(boardHistoryId)
+        
+        this.comments[numKey] = comments
+        this.comments[strKey] = comments
       } catch (error) {
         console.error('コメント取得エラー:', error)
         throw error
@@ -106,12 +127,9 @@ export const useStudyModeStore = defineStore('studyMode', {
           updated_at: responseData.updated_at
         }
         
-        // ローカルステートに追加
-        const boardHistoryId = newComment.board_history_id
-        if (!this.comments[boardHistoryId]) {
-          this.comments[boardHistoryId] = []
-        }
-        this.comments[boardHistoryId].push(newComment)
+        // コメント作成後は重複を避けるため、直接追加せずにfetchCommentsで最新データを取得
+        // これにより、サーバーから最新の状態を取得し、重複問題を回避
+        await this.fetchComments(gameId, moveNumber)
 
         return newComment
       } catch (error) {
@@ -150,10 +168,22 @@ export const useStudyModeStore = defineStore('studyMode', {
         
         // ローカルステートを更新
         const boardHistoryId = updatedComment.board_history_id
-        if (this.comments[boardHistoryId]) {
-          const index = this.comments[boardHistoryId].findIndex(c => c.id === commentId)
+        const numKey = typeof boardHistoryId === 'string' ? parseInt(boardHistoryId) : boardHistoryId
+        const strKey = String(boardHistoryId)
+        
+        // 数値キーで更新
+        if (this.comments[numKey]) {
+          const index = this.comments[numKey].findIndex(c => c.id === commentId)
           if (index !== -1) {
-            this.comments[boardHistoryId][index] = updatedComment
+            this.comments[numKey][index] = updatedComment
+          }
+        }
+        
+        // 文字列キーでも更新
+        if (this.comments[strKey]) {
+          const index = this.comments[strKey].findIndex(c => c.id === commentId)
+          if (index !== -1) {
+            this.comments[strKey][index] = updatedComment
           }
         }
 
@@ -176,13 +206,14 @@ export const useStudyModeStore = defineStore('studyMode', {
         }
 
         // ローカルステートから削除
-        Object.keys(this.comments).forEach(boardHistoryIdStr => {
-          const boardHistoryId = parseInt(boardHistoryIdStr)
-          this.comments[boardHistoryId] = this.comments[boardHistoryId].filter(c => c.id !== commentId)
-          
-          // 空配列になった場合は削除
-          if (this.comments[boardHistoryId].length === 0) {
-            delete this.comments[boardHistoryId]
+        Object.keys(this.comments).forEach(key => {
+          if (this.comments[key]) {
+            this.comments[key] = this.comments[key].filter(c => c.id !== commentId)
+            
+            // 空配列になった場合は削除
+            if (this.comments[key].length === 0) {
+              delete this.comments[key]
+            }
           }
         })
       } catch (error) {

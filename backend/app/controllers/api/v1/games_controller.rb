@@ -2,16 +2,23 @@
 
 module Api
   module V1
-    class GamesController < BaseController
+    class GamesController < ApplicationController
       before_action :set_game, only: [:resign, :mode]
 
       def create
+        Rails.logger.info "ゲーム作成開始: params=#{params.inspect}"
+        Rails.logger.info "game_params: #{game_params.inspect}"
+        
         @game = Game.new(game_params)
+        Rails.logger.info "ゲームオブジェクト作成: #{@game.inspect}"
 
         @game.errors.add(:status, "can't be blank") if game_params[:status].blank?
+        Rails.logger.info "バリデーション後のエラー: #{@game.errors.full_messages}"
         
         if @game.errors.empty? && @game.save
+          Rails.logger.info "ゲーム保存成功: id=#{@game.id}"
           @board = @game.create_board!(sfen: Board.default_sfen)
+          Rails.logger.info "ボード作成成功: id=#{@board.id}"
           
           # 0手目（開始局面）の履歴を作成
           @game.board_histories.create!(
@@ -19,6 +26,7 @@ module Api
             move_number: 0,
             branch: 'main'
           )
+          Rails.logger.info "初期履歴作成成功"
           
           render json: {
             game_id: @game.id,
@@ -26,12 +34,18 @@ module Api
             board_id: @board.id
           }, status: :created
         else
+          Rails.logger.error "ゲーム作成失敗: #{@game.errors.full_messages}"
           render json: {
             error: @game.errors.full_messages.join(', ')
           }, status: :unprocessable_entity
         end
       rescue ActiveRecord::RecordInvalid => e
+        Rails.logger.error "RecordInvalid: #{e.message}"
         render json: { error: e.message }, status: :unprocessable_entity
+      rescue StandardError => e
+        Rails.logger.error "ゲーム作成エラー: #{e.message}"
+        Rails.logger.error e.backtrace.join("\n")
+        render json: { error: "ゲーム作成中にエラーが発生しました: #{e.message}" }, status: :internal_server_error
       end
 
       def show

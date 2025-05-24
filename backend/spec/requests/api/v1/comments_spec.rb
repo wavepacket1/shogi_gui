@@ -1,8 +1,20 @@
 # frozen_string_literal: true
 
 require 'swagger_helper'
+require 'rails_helper'
 
 RSpec.describe 'Comments API', type: :request do
+  let!(:game) { Game.create!(status: 'active', mode: 'study') }
+  let!(:board) { Board.create!(game: game, sfen: Board.default_sfen) }
+  let!(:board_history) do
+    BoardHistory.create!(
+      game: game,
+      move_number: 0,
+      branch: 'main',
+      sfen: board.sfen
+    )
+  end
+
   path '/api/v1/games/{game_id}/moves/{move_number}/comments' do
     post 'コメントを追加する' do
       tags 'Comments'
@@ -28,10 +40,8 @@ RSpec.describe 'Comments API', type: :request do
                  updated_at: { type: :string, format: 'date-time', example: '2025-04-29T10:00:00.000Z' }
                }
 
-        let(:game) { create(:game, status: 'active') }
         let(:game_id) { game.id }
         let(:move_number) { 0 }
-        let(:board_history) { create(:board_history, game: game, move_number: move_number) }
         let(:comment) { { content: 'テストコメント' } }
 
         before do
@@ -63,7 +73,6 @@ RSpec.describe 'Comments API', type: :request do
                  error: { type: :string, example: 'コメント内容を入力してください' }
                }
 
-        let(:game) { create(:game, status: 'active') }
         let(:game_id) { game.id }
         let(:move_number) { 0 }
         let(:board_history) { create(:board_history, game: game, move_number: move_number) }
@@ -96,7 +105,6 @@ RSpec.describe 'Comments API', type: :request do
                  }
                }
 
-        let(:game) { create(:game, status: 'active') }
         let(:game_id) { game.id }
         let(:move_number) { 0 }
         let(:board_history) { create(:board_history, game: game, move_number: move_number) }
@@ -155,7 +163,6 @@ RSpec.describe 'Comments API', type: :request do
                  updated_at: { type: :string, format: 'date-time', example: '2025-04-29T10:00:00.000Z' }
                }
 
-        let(:game) { create(:game, status: 'active') }
         let(:game_id) { game.id }
         let(:move_number) { 0 }
         let(:board_history) { create(:board_history, game: game, move_number: move_number) }
@@ -179,7 +186,6 @@ RSpec.describe 'Comments API', type: :request do
                  error: { type: :string, example: 'コメントが見つかりません' }
                }
 
-        let(:game) { create(:game, status: 'active') }
         let(:game_id) { game.id }
         let(:move_number) { 0 }
         let(:board_history) { create(:board_history, game: game, move_number: move_number) }
@@ -207,7 +213,6 @@ RSpec.describe 'Comments API', type: :request do
                  message: { type: :string, example: 'コメントを削除しました' }
                }
 
-        let(:game) { create(:game, status: 'active') }
         let(:game_id) { game.id }
         let(:move_number) { 0 }
         let(:board_history) { create(:board_history, game: game, move_number: move_number) }
@@ -232,7 +237,6 @@ RSpec.describe 'Comments API', type: :request do
                  error: { type: :string, example: 'コメントが見つかりません' }
                }
 
-        let(:game) { create(:game, status: 'active') }
         let(:game_id) { game.id }
         let(:move_number) { 0 }
         let(:board_history) { create(:board_history, game: game, move_number: move_number) }
@@ -244,6 +248,55 @@ RSpec.describe 'Comments API', type: :request do
 
         run_test!
       end
+    end
+  end
+
+  describe "POST /api/v1/games/:game_id/moves/:move_number/comments" do
+    let(:valid_params) do
+      {
+        comment: {
+          content: "テストコメント"
+        }
+      }
+    end
+
+    context "有効なパラメータの場合" do
+      it "コメントが作成される" do
+        expect {
+          post "/api/v1/games/#{game.id}/moves/0/comments", params: valid_params
+        }.to change(Comment, :count).by(1)
+
+        expect(response).to have_http_status(:created)
+        
+        json_response = JSON.parse(response.body)
+        expect(json_response['content']).to eq('テストコメント')
+        expect(json_response['board_history_id']).to eq(board_history.id)
+      end
+    end
+
+    context "無効なパラメータの場合" do
+      it "エラーが返される" do
+        post "/api/v1/games/#{game.id}/moves/0/comments", params: { comment: { content: "" } }
+
+        expect(response).to have_http_status(:unprocessable_entity)
+        
+        json_response = JSON.parse(response.body)
+        expect(json_response['error']).to include("Content can't be blank")
+      end
+    end
+  end
+
+  describe "GET /api/v1/games/:game_id/moves/:move_number/comments" do
+    let!(:comment) { Comment.create!(board_history: board_history, content: "既存のコメント") }
+
+    it "コメント一覧が取得できる" do
+      get "/api/v1/games/#{game.id}/moves/0/comments"
+
+      expect(response).to have_http_status(:ok)
+      
+      json_response = JSON.parse(response.body)
+      expect(json_response.length).to eq(1)
+      expect(json_response.first['content']).to eq('既存のコメント')
     end
   end
 end 

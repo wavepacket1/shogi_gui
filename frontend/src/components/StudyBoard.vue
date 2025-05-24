@@ -375,15 +375,7 @@ export default defineComponent({
 </script>
 
 <style scoped>
-.wrapper {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 20px;
-    background-color: #f5f5dc;
-    min-height: 100vh;
-    font-family: 'Noto Sans JP', sans-serif;
-}
+.wrapper {    display: flex;    flex-direction: column;    align-items: center;    padding: 20px;    /* 宇宙テーマ背景を継承 */    background: transparent;    min-height: 100vh;    font-family: 'Noto Sans JP', sans-serif;}
 
 .shogi-container {
     display: flex;
@@ -399,7 +391,7 @@ export default defineComponent({
 .game-info {
     text-align: center;
     margin-bottom: 20px;
-    background-color: #fff;
+    background: rgba(30, 30, 60, 0.95);
     padding: 15px;
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
@@ -424,18 +416,7 @@ export default defineComponent({
     background-color: #45a049;
 }
 
-.info {
-    font-size: 16px;
-    font-weight: bold;
-    margin: 5px 0;
-    color: #333;
-}
-
-.study-status {
-    font-size: 14px;
-    color: #666;
-    margin-top: 5px;
-}
+.info {    font-size: 16px;    font-weight: bold;    margin: 5px 0;    color: rgba(232, 232, 255, 0.95);    text-shadow: 0 0 5px rgba(255, 255, 255, 0.3);}.study-status {    font-size: 14px;    color: rgba(232, 232, 255, 0.8);    margin-top: 5px;    text-shadow: 0 0 3px rgba(255, 255, 255, 0.2);}
 
 .board-area {
     display: flex;

@@ -93,7 +93,7 @@ import CommentEditor from './CommentEditor.vue';
 import BranchManager from './BranchManager.vue';
 import type { GameMode } from '@/types/shogi';
 
-export interface MoveHistoryPanelProps {
+interface MoveHistoryPanelProps {
   gameId: number;
   mode: GameMode;
   allowEdit?: boolean;
@@ -413,7 +413,8 @@ export default defineComponent({
 .move-item:hover {
   background: rgba(60, 60, 120, 0.5);
   box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-  transform: translateX(2px);
+  margin-left: 2px;
+  z-index: auto;
 }
 
 .move-item.active {
@@ -461,7 +462,7 @@ export default defineComponent({
   padding: 0 8px;
   border: 1px solid #ccc;
   border-radius: 4px;
-  background-color: #fff;
+      background: rgba(30, 30, 60, 0.95);
   color: #1976d2;  /* パネルの青色に合わせる */
   font-size: 14px;
   cursor: pointer;

@@ -23,9 +23,20 @@ export default defineConfig({
     },
     proxy: {
       '/api': {
-        target: 'http://localhost:3000',
+        target: 'http://backend:3000',
         changeOrigin: true,
-        secure: false
+        secure: false,
+        configure: (proxy, options) => {
+          proxy.on('proxyReq', (proxyReq, req, res) => {
+            console.log('Proxying request:', req.method, req.url, '-> http://backend:3000' + req.url);
+          });
+          proxy.on('proxyRes', (proxyRes, req, res) => {
+            console.log('Proxy response:', proxyRes.statusCode, 'for', req.url);
+          });
+          proxy.on('error', (err, req, res) => {
+            console.error('Proxy error:', err.message, 'for', req.url);
+          });
+        }
       }
     }
   }

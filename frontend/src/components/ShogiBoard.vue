@@ -564,11 +564,19 @@ export default defineComponent({
 @media (max-width: 992px) {
     .shogi-container {
         justify-content: center;
+        gap: 20px;
+        padding: 0 10px;
+    }
+    
+    .board-column {
+        max-width: 480px;
+        padding: 15px;
     }
     
     .move-history-container {
-        width: 320px;
+        width: 300px;
         margin-top: 20px;
+        height: 350px;
     }
 }
 
@@ -576,35 +584,312 @@ export default defineComponent({
     .shogi-container {
         flex-direction: column;
         align-items: center;
+        gap: 15px;
+        padding: 0 5px;
     }
     
-    .board-column, .board-area {
+    .board-column {
         max-width: 100%;
+        width: 100%;
+        padding: 12px;
+        margin: 0;
+    }
+    
+    .board-area {
+        max-width: 100%;
+        width: 100%;
     }
     
     .move-history-container {
         max-width: 100%;
         min-width: unset;
         width: 100%;
-        height: 300px;
-        margin-top: 20px;
+        height: 280px;
+        margin-top: 15px;
+    }
+    
+    .game-info {
+        margin-bottom: 12px;
     }
     
     .game-info button {
         font-size: 12px;
+        padding: 6px 12px;
+        min-width: 80px;
+        min-height: 44px; /* タッチフレンドリー */
+    }
+    
+    .control-panel {
+        gap: 6px;
+    }
+    
+    /* 将棋盤のサイズ調整 */
+    .board-area :deep(.shogi-board) {
+        max-width: 100%;
+        width: 100%;
+        box-sizing: border-box;
+    }
+    
+    /* 駒台のレスポンシブ調整 */
+    .pieces-in-hand-top,
+    .pieces-in-hand-bottom {
+        padding: 8px 0;
+    }
+    
+    /* 情報表示の調整 */
+    .info {
+        font-size: 13px;
         padding: 5px 10px;
+        text-align: center;
     }
 }
 
-@media (max-width: 480px) {
+@media (max-width: 600px) {
+    .shogi-container {
+        gap: 10px;
+        padding: 0;
+    }
+    
+    .board-column {
+        padding: 10px;
+        border-radius: 8px;
+    }
+    
+    .game-info {
+        margin-bottom: 10px;
+    }
+    
     .control-panel {
         flex-direction: column;
-        gap: 5px;
+        gap: 6px;
+        width: 100%;
     }
     
     .game-info button {
         width: 100%;
-        margin: 2px 0;
+        margin: 0;
+        font-size: 11px;
+        padding: 8px 12px;
+        min-height: 44px; /* タッチフレンドリー */
+    }
+    
+    .move-history-container {
+        height: 250px;
+        border-radius: 8px;
+    }
+    
+    /* 駒台のモバイル最適化 */
+    .pieces-in-hand-top,
+    .pieces-in-hand-bottom {
+        padding: 6px 0;
+        min-height: 50px;
+        align-items: center;
+    }
+    
+    /* 将棋盤のモバイル最適化 */
+    .board-area :deep(.shogi-board) {
+        border-width: 2px;
+        border-radius: 4px;
+    }
+    
+    .board-area :deep(.cell) {
+        min-height: 30px; /* タッチしやすいサイズ */
+        font-size: 14px;
+    }
+    
+    .board-area :deep(.piece) {
+        font-size: 12px;
+        font-weight: bold;
+    }
+}
+
+@media (max-width: 480px) {
+    .wrapper {
+        padding: 5px;
+    }
+    
+    .shogi-container {
+        gap: 8px;
+        padding: 0;
+    }
+    
+    .board-column {
+        padding: 8px;
+        border-radius: 6px;
+    }
+    
+    .game-info {
+        margin-bottom: 8px;
+    }
+    
+    .control-panel {
+        gap: 4px;
+    }
+    
+    .game-info button {
+        font-size: 10px;
+        padding: 10px 8px;
+        min-height: 44px; /* アクセシビリティガイドライン準拠 */
+        border-radius: 6px;
+    }
+    
+    .info {
+        font-size: 12px;
+        padding: 4px 8px;
+    }
+    
+    .move-history-container {
+        height: 220px;
+        margin-top: 10px;
+    }
+    
+    /* 極小画面での将棋盤最適化 */
+    .board-area :deep(.shogi-board) {
+        border-width: 1px;
+        background-size: 11.11% 11.11%; /* 9x9グリッドに最適化 */
+    }
+    
+    .board-area :deep(.cell) {
+        min-height: 28px;
+        font-size: 12px;
+        border-width: 0.5px;
+    }
+    
+    .board-area :deep(.piece) {
+        font-size: 10px;
+        line-height: 1.2;
+    }
+    
+    /* 駒台の極小画面対応 */
+    .pieces-in-hand-top,
+    .pieces-in-hand-bottom {
+        padding: 4px 0;
+        min-height: 44px;
+        overflow-x: auto;
+        scrollbar-width: none; /* Firefox */
+    }
+    
+    .pieces-in-hand-top::-webkit-scrollbar,
+    .pieces-in-hand-bottom::-webkit-scrollbar {
+        display: none; /* Chrome, Safari */
+    }
+}
+
+@media (max-width: 360px) {
+    .board-column {
+        padding: 6px;
+    }
+    
+    .game-info button {
+        font-size: 9px;
+        padding: 8px 6px;
+        min-height: 44px; /* タッチフレンドリー */
+    }
+    
+    .info {
+        font-size: 11px;
+        padding: 3px 6px;
+    }
+    
+    .move-history-container {
+        height: 200px;
+    }
+    
+    /* 超小画面での将棋盤調整 */
+    .board-area :deep(.cell) {
+        min-height: 25px;
+        font-size: 11px;
+    }
+    
+    .board-area :deep(.piece) {
+        font-size: 9px;
+    }
+}
+
+/* ランドスケープモード対応 */
+@media (max-width: 768px) and (orientation: landscape) {
+    .shogi-container {
+        flex-direction: row;
+        justify-content: center;
+        gap: 15px;
+        max-height: 100vh;
+        overflow-y: auto;
+    }
+    
+    .board-column {
+        max-width: 400px;
+        flex: 0 0 auto;
+    }
+    
+    .move-history-container {
+        width: 250px;
+        height: 100%;
+        max-height: 350px;
+        margin-top: 0;
+    }
+    
+    .game-info {
+        margin-bottom: 8px;
+    }
+    
+    .control-panel {
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 4px;
+    }
+    
+    .game-info button {
+        flex: 1;
+        min-width: unset;
+        font-size: 10px;
+    }
+}
+
+/* 高解像度画面対応 */
+@media (min-width: 1200px) {
+    .shogi-container {
+        max-width: 1400px;
+        gap: 40px;
+    }
+    
+    .board-column {
+        max-width: 550px;
+    }
+    
+    .move-history-container {
+        width: 300px;
+        height: 450px;
+    }
+}
+
+/* タッチデバイス対応 */
+@media (hover: none) and (pointer: coarse) {
+    .board-area :deep(.cell) {
+        min-height: 35px; /* タッチしやすいサイズ */
+    }
+    
+    .game-info button {
+        min-height: 44px; /* タッチターゲットサイズ */
+        padding: 12px 16px;
+    }
+    
+    .board-area :deep(.cell:hover) {
+        background-color: rgba(219, 186, 138, 0.6); /* タッチ時のフィードバック強化 */
+    }
+}
+
+/* プリント時の調整 */
+@media print {
+    .wrapper {
+        background: none;
+    }
+    
+    .control-panel {
+        display: none;
+    }
+    
+    .move-history-container {
+        page-break-inside: avoid;
     }
 }
 

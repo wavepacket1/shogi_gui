@@ -96,14 +96,21 @@ export default defineComponent({
   margin: 10px 0;
   padding: 10px;
   border-radius: 8px;
-  background-color: #f5f5f5;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  background: rgba(30, 30, 60, 0.9);
+  backdrop-filter: blur(15px);
+  box-shadow: 
+    0 4px 8px rgba(0,0,0,0.2),
+    0 0 20px rgba(138, 43, 226, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .mode-title {
   font-weight: bold;
   margin-bottom: 8px;
   font-size: 1rem;
+  color: rgba(232, 232, 255, 0.95);
+  text-shadow: 0 0 5px rgba(255, 255, 255, 0.3);
 }
 
 .mode-options {
@@ -115,14 +122,16 @@ export default defineComponent({
   padding: 8px 16px;
   border: 1px solid #ccc;
   border-radius: 4px;
-  background-color: #fff;
+  background: rgba(30, 30, 60, 0.95);
   cursor: pointer;
   transition: all 0.2s;
   font-size: 0.9rem;
 }
 
 .mode-button:hover:not(:disabled) {
-  background-color: #f0f0f0;
+  background: rgba(74, 144, 226, 0.3);
+  border-color: rgba(74, 144, 226, 0.6);
+  box-shadow: 0 6px 12px rgba(74, 144, 226, 0.2);
   transform: translateY(-1px);
 }
 
@@ -139,19 +148,23 @@ export default defineComponent({
 }
 
 .error-message {
-  color: #d32f2f;
+  color: #ff6b6b;
   margin-top: 8px;
   font-size: 0.85rem;
-  background-color: #ffebee;
+  background: rgba(40, 20, 20, 0.8);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 107, 107, 0.3);
   padding: 4px 8px;
   border-radius: 4px;
   max-width: 90%;
+  text-shadow: 0 0 3px rgba(255, 107, 107, 0.3);
 }
 
 .loading {
   margin-top: 8px;
   font-size: 0.85rem;
-  color: #666;
+  color: rgba(232, 232, 255, 0.7);
+  text-shadow: 0 0 3px rgba(255, 255, 255, 0.2);
 }
 
 @media (max-width: 600px) {

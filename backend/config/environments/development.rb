@@ -31,6 +31,11 @@ Rails.application.configure do
     config.cache_store = :null_store
   end
   config.hosts << "potential-chainsaw-xqwgxvq7wr7hp5p7-3000.app.github.dev"
+  config.hosts << "backend:3000"
+  config.hosts << "localhost:3000"
+  config.hosts << "127.0.0.1:3000"
+  # 開発環境では全てのホストを許可
+  config.hosts.clear
 
   # Store uploaded files on the local file system (see config/storage.yml for options).
   config.active_storage.service = :local

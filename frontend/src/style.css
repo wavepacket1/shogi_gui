@@ -3,9 +3,34 @@
   line-height: 1.5;
   font-weight: 400;
 
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+  color-scheme: dark;
+  color: rgba(232, 232, 255, 0.95);
+  
+  /* 宇宙テーマ背景 */
+  background: 
+    /* 銀河の渦巻き効果 */
+    radial-gradient(ellipse at 20% 50%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 20%, rgba(255, 119, 198, 0.3) 0%, transparent 50%),
+    radial-gradient(ellipse at 40% 80%, rgba(120, 219, 255, 0.3) 0%, transparent 50%),
+    /* 星の背景 */
+    radial-gradient(circle at 25% 25%, #fff 1px, transparent 1px),
+    radial-gradient(circle at 75% 75%, #fff 0.5px, transparent 0.5px),
+    radial-gradient(circle at 90% 40%, #fff 1px, transparent 1px),
+    radial-gradient(circle at 10% 80%, #fff 0.5px, transparent 0.5px),
+    radial-gradient(circle at 50% 10%, #fff 0.8px, transparent 0.8px),
+    radial-gradient(circle at 20% 70%, #fff 0.6px, transparent 0.6px),
+    radial-gradient(circle at 80% 60%, #fff 1.2px, transparent 1.2px),
+    radial-gradient(circle at 60% 90%, #fff 0.4px, transparent 0.4px),
+    /* ベースの宇宙色 */
+    linear-gradient(135deg, #1e3c72 0%, #2a5298 25%, #1e3c72 50%, #0f0f23 75%, #000000 100%);
+  
+  background-size: 
+    200% 200%, 200% 200%, 200% 200%,
+    100px 100px, 150px 150px, 120px 120px, 80px 80px, 
+    200px 200px, 90px 90px, 110px 110px, 60px 60px,
+    100% 100%;
+  
+  background-attachment: fixed;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -13,13 +38,47 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* HTMLとBODYレベルでも宇宙背景を確実に適用 */
+html, body {
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  background: 
+    /* 銀河の渦巻き効果 */
+    radial-gradient(ellipse at 20% 50%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 20%, rgba(255, 119, 198, 0.3) 0%, transparent 50%),
+    radial-gradient(ellipse at 40% 80%, rgba(120, 219, 255, 0.3) 0%, transparent 50%),
+    /* 星の背景 */
+    radial-gradient(circle at 25% 25%, #fff 1px, transparent 1px),
+    radial-gradient(circle at 75% 75%, #fff 0.5px, transparent 0.5px),
+    radial-gradient(circle at 90% 40%, #fff 1px, transparent 1px),
+    radial-gradient(circle at 10% 80%, #fff 0.5px, transparent 0.5px),
+    radial-gradient(circle at 50% 10%, #fff 0.8px, transparent 0.8px),
+    radial-gradient(circle at 20% 70%, #fff 0.6px, transparent 0.6px),
+    radial-gradient(circle at 80% 60%, #fff 1.2px, transparent 1.2px),
+    radial-gradient(circle at 60% 90%, #fff 0.4px, transparent 0.4px),
+    /* ベースの宇宙色 */
+    linear-gradient(135deg, #1e3c72 0%, #2a5298 25%, #1e3c72 50%, #0f0f23 75%, #000000 100%);
+  
+  background-size: 
+    200% 200%, 200% 200%, 200% 200%,
+    100px 100px, 150px 150px, 120px 120px, 80px 80px, 
+    200px 200px, 90px 90px, 110px 110px, 60px 60px,
+    100% 100%;
+  
+  background-attachment: fixed;
+  color: rgba(232, 232, 255, 0.95);
+}
+
 a {
   font-weight: 500;
-  color: #646cff;
+  color: #7dd3fc;
   text-decoration: inherit;
+  text-shadow: 0 0 5px rgba(125, 211, 252, 0.3);
 }
 a:hover {
-  color: #535bf2;
+  color: #38bdf8;
+  text-shadow: 0 0 10px rgba(56, 189, 248, 0.5);
 }
 
 body {
@@ -33,47 +92,90 @@ body {
 h1 {
   font-size: 3.2em;
   line-height: 1.1;
+  color: rgba(232, 232, 255, 0.95);
+  text-shadow: 0 0 20px rgba(138, 43, 226, 0.5);
 }
 
 button {
   border-radius: 8px;
-  border: 1px solid transparent;
+  border: 1px solid rgba(255, 255, 255, 0.2);
   padding: 0.6em 1.2em;
   font-size: 1em;
   font-weight: 500;
   font-family: inherit;
-  background-color: #1a1a1a;
+  background: rgba(40, 40, 80, 0.6);
+  color: rgba(232, 232, 255, 0.95);
   cursor: pointer;
-  transition: border-color 0.25s;
+  transition: all 0.25s ease;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
 }
 button:hover {
-  border-color: #646cff;
+  border-color: rgba(74, 144, 226, 0.6);
+  background: rgba(74, 144, 226, 0.3);
+  box-shadow: 0 6px 12px rgba(74, 144, 226, 0.2);
+  transform: translateY(-2px);
 }
 button:focus,
 button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
+  outline: 2px solid rgba(74, 144, 226, 0.8);
+  outline-offset: 2px;
 }
 
 .card {
   padding: 2em;
+  background: rgba(30, 30, 60, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  backdrop-filter: blur(15px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
 }
 
 #app {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
+  width: 100%;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
   text-align: center;
+  /* App.vueで設定される宇宙背景を継承 */
 }
 
+/* ライトモード設定を削除し、常に宇宙テーマを適用 */
+/* 強制的にダークモードを適用してライトモードの白背景を無効化 */
 @media (prefers-color-scheme: light) {
   :root {
-    color: #213547;
-    background-color: #ffffff;
+    color-scheme: dark;
+    color: rgba(232, 232, 255, 0.95);
+    /* 白い背景を宇宙背景に変更 */
+    background: 
+      radial-gradient(ellipse at 20% 50%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 20%, rgba(255, 119, 198, 0.3) 0%, transparent 50%),
+      radial-gradient(ellipse at 40% 80%, rgba(120, 219, 255, 0.3) 0%, transparent 50%),
+      radial-gradient(circle at 25% 25%, #fff 1px, transparent 1px),
+      radial-gradient(circle at 75% 75%, #fff 0.5px, transparent 0.5px),
+      radial-gradient(circle at 90% 40%, #fff 1px, transparent 1px),
+      radial-gradient(circle at 10% 80%, #fff 0.5px, transparent 0.5px),
+      radial-gradient(circle at 50% 10%, #fff 0.8px, transparent 0.8px),
+      radial-gradient(circle at 20% 70%, #fff 0.6px, transparent 0.6px),
+      radial-gradient(circle at 80% 60%, #fff 1.2px, transparent 1.2px),
+      radial-gradient(circle at 60% 90%, #fff 0.4px, transparent 0.4px),
+      linear-gradient(135deg, #1e3c72 0%, #2a5298 25%, #1e3c72 50%, #0f0f23 75%, #000000 100%);
+    
+    background-size: 
+      200% 200%, 200% 200%, 200% 200%,
+      100px 100px, 150px 150px, 120px 120px, 80px 80px, 
+      200px 200px, 90px 90px, 110px 110px, 60px 60px,
+      100% 100%;
+    
+    background-attachment: fixed;
   }
   a:hover {
-    color: #747bff;
+    color: #38bdf8;
+    text-shadow: 0 0 10px rgba(56, 189, 248, 0.5);
   }
   button {
-    background-color: #f9f9f9;
+    background: rgba(40, 40, 80, 0.6);
+    color: rgba(232, 232, 255, 0.95);
+    border-color: rgba(255, 255, 255, 0.2);
   }
 }

@@ -2,19 +2,27 @@
 
 module Api
   module V1
-    class CommentsController < BaseController
+    class CommentsController < ApplicationController
       before_action :set_board_history
       before_action :set_comment, only: [:update, :destroy]
 
       def index
+        Rails.logger.info "コメント一覧取得開始: board_history_id=#{@board_history.id}"
         @comments = @board_history.comments.order(created_at: :desc)
+        Rails.logger.info "コメント件数: #{@comments.count}"
         render json: @comments
       end
 
       def create
+        Rails.logger.info "コメント作成開始: board_history_id=#{@board_history.id}"
+        Rails.logger.info "リクエストパラメータ: #{params.inspect}"
+        Rails.logger.info "コメントパラメータ: #{comment_params.inspect}"
+        
         @comment = @board_history.comments.build(comment_params)
+        Rails.logger.info "コメントオブジェクト作成: #{@comment.inspect}"
 
         if @comment.save
+          Rails.logger.info "コメント保存成功: id=#{@comment.id}"
           render json: {
             id: @comment.id,
             comment_id: @comment.id,
@@ -24,6 +32,7 @@ module Api
             updated_at: @comment.updated_at
           }, status: :created
         else
+          Rails.logger.error "コメント保存失敗: #{@comment.errors.full_messages}"
           render json: { error: @comment.errors.full_messages.join(', ') }, status: :unprocessable_entity
         end
       rescue StandardError => e
