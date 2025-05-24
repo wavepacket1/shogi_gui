@@ -138,16 +138,55 @@ export default defineComponent({
     watch(currentMoveIndex, (newIndex) => {
       if (newIndex >= 0) {
         nextTick(() => {
-          const activeMove = document.querySelector('.move-item.active');
-          if (activeMove && movesContainerRef.value) {
-            activeMove.scrollIntoView({
-              behavior: 'smooth',
-              block: 'center'
-            });
-          }
+          scrollToCurrentMove();
         });
       }
     });
+
+    // 棋譜リストの変更も監視して新しい手順が追加されたら自動スクロール
+    watch(boardHistories, (newHistories, oldHistories) => {
+      if (newHistories.length > (oldHistories?.length || 0)) {
+        // 新しい手順が追加された場合、最新の手順にスクロール
+        nextTick(() => {
+          scrollToLatestMove();
+        });
+      }
+    }, { deep: true });
+
+    // 現在の手順までスクロールする関数
+    const scrollToCurrentMove = () => {
+      const container = movesContainerRef.value;
+      if (!container) return;
+
+      const activeMove = container.querySelector('.move-item.active') as HTMLElement;
+      if (activeMove) {
+        const containerRect = container.getBoundingClientRect();
+        const activeRect = activeMove.getBoundingClientRect();
+        
+        // アクティブな手順がコンテナの範囲外にある場合のみスクロール
+        if (activeRect.top < containerRect.top || activeRect.bottom > containerRect.bottom) {
+          activeMove.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center'
+          });
+        }
+      }
+    };
+
+    // 最新の手順までスクロールする関数
+    const scrollToLatestMove = () => {
+      const container = movesContainerRef.value;
+      if (!container) return;
+
+      const moveItems = container.querySelectorAll('.move-item');
+      if (moveItems.length > 0) {
+        const lastMove = moveItems[moveItems.length - 1] as HTMLElement;
+        lastMove.scrollIntoView({
+          behavior: 'smooth',
+          block: 'end'
+        });
+      }
+    };
 
     // 盤面履歴を取得
     const fetchBoardHistories = async (preserveCurrentIndex: boolean = false) => {
@@ -333,7 +372,9 @@ export default defineComponent({
       navigateToPrev,
       navigateToNext,
       navigateToLast,
-      movesContainerRef
+      movesContainerRef,
+      scrollToCurrentMove,
+      scrollToLatestMove
     };
   }
 });
@@ -342,7 +383,8 @@ export default defineComponent({
 <style scoped>
 .move-history-panel {
   width: 280px;
-  height: 100%;
+  height: 550px; /* 先手持ち駒エリアまでカバーする高さに設定 */
+  max-height: 550px;
   border: none;
   border-radius: 8px;
   overflow: hidden;
@@ -509,5 +551,47 @@ export default defineComponent({
 
 .moves-container::-webkit-scrollbar-thumb:hover {
   background: rgba(74, 144, 226, 0.8);
+}
+
+/* レスポンシブ対応 */
+@media (max-width: 768px) {
+  .move-history-panel {
+    width: 100%;
+    max-width: 280px;
+    height: 400px; /* タブレットでも少し高さを増やす */
+    max-height: 400px;
+  }
+  
+  .navigation-controls {
+    padding: 6px;
+    gap: 2px;
+  }
+  
+  .nav-button {
+    min-width: 28px;
+    height: 24px;
+    font-size: 12px;
+  }
+  
+  .move-item {
+    padding: 4px 6px;
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 480px) {
+  .move-history-panel {
+    height: 300px; /* スマートフォンでも高さを増やす */
+    max-height: 300px;
+  }
+  
+  .move-item {
+    padding: 3px 5px;
+    font-size: 12px;
+  }
+  
+  .moves-container::-webkit-scrollbar {
+    width: 4px;
+  }
 }
 </style>

@@ -22,11 +22,7 @@
                         @piece-click="handlePieceClick"
                     />
 
-                    <ShogiBoardGrid 
-                        :board="boardStore.shogiData.board"
-                        :selectedCell="boardStore.selectedCell"
-                        @cell-click="handleCellClick"
-                    />
+                                        <ShogiBoardGrid                         :board="boardStore.shogiData.board"                        :selectedCell="boardStore.selectedCell"                        :activePlayer="boardStore.activePlayer || 'b'"                        @cell-click="handleCellClick"                    />
 
                     <PiecesInHand 
                         class="pieces-in-hand-bottom" 

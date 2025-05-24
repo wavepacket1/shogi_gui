@@ -29,6 +29,7 @@
                     <ShogiBoardGrid 
                         :board="boardStore.shogiData.board"
                         :selectedCell="boardStore.selectedCell"
+                        :activePlayer="boardStore.activePlayer || 'b'"
                         @cell-click="handleCellClick"
                     />
 
@@ -516,7 +517,7 @@ export default defineComponent({
 .move-history-container {
     flex: 0 0 auto;
     width: 280px;
-    height: 400px;
+    height: 550px;
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -576,7 +577,7 @@ export default defineComponent({
     .move-history-container {
         width: 300px;
         margin-top: 20px;
-        height: 350px;
+        height: 400px;
     }
 }
 
@@ -674,7 +675,7 @@ export default defineComponent({
     }
     
     .move-history-container {
-        height: 250px;
+        height: 300px;
         border-radius: 8px;
     }
     
@@ -739,7 +740,7 @@ export default defineComponent({
     }
     
     .move-history-container {
-        height: 220px;
+        height: 300px;
         margin-top: 10px;
     }
     
@@ -792,7 +793,7 @@ export default defineComponent({
     }
     
     .move-history-container {
-        height: 200px;
+        height: 250px;
     }
     
     /* 超小画面での将棋盤調整 */

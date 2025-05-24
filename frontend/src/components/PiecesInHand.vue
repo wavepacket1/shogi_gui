@@ -51,7 +51,9 @@ export default defineComponent({
     gap: 12px;
     width: 450px;
     padding: 15px;
-    background: rgba(244, 240, 236, 0.9);
+    background: rgba(30, 30, 60, 0.8);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 8px;
 }
 
@@ -78,24 +80,18 @@ export default defineComponent({
         0% 35%
     );
     background: 
-        repeating-linear-gradient(
-            -65deg,
-            #C4A36B 0px,
-            #C4A36B 4px,
-            #B49355 4px,
-            #B49355 8px
-        ),
         linear-gradient(
             155deg,
-            #D4B37B 0%,
-            #B49355 45%,
-            #A48345 80%,
-            #937235 100%
+            rgba(255, 255, 255, 0.95) 0%,
+            rgba(230, 230, 255, 0.9) 30%,
+            rgba(200, 200, 240, 0.85) 70%,
+            rgba(180, 180, 220, 0.9) 100%
         );
-    background-blend-mode: soft-light;
     box-shadow: 
-        0 2px 4px rgba(0, 0, 0, 0.1),
-        inset 0 1px 3px rgba(255, 255, 255, 0.6);
+        0 4px 8px rgba(0, 0, 0, 0.3),
+        0 0 15px rgba(255, 255, 255, 0.2),
+        inset 0 1px 3px rgba(255, 255, 255, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
 .piece-shape::before {
@@ -108,17 +104,10 @@ export default defineComponent({
     background: 
         linear-gradient(
             155deg,
-            rgba(255, 255, 255, 0.7) 0%,
-            rgba(255, 245, 225, 0.2) 30%,
-            rgba(255, 235, 205, 0.1) 70%,
-            rgba(0, 0, 0, 0.08) 100%
-        ),
-        repeating-linear-gradient(
-            65deg,
-            transparent 0px,
-            transparent 3px,
-            rgba(255, 245, 225, 0.15) 3px,
-            rgba(255, 245, 225, 0.15) 6px
+            rgba(255, 255, 255, 0.6) 0%,
+            rgba(255, 245, 225, 0.3) 30%,
+            rgba(255, 235, 205, 0.2) 70%,
+            rgba(0, 0, 0, 0.05) 100%
         );
     clip-path: inherit;
     pointer-events: none;
@@ -127,7 +116,7 @@ export default defineComponent({
 .piece-symbol {
     font-size: 16px;
     font-weight: bold;
-    color: #000000;
+    color: #2d1e0f;
     text-shadow: 
         0 1px 2px rgba(255, 255, 255, 0.8),
         0 0 10px rgba(255, 255, 255, 0.4);
@@ -146,17 +135,15 @@ export default defineComponent({
     bottom: 2px;
     right: 2px;
     font-size: 10px;
-    color: #000000;
-    background: rgba(255, 255, 255, 0.8);
+    color: #2d1e0f;
+    background: rgba(255, 255, 255, 0.9);
     padding: 0px 2px;
     border-radius: 2px;
     transform-origin: center;
     text-shadow: 0 1px 1px rgba(255, 255, 255, 0.8);
 }
 
-.piece-shape.gote {
-    transform: rotate(180deg);
-}
+.piece-shape.gote {    transform: rotate(180deg);    /* 先手駒と同じ色に統一、回転のみで区別 */}
 
 .piece-shape.gote .piece-symbol {
     transform: scaleY(1.3);
@@ -168,28 +155,27 @@ export default defineComponent({
 
 .piece-shape.selected {
     background: 
-        repeating-linear-gradient(
-            -65deg,
-            #E4C38B 0px,
-            #E4C38B 4px,
-            #D4B375 4px,
-            #D4B375 8px
-        ),
         linear-gradient(
             155deg,
-            #F4D39B 0%,
-            #D4B375 45%,
-            #C4A365 80%,
-            #B39355 100%
+            rgba(255, 216, 102, 0.95) 0%,
+            rgba(255, 230, 150, 0.9) 30%,
+            rgba(255, 210, 120, 0.85) 70%,
+            rgba(220, 190, 100, 0.9) 100%
         );
     box-shadow: 
-        0 0 0 2px #FFD700,
-        0 2px 4px rgba(0, 0, 0, 0.2),
-        inset 0 1px 3px rgba(255, 255, 255, 0.6);
+        0 0 0 2px rgba(255, 216, 102, 0.8),
+        0 4px 8px rgba(0, 0, 0, 0.3),
+        0 0 20px rgba(255, 216, 102, 0.4),
+        inset 0 1px 3px rgba(255, 255, 255, 0.8);
+    border-color: rgba(255, 216, 102, 0.8);
 }
 
 .piece-shape:hover {
     cursor: pointer;
-    filter: brightness(1.1);
+    box-shadow: 
+        0 6px 12px rgba(0, 0, 0, 0.4),
+        0 0 20px rgba(255, 255, 255, 0.3),
+        inset 0 1px 3px rgba(255, 255, 255, 0.9);
+    border-color: rgba(255, 255, 255, 0.5);
 }
 </style>

@@ -8,7 +8,7 @@
                 :class="{ 'selected': isSelected(x, y) }"
                 :data-x="x"
                 :data-y="y"
-                @click="() => $emit('cellClick', x, y)"
+                @click="() => handleCellClick(x, y)"
             >
                 <div v-if="board[y][x]" class="piece-shape" :class="[board[y][x].owner]">
                     <div class="piece-symbol">{{ getJapanesePiece(board[y][x]) }}</div>
@@ -34,9 +34,13 @@ export default defineComponent({
         selectedCell: {
             type: Object as PropType<{x: number | null, y: number | null}>,
             required: true
+        },
+        activePlayer: {
+            type: String as PropType<'b' | 'w'>,
+            required: true
         }
     },
-    setup(props) {
+    setup(props, { emit }) {
         const getJapanesePiece = (piece: types.ShogiPiece): string => {
             if (!piece) return '';
             const key = piece.promoted ? `+${piece.piece_type}` : piece.piece_type;
@@ -47,9 +51,34 @@ export default defineComponent({
             return props.selectedCell.x === x && props.selectedCell.y === y;
         };
 
+        const canSelectPiece = (x: number, y: number) => {
+            const piece = props.board[y][x];
+            // 駒がない場合は選択可能（空マスへの移動）
+            if (!piece) return true;
+            // 現在の手番と駒の所有者が同じ場合のみ選択可能
+            return piece.owner === props.activePlayer;
+        };
+
+        const handleCellClick = (x: number, y: number) => {
+            const piece = props.board[y][x];
+            
+            // 駒を最初に選択する場合（selectedCellがnullの場合）のみ手番チェック
+            const isInitialSelection = props.selectedCell.x === null || props.selectedCell.y === null;
+            
+            if (isInitialSelection && piece && piece.owner !== props.activePlayer) {
+                console.log('この駒は選択できません。手番:', props.activePlayer, '駒の所有者:', piece.owner);
+                return;
+            }
+            
+            // cellClickイベントを発行（移動先としては相手の駒を取ることも可能）
+            emit('cellClick', x, y);
+        };
+
         return {
             getJapanesePiece,
-            isSelected
+            isSelected,
+            canSelectPiece,
+            handleCellClick
         };
     },
 });
@@ -115,7 +144,7 @@ export default defineComponent({
     position: relative;
     background: rgba(30, 30, 60, 0.3);
     cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: none;
     backdrop-filter: blur(5px);
 }
 
@@ -137,7 +166,7 @@ export default defineComponent({
     align-items: center;
     justify-content: center;
     position: relative;
-    transition: all 0.3s ease;
+    transition: none;
     clip-path: polygon(
         50% 0%,
         100% 35%,
@@ -162,7 +191,7 @@ export default defineComponent({
 }
 
 .piece-shape:hover {
-    transform: translateY(-2px) scale(1.05);
+    /* アニメーション効果を削除 */
     box-shadow: 
         0 6px 12px rgba(0, 0, 0, 0.4),
         0 0 20px rgba(255, 255, 255, 0.3),
@@ -208,20 +237,11 @@ export default defineComponent({
     position: relative;
 }
 
-.piece-shape.w {
-    transform: rotate(180deg);
-    background: 
-        linear-gradient(
-            155deg,
-            rgba(255, 200, 200, 0.95) 0%,
-            rgba(255, 220, 220, 0.9) 30%,
-            rgba(240, 200, 200, 0.85) 70%,
-            rgba(220, 180, 180, 0.9) 100%
-        );
-}
+.piece-shape.w {    transform: rotate(180deg);    /* 先手駒と同じ色に統一、回転のみで区別 */}
 
 .piece-shape.w:hover {
-    transform: rotate(180deg) translateY(-2px) scale(1.05);
+    /* 回転のみ維持、アニメーション効果削除 */
+    transform: rotate(180deg);
 }
 
 .piece-shape.w .piece-symbol {
@@ -229,14 +249,7 @@ export default defineComponent({
     color: #2d1e0f;
 }
 
-.shogi-cell.selected {
-    background: rgba(255, 216, 102, 0.4);
-    border-color: rgba(255, 216, 102, 0.8);
-    box-shadow: 
-        inset 0 0 15px rgba(255, 216, 102, 0.5),
-        0 0 20px rgba(255, 216, 102, 0.4);
-    animation: selectedPulse 2s ease-in-out infinite alternate;
-}
+.shogi-cell.selected {    background: rgba(255, 216, 102, 0.4);    border-color: rgba(255, 216, 102, 0.8);    box-shadow:         inset 0 0 15px rgba(255, 216, 102, 0.5),        0 0 20px rgba(255, 216, 102, 0.4);    animation: selectedPulse 2s ease-in-out infinite alternate;}
 
 @keyframes selectedPulse {
     0% { 
@@ -341,8 +354,7 @@ export default defineComponent({
 @media (hover: none) and (pointer: coarse) {
     .shogi-cell:active {
         background: rgba(74, 144, 226, 0.4);
-        transform: scale(0.95);
-        transition: all 0.1s ease;
+        /* アニメーション効果を削除 */
     }
     
     .piece-shape:hover {
@@ -350,7 +362,7 @@ export default defineComponent({
     }
     
     .piece-shape:active {
-        transform: scale(0.9);
+        /* アニメーション効果を削除 */
     }
 }
 
