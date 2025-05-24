@@ -3,15 +3,7 @@
         <div class="shogi-container">
             <div class="board-column">
                 <!-- 検討モード用の情報表示 -->
-                <div class="game-info">
-                    <div class="study-controls">
-                        <button @click="copyPositionToClipboard" class="copy-position-btn">
-                            局面コピー
-                        </button>
-                    </div>
-                    <div class="info">手数: {{ getStepNumber }} &nbsp;|&nbsp; 手番: {{ getOwner }}</div>
-                    <div class="study-status">{{ studyStatus }}</div>
-                </div>
+                                <div class="game-info">                    <div class="info">手数: {{ getStepNumber }} &nbsp;|&nbsp; 手番: {{ getOwner }}</div>                    <div class="study-status">{{ studyStatus }}</div>                </div>
 
                 <div class="board-area">
                     <PiecesInHand 
@@ -300,24 +292,7 @@ export default defineComponent({
             pendingMove.value = null;
         };
 
-        // 局面コピー機能
-        const copyPositionToClipboard = async () => {
-            try {
-                // TODO: SFEN形式での局面コピー機能を実装
-                const sfen = boardStore.shogiData?.sfen || '現在の局面';
-                await navigator.clipboard.writeText(sfen);
-                
-                // 成功通知（簡易版）
-                const tempMessage = moveError.value;
-                moveError.value = '局面をクリップボードにコピーしました';
-                setTimeout(() => {
-                    moveError.value = tempMessage;
-                }, 2000);
-            } catch (error) {
-                console.error('局面コピーエラー:', error);
-                showMoveError('局面のコピーに失敗しました');
-            }
-        };
+        
 
         // 駒の順序を定義
         const PIECE_ORDER = ['P', 'N', 'L', 'S', 'G', 'B', 'R'];
@@ -357,11 +332,7 @@ export default defineComponent({
             getStepNumber,
             getOwner,
             studyStatus,
-            handleCellClick,
-            handlePieceClick,
-            handlePromotion,
-            copyPositionToClipboard,
-            initializeGame,
+                        handleCellClick,            handlePieceClick,            handlePromotion,            initializeGame,
             showPromotionModal,
             selectedHandPiece,
             moveError,
@@ -393,24 +364,7 @@ export default defineComponent({
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
-.study-controls {
-    margin-bottom: 10px;
-}
 
-.copy-position-btn {
-    background-color: #4CAF50;
-    color: white;
-    border: none;
-    padding: 8px 16px;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 14px;
-    transition: background-color 0.2s;
-}
-
-.copy-position-btn:hover {
-    background-color: #45a049;
-}
 
 .info {    font-size: 16px;    font-weight: bold;    margin: 5px 0;    color: rgba(232, 232, 255, 0.95);    text-shadow: 0 0 5px rgba(255, 255, 255, 0.3);}.study-status {    font-size: 14px;    color: rgba(232, 232, 255, 0.8);    margin-top: 5px;    text-shadow: 0 0 3px rgba(255, 255, 255, 0.2);}
 

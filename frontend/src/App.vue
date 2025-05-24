@@ -8,7 +8,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, computed } from 'vue';
+import { defineComponent, computed, onMounted } from 'vue';
 import ShogiBoard from './components/ShogiBoard.vue';
 import StudyBoard from './components/StudyBoard.vue';
 import EditBoard from './components/EditBoard.vue';
@@ -26,6 +26,13 @@ export default defineComponent({
   },
   setup() {
     const modeStore = useModeStore();
+
+    // 初期化時にURLからモードを取得
+    onMounted(() => {
+      console.log('🚀 アプリケーション初期化: URLからモードを設定');
+      modeStore.initializeModeFromUrl();
+      console.log('現在のモード:', modeStore.currentMode);
+    });
 
     // 現在のモードに基づいて表示するコンポーネントを決定
     const currentComponent = computed(() => {

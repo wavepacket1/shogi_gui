@@ -70,6 +70,13 @@
         <div class="move-content">
           <span class="move-number">{{ index }}.</span>
           <span class="move-notation">{{ formatMove(history) }}</span>
+          
+          <!-- 分岐情報の表示（インジケータのみ） -->
+          <div v-if="hasBranchesAtMove(history.move_number)" class="branch-info-indicator">
+            <span class="branch-info-text" :title="`${getBranchCountAtMove(history.move_number)}つの分岐があります`">
+              🌿 {{ getBranchCountAtMove(history.move_number) }}
+            </span>
+          </div>
         </div>
         
         <!-- 検討モードの場合のみコメント機能を表示 -->
@@ -86,19 +93,11 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, computed, onMounted, watch, nextTick } from 'vue';
+import { defineComponent, ref, computed, onMounted, watch, nextTick, PropType } from 'vue';
 import { useBoardStore } from '@/store';
 import { BoardHistory } from '@/store/types';
 import CommentEditor from './CommentEditor.vue';
 import BranchManager from './BranchManager.vue';
-import type { GameMode } from '@/types/shogi';
-
-interface MoveHistoryPanelProps {
-  gameId: number;
-  mode: GameMode;
-  allowEdit?: boolean;
-  showComments?: boolean;
-}
 
 export default defineComponent({
   name: 'MoveHistoryPanel',
@@ -112,8 +111,8 @@ export default defineComponent({
       required: true
     },
     mode: {
-      type: String as () => GameMode,
-      default: 'play'
+      type: String as PropType<'play' | 'edit' | 'study'>,
+      default: 'play' as const
     },
     allowEdit: {
       type: Boolean,
@@ -124,7 +123,7 @@ export default defineComponent({
       default: true
     }
   },
-  setup(props: MoveHistoryPanelProps) {
+  setup(props) {
     const boardStore = useBoardStore();
     const boardHistories = ref<BoardHistory[]>([]);
     const branches = ref<string[]>(['main']);
@@ -133,6 +132,9 @@ export default defineComponent({
     const loading = ref(false);
     const error = ref('');
     const movesContainerRef = ref<HTMLElement | null>(null);
+    
+    // 分岐関連の状態
+    const allBoardHistories = ref<BoardHistory[]>([]);
 
     // currentMoveIndexの変更を監視してスクロール処理を行う
     watch(currentMoveIndex, (newIndex) => {
@@ -188,6 +190,146 @@ export default defineComponent({
       }
     };
 
+    // 全分岐の履歴を取得
+    const fetchAllBoardHistories = async () => {
+      console.log('📡 全分岐履歴の取得開始...', `gameId: ${props.gameId}`);
+      const url = `http://localhost:3000/api/v1/games/${props.gameId}/board_histories/all_branches`;
+      console.log('🔗 Request URL:', url);
+      
+      try {
+        const response = await fetch(url);
+        console.log('📊 Response status:', response.status);
+        
+        if (response.ok) {
+          const data = await response.json();
+          allBoardHistories.value = data;
+          console.log('✅ 全分岐履歴取得成功:', {
+            totalHistories: data.length,
+            branches: [...new Set(data.map((h: any) => h.branch))],
+            moveNumbers: [...new Set(data.map((h: any) => h.move_number))].sort((a: any, b: any) => a - b),
+            firstFewRecords: data.slice(0, 3)
+          });
+        } else {
+          console.warn('❌ 全分岐履歴取得失敗、フォールバックに切り替え');
+          console.error('Failed to fetch all board histories:', response.status, response.statusText);
+          // フォールバック処理に移行
+          await fetchAllBoardHistoriesFallback();
+        }
+      } catch (err) {
+        console.error('Error fetching all board histories:', err);
+        // フォールバック: 各分岐を個別に取得
+        await fetchAllBoardHistoriesFallback();
+      }
+    };
+
+    // フォールバック: 各分岐を個別に取得
+    const fetchAllBoardHistoriesFallback = async () => {
+      const allHistories: BoardHistory[] = [];
+      for (const branch of branches.value) {
+        try {
+          const branchResponse = await fetch(`http://localhost:3000/api/v1/games/${props.gameId}/board_histories?branch=${branch}`);
+          if (branchResponse.ok) {
+            const branchHistories = await branchResponse.json();
+            allHistories.push(...branchHistories);
+          }
+        } catch (error) {
+          console.error(`Error fetching histories for branch ${branch}:`, error);
+        }
+      }
+      allBoardHistories.value = allHistories;
+      console.log('All board histories (fallback):', allBoardHistories.value.length);
+    };
+
+    // 指定された手数に対して存在する分岐を取得（改善版）
+    const getBranchesForMove = (moveNumber: number): string[] => {
+      const moveBranches = allBoardHistories.value
+        .filter(history => history.move_number === moveNumber)
+        .map(history => history.branch);
+      
+      const uniqueBranches = [...new Set(moveBranches)];
+      
+      // 詳細デバッグ情報
+      const matchingHistories = allBoardHistories.value.filter(h => h.move_number === moveNumber);
+      console.log(`🔍 手数 ${moveNumber} の分岐チェック:`, {
+        totalHistories: allBoardHistories.value.length,
+        matchingHistories: matchingHistories.map(h => ({
+          move_number: h.move_number,
+          branch: h.branch,
+          move_sfen: h.move_sfen,
+          notation: h.notation,
+          parent_branch: h.parent_branch,
+          depth: h.depth
+        })),
+        uniqueBranches,
+        showPlus: uniqueBranches.length > 1,
+        allBranches: [...new Set(allBoardHistories.value.map(h => h.branch))]
+      });
+      
+      return uniqueBranches;
+    };
+
+    // 新しいAPI使用：指定手数での分岐情報を取得
+    const getBranchesAtMove = async (moveNumber: number) => {
+      try {
+        const response = await fetch(`http://localhost:3000/api/v1/games/${props.gameId}/board_histories/branches_at_move/${moveNumber}`);
+        if (response.ok) {
+          const data = await response.json();
+          console.log(`🌳 手数 ${moveNumber} の分岐ツリー情報:`, data);
+          return data;
+        }
+      } catch (error) {
+        console.error('分岐情報取得エラー:', error);
+      }
+      return { has_branches: false, branch_count: 0, branches: [] };
+    };
+
+    // 分岐ツリー構造を取得
+    const fetchBranchTree = async () => {
+      try {
+        const response = await fetch(`http://localhost:3000/api/v1/games/${props.gameId}/board_histories/branch_tree`);
+        if (response.ok) {
+          const treeData = await response.json();
+          console.log('🌳 分岐ツリー構造:', treeData);
+          return treeData;
+        }
+      } catch (error) {
+        console.error('分岐ツリー取得エラー:', error);
+      }
+      return null;
+    };
+
+    // 分岐表示の改善：木構造を考慮
+    const hasBranchesAtMove = (moveNumber: number): boolean => {
+      const branches = getBranchesForMove(moveNumber);
+      const hasBranches = branches.length > 1;
+      
+      // 子分岐が存在するかもチェック
+      const hasChildBranches = allBoardHistories.value.some(h => 
+        h.parent_branch && h.branch_point === moveNumber
+      );
+      
+      console.log(`📊 手数 ${moveNumber} 分岐判定:`, {
+        branches: branches,
+        hasBranches: hasBranches,
+        hasChildBranches: hasChildBranches,
+        finalResult: hasBranches || hasChildBranches
+      });
+      
+      return hasBranches || hasChildBranches;
+    };
+
+    // 分岐数を取得（改善版）
+    const getBranchCountAtMove = (moveNumber: number): number => {
+      const directBranches = getBranchesForMove(moveNumber).length;
+      const childBranches = allBoardHistories.value.filter(h => 
+        h.parent_branch && h.branch_point === moveNumber
+      ).length;
+      
+      return Math.max(directBranches - 1, childBranches);
+    };
+
+
+
     // 盤面履歴を取得
     const fetchBoardHistories = async (preserveCurrentIndex: boolean = false) => {
       loading.value = true;
@@ -209,6 +351,9 @@ export default defineComponent({
       try {
         const response = await boardStore.fetchBranches(props.gameId);
         branches.value = boardStore.branches;
+        console.log('🔄 分岐一覧取得完了:', branches.value);
+        // 分岐情報更新後に全履歴を取得
+        await fetchAllBoardHistories();
       } catch (err) {
         console.error('Error fetching branches:', err);
       }
@@ -318,15 +463,21 @@ export default defineComponent({
     };
 
     // コンポーネントマウント時に履歴と分岐を取得
-    onMounted(() => {
-      fetchBoardHistories();
-      fetchBranches();
+    onMounted(async () => {
+      console.log('🚀 MoveHistoryPanel初期化開始');
+      // 順序を正しく設定: 分岐 → 履歴 → 全分岐データ
+      await fetchBranches();
+      await fetchBoardHistories();
+      await fetchAllBoardHistories();
+      console.log('✅ MoveHistoryPanel初期化完了');
     });
 
     // ゲームIDが変わったら再取得
-    watch(() => props.gameId, () => {
-      fetchBoardHistories();
-      fetchBranches();
+    watch(() => props.gameId, async () => {
+      console.log('🎮 ゲームID変更:', props.gameId);
+      await fetchBranches();
+      await fetchBoardHistories();
+      await fetchAllBoardHistories();
     });
 
     // ナビゲーション用の関数を追加
@@ -374,7 +525,12 @@ export default defineComponent({
       navigateToLast,
       movesContainerRef,
       scrollToCurrentMove,
-      scrollToLatestMove
+      scrollToLatestMove,
+      getBranchesForMove,
+      getBranchesAtMove,
+      fetchBranchTree,
+      hasBranchesAtMove,
+      getBranchCountAtMove
     };
   }
 });
@@ -450,6 +606,7 @@ export default defineComponent({
   display: flex;
   flex-direction: column;
   gap: 4px;
+  position: relative;
 }
 
 .move-item:hover {
@@ -483,10 +640,33 @@ export default defineComponent({
 .move-content {
   display: flex;
   align-items: center;
+  justify-content: space-between;
 }
 
 .comment-section {
   margin-top: 4px;
+}
+
+/* 分岐情報インジケータのスタイル */
+.branch-info-indicator {
+  margin-left: auto;
+}
+
+.branch-info-text {
+  color: rgba(76, 175, 80, 0.9);
+  font-size: 12px;
+  font-weight: bold;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(76, 175, 80, 0.1);
+  border: 1px solid rgba(76, 175, 80, 0.3);
+  cursor: help;
+  transition: all 0.2s ease;
+}
+
+.branch-info-text:hover {
+  background: rgba(76, 175, 80, 0.2);
+  border-color: rgba(76, 175, 80, 0.5);
 }
 
 .navigation-controls {
@@ -577,6 +757,10 @@ export default defineComponent({
     padding: 4px 6px;
     font-size: 13px;
   }
+
+  .branch-dropdown {
+    min-width: 180px;
+  }
 }
 
 @media (max-width: 480px) {
@@ -592,6 +776,11 @@ export default defineComponent({
   
   .moves-container::-webkit-scrollbar {
     width: 4px;
+  }
+
+  .branch-dropdown {
+    min-width: 160px;
+    right: -20px;
   }
 }
 </style>

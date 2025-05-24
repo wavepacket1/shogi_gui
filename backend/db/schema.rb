@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2025_05_05_080241) do
+ActiveRecord::Schema[7.0].define(version: 2025_05_25_000001) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -22,8 +22,13 @@ ActiveRecord::Schema[7.0].define(version: 2025_05_05_080241) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "move_sfen"
+    t.string "parent_branch"
+    t.integer "branch_point"
+    t.integer "depth", default: 0
     t.index ["game_id", "move_number", "branch"], name: "index_board_histories_on_game_id_and_move_number_and_branch", unique: true
+    t.index ["game_id", "parent_branch"], name: "index_board_histories_on_game_id_and_parent_branch"
     t.index ["game_id"], name: "index_board_histories_on_game_id"
+    t.index ["parent_branch", "branch_point"], name: "index_board_histories_on_parent_branch_and_branch_point"
   end
 
   create_table "boards", force: :cascade do |t|

@@ -23,7 +23,10 @@ Rails.application.routes.draw do
 
       # 履歴関連のルート
       get '/games/:game_id/board_histories', to: 'board_histories#index'
+      get '/games/:game_id/board_histories/all_branches', to: 'board_histories#all_branches'
       get '/games/:game_id/board_histories/branches', to: 'board_histories#branches'
+      get '/games/:game_id/board_histories/branch_tree', to: 'board_histories#branch_tree'  # 新追加
+      get '/games/:game_id/board_histories/branches_at_move/:move_number', to: 'board_histories#branches_at_move'  # 新追加
       post '/games/:game_id/navigate_to/:move_number', to: 'board_histories#navigate_to'
       post '/games/:game_id/switch_branch/:branch_name', to: 'board_histories#switch_branch'
       
@@ -37,5 +40,11 @@ Rails.application.routes.draw do
       patch '/games/:game_id/moves/:move_number/comments/:id', to: 'comments#update'
       delete '/games/:game_id/moves/:move_number/comments/:id', to: 'comments#destroy'
     end
+  end
+
+  # その他のルート
+  root 'application#index'
+  get '*path', to: 'application#index', constraints: ->(request) do
+    !request.xhr? && request.format.html?
   end
 end

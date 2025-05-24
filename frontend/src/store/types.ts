@@ -98,6 +98,12 @@ export interface BoardHistory {
     last_move_promoted: boolean;
     /** 棋譜表記（例：「▲7六歩」「△8四銀」）。 */
     notation: string;
+    /** 木構造：親分岐名 */
+    parent_branch?: string | null;
+    /** 木構造：分岐開始点の手数 */
+    branch_point?: number | null;
+    /** 木構造：分岐の深さ */
+    depth?: number;
     created_at: string;
     updated_at: string;
 }

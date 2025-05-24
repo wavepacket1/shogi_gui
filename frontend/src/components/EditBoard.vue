@@ -587,30 +587,18 @@ onMounted(async () => {
   // ゲームIDの設定
   const mainBoardStore = useBoardStore();
   
-  // メインボードストアにゲームが存在しない場合は新規作成
-  if (!mainBoardStore.game?.id) {
-    console.log('ゲームが存在しないため、新規作成します...');
-    try {
-      await mainBoardStore.createGame();
-      console.log('新規ゲームを作成しました:', mainBoardStore.game?.id);
-    } catch (error) {
-      console.error('ゲーム作成に失敗しました:', error);
+  // URLパラメータまたは既存ゲームの初期化
+  try {
+    await mainBoardStore.initializeGameFromUrl();
+    console.log('ゲーム初期化完了:', mainBoardStore.game?.id);
+    
+    // 編集用ストアにゲームIDを設定
+    if (mainBoardStore.game?.id) {
+      boardStore.setGameId(mainBoardStore.game.id);
+      console.log('編集モードにゲームIDを設定しました:', mainBoardStore.game.id);
     }
-  }
-  
-  // 編集用ストアにゲームIDを設定
-  if (mainBoardStore.game?.id) {
-    boardStore.setGameId(mainBoardStore.game.id);
-    console.log('編集モードにゲームIDを設定しました:', mainBoardStore.game.id);
-  }
-  
-  // URLパラメータからのゲームID取得（オプション）
-  const urlParams = new URLSearchParams(window.location.search);
-  const gameIdFromUrl = urlParams.get('gameId');
-  if (gameIdFromUrl) {
-    const gameId = parseInt(gameIdFromUrl);
-    boardStore.setGameId(gameId);
-    console.log('URLからゲームIDを設定しました:', gameId);
+  } catch (error) {
+    console.error('ゲーム初期化に失敗しました:', error);
   }
   
   // 空の盤面で初期化

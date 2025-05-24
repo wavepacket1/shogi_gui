@@ -87,6 +87,79 @@ export const useBoardStore = defineStore('board', {
             }, 'ゲームの作成に失敗しました');
         },
 
+        // 既存ゲームの読み込み
+        async loadExistingGame(gameId: number) {
+            await this.handleAsyncAction(async () => {
+                // ゲーム詳細を取得
+                const gameResponse = await fetch(`http://localhost:3000/api/v1/games/${gameId}`);
+                if (!gameResponse.ok) {
+                    throw new Error(`ゲーム ${gameId} が見つかりません`);
+                }
+                
+                const gameData = await gameResponse.json();
+                
+                this.updateGameState({
+                    id: gameData.id,
+                    status: gameData.status,
+                    mode: gameData.mode,
+                    board_id: gameData.board?.id
+                });
+
+                // 盤面情報を取得
+                if (gameData.board?.id) {
+                    await this.fetchBoard();
+                }
+
+                // 棋譜履歴を取得
+                await this.fetchBoardHistories(gameId, this.currentBranch, false);
+                
+                console.log('✅ 既存ゲーム読み込み完了:', gameId);
+            }, `既存ゲーム ${gameId} の読み込みに失敗しました`);
+        },
+
+        // URLパラメータまたは既存ゲームの初期化
+        async initializeGameFromUrl() {
+            await this.handleAsyncAction(async () => {
+                // URLパラメータからゲームIDを取得
+                const urlParams = new URLSearchParams(window.location.search);
+                const gameIdFromUrl = urlParams.get('game_id') || urlParams.get('gameId');
+                
+                if (gameIdFromUrl) {
+                    const gameId = parseInt(gameIdFromUrl);
+                    if (!isNaN(gameId)) {
+                        console.log('🎮 URLからゲームID指定:', gameId);
+                        await this.loadExistingGame(gameId);
+                        return;
+                    }
+                }
+                
+                // ローカルストレージからゲームIDを取得
+                const storedGameId = localStorage.getItem('currentGameId');
+                if (storedGameId) {
+                    const gameId = parseInt(storedGameId);
+                    if (!isNaN(gameId)) {
+                        console.log('💾 ローカルストレージからゲームID取得:', gameId);
+                        try {
+                            await this.loadExistingGame(gameId);
+                            return;
+                        } catch (error) {
+                            console.warn('ローカルストレージのゲームが無効、新規作成します:', error);
+                            localStorage.removeItem('currentGameId');
+                        }
+                    }
+                }
+                
+                // 既存ゲームがない場合は新規作成
+                console.log('🆕 新しいゲームを作成します');
+                await this.createGame();
+                
+                // 作成したゲームIDをローカルストレージに保存
+                if (this.game?.id) {
+                    localStorage.setItem('currentGameId', this.game.id.toString());
+                }
+            }, 'ゲームの初期化に失敗しました');
+        },
+
 
         async enteringKingDeclaration(game_id: number, board_id: number) {
             await this.handleAsyncAction(async () => {
@@ -121,11 +194,21 @@ export const useBoardStore = defineStore('board', {
                 const pos = this._convertPosition(x, y);
                 const usiMove = `${piece}*${pos.x}${pos.y}`;
 
-                const response = await api.api.v1GamesBoardsMovePartialUpdate(
-                    game_id,
-                    board_id,
-                    { move: usiMove }
-                );
+                // 現在の手数を取得
+                const currentMoveNumber = this.currentMoveIndex >= 0 ? 
+                    this.boardHistories[this.currentMoveIndex]?.move_number || 0 : 0;
+
+                            const response = await api.api.v1GamesBoardsMovePartialUpdate(
+                game_id,
+                board_id,
+                { 
+                    move: usiMove
+                },
+                {
+                    move_number: currentMoveNumber,
+                    branch: this.currentBranch
+                }
+            );
 
                 await this._updateGameStateFromResponse(response);
             }, '駒を打つことができませんでした');
@@ -148,8 +231,13 @@ export const useBoardStore = defineStore('board', {
             }
         },
 
-        updateGameState(gameData: Pick<Types.Game, 'id' | 'status' | 'board_id'>) {
-            this.game = gameData;
+        updateGameState(gameData: Pick<Types.Game, 'id' | 'status' | 'board_id' | 'mode'>) {
+            this.game = {
+                id: gameData.id,
+                status: gameData.status,
+                board_id: gameData.board_id,
+                mode: gameData.mode
+            };
             this.board_id = gameData.board_id;
         },
 
@@ -166,11 +254,34 @@ export const useBoardStore = defineStore('board', {
 
          // ヘルパーメソッド
         async _executeMove(game_id: number, board_id: number, usiMove: string) {
+            // 現在の手数を取得
+            const currentMoveNumber = this.currentMoveIndex >= 0 ? 
+                this.boardHistories[this.currentMoveIndex]?.move_number || 0 : 0;
+            
+            console.log('🎮 フロント指し手送信:', {
+                game_id,
+                board_id,
+                move: usiMove,
+                move_number: currentMoveNumber,
+                branch: this.currentBranch,
+                currentMoveIndex: this.currentMoveIndex,
+                historiesLength: this.boardHistories.length
+            });
+            
             const response = await api.api.v1GamesBoardsMovePartialUpdate(
                 game_id,
                 board_id,
-                { move: usiMove }
+                { 
+                    move: usiMove
+                },
+                {
+                    move_number: currentMoveNumber,
+                    branch: this.currentBranch
+                }
             );
+
+            console.log('📨 API応答:', response.data);
+            console.log('📨 完全なレスポンス:', JSON.stringify(response, null, 2));
 
             if (!response.data.sfen) {
                 throw new Error('SFEN data is missing');
@@ -193,8 +304,17 @@ export const useBoardStore = defineStore('board', {
             // 駒を動かした後に履歴を更新（一度だけ）
             if (!skipHistoryUpdate && this.game?.id) {
                 try {
+                    console.log('🔄 履歴更新開始:', {
+                        gameId: this.game.id,
+                        currentBranch: this.currentBranch,
+                        currentHistoriesLength: this.boardHistories.length
+                    });
                     // 履歴を一度だけ更新
                     await this.fetchBoardHistories(this.game.id, this.currentBranch, false);
+                    console.log('✅ 履歴更新完了:', {
+                        newHistoriesLength: this.boardHistories.length,
+                        currentMoveIndex: this.currentMoveIndex
+                    });
                 } catch (error) {
                     console.error('履歴の更新に失敗しました:', error);
                 }

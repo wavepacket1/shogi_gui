@@ -80,6 +80,34 @@ export const useModeStore = defineStore('mode', {
                 }
             }
         },
+
+        /**
+         * URLパラメータからモードを初期化
+         */
+        initializeModeFromUrl() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const modeParam = urlParams.get('mode');
+            
+            if (modeParam) {
+                console.log('🎯 URLからモード設定:', modeParam);
+                switch (modeParam.toLowerCase()) {
+                    case 'study':
+                        this.currentMode = GameMode.STUDY;
+                        break;
+                    case 'edit':
+                        this.currentMode = GameMode.EDIT;
+                        break;
+                    case 'play':
+                        this.currentMode = GameMode.PLAY;
+                        break;
+                    default:
+                        console.warn('未知のモード:', modeParam);
+                        this.currentMode = GameMode.PLAY;
+                }
+            } else {
+                this.currentMode = GameMode.PLAY; // デフォルト値
+            }
+        },
         
         /**
          * エラーをクリア

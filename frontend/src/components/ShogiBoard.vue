@@ -129,7 +129,7 @@ export default defineComponent({
         const initializeGame = async () => {
             try {
                 isLoading.value = true;
-                await boardStore.createGame();  // ゲームを作成
+                await boardStore.initializeGameFromUrl();  // URLまたは新規ゲームを初期化
             } catch (error) {
                 errorMessage.value = 'ゲームの初期化に失敗しました';
                 console.error('Error initializing game:', error);

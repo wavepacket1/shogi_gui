@@ -21,6 +21,22 @@ module Api
         
         render json: histories_with_notation
       end
+
+      # 全分岐の履歴を取得
+      def all_branches
+        @game = Game.find(params[:game_id])
+        @board_histories = @game.board_histories.order(:move_number, :branch)
+        
+        # 履歴に棋譜表記を追加
+        histories_with_notation = @board_histories.map do |history|
+          history_data = history.as_json
+          # 棋譜表記を追加
+          history_data['notation'] = history.to_kifu_notation
+          history_data
+        end
+        
+        render json: histories_with_notation
+      end
       
       # 分岐リストの取得
       def branches
@@ -65,6 +81,9 @@ module Api
           }, status: :not_found
         end
 
+        # 親分岐の深さを計算
+        parent_depth = source_history.branch_tree_depth
+
         ActiveRecord::Base.transaction do
           # 分岐開始地点までの履歴を新しい分岐にコピー
           histories_to_copy = @game.board_histories
@@ -77,7 +96,10 @@ module Api
               sfen: history.sfen,
               move_number: history.move_number,
               branch: branch_name,
-              move_sfen: history.move_sfen
+              move_sfen: history.move_sfen,
+              parent_branch: source_branch,
+              branch_point: move_number,
+              depth: parent_depth + 1
             )
           end
         end
@@ -86,7 +108,10 @@ module Api
           branch_name: branch_name,
           created_at: Time.current.iso8601,
           move_number: move_number,
-          source_branch: source_branch
+          source_branch: source_branch,
+          parent_branch: source_branch,
+          branch_point: move_number,
+          depth: parent_depth + 1
         }, status: :created
       rescue => e
         render json: {
@@ -212,6 +237,54 @@ module Api
           notation: @latest_history.to_kifu_notation
         }
       end
+
+      # 分岐ツリー構造の取得
+      def branch_tree
+        @game = Game.find(params[:game_id])
+        
+        # 全分岐の基本情報を取得
+        branches_data = @game.board_histories
+                             .select(:branch, :parent_branch, :branch_point, :depth)
+                             .distinct
+                             .group_by(&:branch)
+                             .transform_values(&:first)
+
+        # ツリー構造を構築
+        tree = build_branch_tree(branches_data)
+        
+        render json: {
+          tree: tree,
+          branches: branches_data.keys,
+          total_branches: branches_data.size
+        }
+      end
+
+      # 指定した手数での分岐情報を取得（+マーク表示用）
+      def branches_at_move
+        @game = Game.find(params[:game_id])
+        move_number = params[:move_number].to_i
+        
+        # 指定手数に存在する全分岐を取得（全フィールドを取得）
+        branches_at_move = @game.board_histories
+                               .where(move_number: move_number)
+                               .map do |history|
+          {
+            branch: history.branch,
+            parent_branch: history.parent_branch,
+            branch_point: history.branch_point,
+            depth: history.depth || 0,
+            notation: history.to_kifu_notation,
+            is_main: history.is_main_branch?
+          }
+        end
+        
+        render json: {
+          move_number: move_number,
+          branches: branches_at_move,
+          branch_count: branches_at_move.size,
+          has_branches: branches_at_move.size > 1
+        }
+      end
       
       private
       
@@ -232,6 +305,54 @@ module Api
           return candidate unless existing_branches.include?(candidate)
           counter += 1
         end
+      end
+
+      # 分岐ツリー構造を構築
+      def build_branch_tree(branches_data)
+        # ルート分岐（main）から開始
+        root = {
+          branch: 'main',
+          depth: 0,
+          children: []
+        }
+        
+        # 深さ順でソートして階層構造を構築
+        sorted_branches = branches_data.values.sort_by { |b| b.depth || 0 }
+        
+        sorted_branches.each do |branch_data|
+          next if branch_data.branch == 'main' # mainは既に追加済み
+          
+          branch_node = {
+            branch: branch_data.branch,
+            parent_branch: branch_data.parent_branch,
+            branch_point: branch_data.branch_point,
+            depth: branch_data.depth || 0,
+            children: []
+          }
+          
+          # 親分岐を見つけて子として追加
+          if parent_node = find_branch_in_tree(root, branch_data.parent_branch)
+            parent_node[:children] << branch_node
+          else
+            # 親が見つからない場合はルートに追加
+            root[:children] << branch_node
+          end
+        end
+        
+        root
+      end
+
+      # ツリー内で指定した分岐を再帰的に検索
+      def find_branch_in_tree(node, branch_name)
+        return node if node[:branch] == branch_name
+        
+        node[:children].each do |child|
+          if result = find_branch_in_tree(child, branch_name)
+            return result
+          end
+        end
+        
+        nil
       end
     end
   end

@@ -8,6 +8,51 @@ class BoardHistory < ApplicationRecord
     scope :ordered, -> { order(move_number: :asc) }
     scope :main_branch, -> { where(branch: 'main') }
   
+    # 木構造の関係性
+    def child_branches
+      game.board_histories.where(parent_branch: branch).select(:branch).distinct.pluck(:branch)
+    end
+  
+    def parent_branch_history
+      return nil if parent_branch.blank?
+      game.board_histories.where(branch: parent_branch, move_number: branch_point).first
+    end
+  
+    def branch_tree_depth
+      return 0 if parent_branch.blank?
+      parent_history = parent_branch_history
+      return 1 if parent_history.nil?
+      parent_history.branch_tree_depth + 1
+    end
+  
+    def is_main_branch?
+      branch == 'main'
+    end
+  
+    def branch_ancestors
+      ancestors = []
+      current = self
+      
+      while current&.parent_branch.present?
+        parent = current.parent_branch_history
+        break if parent.nil?
+        ancestors << parent.branch
+        current = parent
+      end
+      
+      ancestors.reverse
+    end
+  
+    def branch_descendants
+      descendants = []
+      child_branches.each do |child_branch|
+        descendants << child_branch
+        child_history = game.board_histories.where(branch: child_branch).first
+        descendants.concat(child_history.branch_descendants) if child_history
+      end
+      descendants
+    end
+  
     # 前の局面を取得
     def previous_board_history
       return nil if move_number <= 0
